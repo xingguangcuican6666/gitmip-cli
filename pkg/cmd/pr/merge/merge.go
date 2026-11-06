@@ -211,7 +211,16 @@ type mergeContext struct {
 
 // Attempt to disable auto merge on the pull request.
 func (m *mergeContext) disableAutoMerge() error {
-	if err := disableAutoMerge(m.httpClient, m.baseRepo, m.pr.ID); err != nil {
+	// Gitea schedules auto-merge through the merge endpoint and cancels it with
+	// DELETE on that same endpoint, so the pull request is addressed by index
+	// rather than by the node id the GitHub mutation takes.
+	var err error
+	if hosttype.IsGitea(m.baseRepo.RepoHost()) {
+		err = api.DisableAutoMergeGitea(api.NewClientFromHTTP(m.httpClient), m.baseRepo, m.pr.Number)
+	} else {
+		err = disableAutoMerge(m.httpClient, m.baseRepo, m.pr.ID)
+	}
+	if err != nil {
 		return err
 	}
 	return m.infof("%s Auto-merge disabled for pull request %s#%d\n", m.cs.SuccessIconWithColor(m.cs.Green), ghrepo.FullName(m.baseRepo), m.pr.Number)
@@ -641,12 +650,6 @@ func mergeRun(opts *MergeOptions) error {
 
 	// no further action is possible when disabling auto merge
 	if opts.AutoMergeDisable {
-		if hosttype.IsGitea(ctx.baseRepo.RepoHost()) {
-			// Gitea sets auto-merge as a field on the merge request and exposes no
-			// endpoint that clears it, so the mutation GitHub uses has no
-			// counterpart to fall back on.
-			return api.ErrGiteaAutoMergeDisableUnsupported
-		}
 		return ctx.disableAutoMerge()
 	}
 

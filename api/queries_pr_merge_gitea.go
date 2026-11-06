@@ -28,10 +28,9 @@ import (
 // if the head has moved since. That is what makes --match-head-commit safe here
 // rather than a no-op.
 //
-// merge_when_checks_succeed is Gitea's auto-merge. It is a field on the merge
-// request rather than a separate enable/disable endpoint, so there is no way to
-// turn it back off through the API: a caller that asks for --disable-auto is told
-// so rather than getting a request that silently does nothing.
+// merge_when_checks_succeed is Gitea's auto-merge. It is scheduled as a field on
+// the merge request and cancelled with DELETE on that same endpoint, which is
+// the counterpart of GitHub's enable/disable pair.
 //
 // A successful merge answers 200 with the updated pull request or 204 with
 // nothing, depending on the Gitea version, so the body is drained rather than
@@ -67,7 +66,7 @@ type MergePullRequestGiteaInput struct {
 	DeleteBranchAfterMerge bool
 
 	// MergeWhenChecksSucceed defers the merge until the pull request's checks
-	// pass. Gitea has no way to cancel it afterwards through the API.
+	// pass. Cancel it with DisableAutoMergeGitea.
 	MergeWhenChecksSucceed bool
 }
 
@@ -121,8 +120,23 @@ func MergePullRequestGitea(client *Client, repo ghrepo.Interface, number int, in
 	return nil
 }
 
-// ErrGiteaAutoMergeDisableUnsupported explains why --disable-auto cannot work on
-// a Gitea host: auto-merge is a field on the merge request, and Gitea exposes no
-// endpoint that clears it.
-var ErrGiteaAutoMergeDisableUnsupported = fmt.Errorf(
-	"Gitea has no endpoint for disabling auto-merge, so `--disable-auto` is not supported")
+// DisableAutoMergeGitea cancels a scheduled auto-merge.
+//
+// GitHub has a disablePullRequestAutoMerge mutation; Gitea cancels through
+// DELETE on the merge endpoint itself, which is where auto-merge was scheduled
+// in the first place. The two are not symmetric: the delete carries no method or
+// message, only which pull request to cancel.
+//
+// Gitea answers 204 whether or not an auto-merge was scheduled, so a caller
+// cannot tell from the response alone whether anything changed.
+func DisableAutoMergeGitea(client *Client, repo ghrepo.Interface, number int) error {
+	path := fmt.Sprintf("repos/%s/%s/pulls/%d/merge", repo.RepoOwner(), repo.RepoName(), number)
+
+	resp, err := client.Request(repo.RepoHost(), http.MethodDelete, path, nil)
+	if err != nil {
+		return err
+	}
+	_, _ = io.Copy(io.Discard, resp.Body)
+	resp.Body.Close()
+	return nil
+}
