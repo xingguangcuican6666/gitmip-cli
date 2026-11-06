@@ -9,6 +9,10 @@
 # a runner per operating system. CGO is off for the whole workflow, so the
 # resulting binaries are static and a macOS or Windows runner would not produce
 # anything a Linux runner cannot.
+#
+# The matrix is deliberately short: this instance has one runner, so every job
+# runs one after another and each extra entry is another full compile before
+# the pipeline is green. Add targets when a second runner exists.
 name: Build
 
 on:
@@ -74,8 +78,6 @@ jobs:
             goarch: amd64
           - goos: linux
             goarch: arm64
-          - goos: darwin
-            goarch: amd64
           - goos: darwin
             goarch: arm64
           - goos: windows
