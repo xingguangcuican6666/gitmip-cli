@@ -337,15 +337,15 @@ Gitea 有而 `gh` 没有的能力，移植时顺手补上：
 5. 🟡 **`pr` 与 `issue` 的 GraphQL 重写**。工作量最大，按子命令分批，每批保留原有单元测试作为行为契约（`httpmock` 层从 GraphQL 断言改为 REST 断言）。
    - ✅ `issue` 全族：list / view / create / close / reopen / delete / edit / lock / unlock / pin / unpin / comment / status。`transfer` 与 `develop` 明确拒绝（Gitea 无端点）。
    - ✅ `pr view` / `pr list` / `pr diff` / `pr comment` / `pr merge` / `pr checkout`。
-   - ⬜ `pr checks`：`statusCheckRollup` 每提交一份，需改走 `GET /commits/{sha}/status`（combined）与 `GET /repos/{o}/{r}/commits/{ref}/statuses`，并接受 Gitea 的 `pending/success/error/failure/warning/skipped` 六值映射到 gh 的三桶。
-   - ⬜ `pr status`：三个桶（viewerCreated / reviewRequested / currentBranch）都用 `GET /repos/issues/search` 的 `created`/`review_requested` 参数实现，Gitea 无 GraphQL 别名一次取回，需三次请求。
-   - ⬜ `pr review`：`POST /pulls/{index}/reviews`，`event` 取 `APPROVED`/`COMMENT`/`REQUEST_CHANGES`；`--request-changes` 的正文由 `body` 承载。评论级 review（`--comment` 带行号）走 `comments[]`。
-   - ⬜ `pr edit`：`PATCH /pulls/{index}`，`EditPullRequestOption` **没有 `draft` 字段**，正文/标题/基线/里程碑/标签可改，reviewer 请求改走 `POST|DELETE /pulls/{index}/requested_reviewers`。
-   - ⬜ `pr ready`：`EditPullRequestOption` 无 `draft`，`POST /pulls/{index}/update` 是"合并基线到 head"不是"转正"，Gitea 无 API 可清 draft 位，只能拒绝并说明。
-   - ⬜ `pr close` / `pr reopen`：`PATCH /pulls/{index}` 带 `state: closed|open`。
-   - ⬜ `pr update-branch`：`POST /pulls/{index}/update`（Gitea 语义是 merge 基线进 head，不是 rebase）。
-   - ⬜ `pr create`：`POST /pulls` + `CreatePullRequestOption`（`base`/`head`/`title`/`body`/`draft` 无、`assignees`/`labels`/`milestone`/`reviewers`）。
-   - ⬜ `pr revert`：无对应端点，需本地 revert + 建提交流程。
+   - ✅ `pr checks`：`GET /commits/{sha}/status` 一次取回全部 status。Gitea 的 `pending/success/error/failure/warning/skipped` 映射到三桶时，`warning` 与 `skipped` 归入 skipping（都不阻塞合并），否则 `--watch` 会永远等下去。`--required` 拒绝：Gitea 不按 commit status 暴露必检项。
+   - ✅ `pr status`：两个桶走 Gitea 自己的端点。`created_by=<login>` 用仓库内 issue 列表（精确）；`review_requested=true` 只有跨仓库搜索支持，且必须认证。跨仓库搜索的 `created` 在匿名时会被**静默忽略**并返回 owner 下全部 PR，所以不能用它做 created 桶。当前分支的 PR 本地匹配 head 后在取一次详情并预加载 rollup。
+   - ✅ `pr review`：`POST /pulls/{index}/reviews`，`event` 取 `APPROVED`/`COMMENT`/`REQUEST_CHANGES`；正文由 `body` 承载，空值省略。
+   - ✅ `pr edit`：`PATCH /issues/{index}` 改标题/正文/里程碑，标签走 `PUT /issues/{index}/labels`（整表替换），assignee 走 `POST|DELETE /issues/{index}/assignees`，基线单独 `PATCH /pulls/{index}`，reviewer 走 `POST|DELETE /pulls/{index}/requested_reviewers`。
+   - ✅ `pr ready`：拒绝。`EditPullRequestOption` 无 `draft` 字段，`POST /pulls/{index}/update` 是"合并基线到 head"不是"转正"，Gitea 的 API 层没有清 draft 位的手段。
+   - ✅ `pr close` / `pr reopen`：`PATCH /pulls/{index}` 带 `state: closed|open`，按 index 寻址。
+   - ✅ `pr update-branch`：`POST /pulls/{index}/update`（Gitea 语义是 merge 基线进 head），`--rebase` 拒绝。behind 计数不能靠反向 compare：`owner:branch...base` 在 Gitea 上 404，改用 PR 自己的 `merge_base` 与 base 比较。
+   - ✅ `pr create`：`POST /pulls` + `CreatePullRequestOption`（`base`/`head`/`title`/`body`/`assignees`/`labels`/`milestone`/`reviewers`）。`--draft` 与 `--project` 拒绝（无字段）。
+   - ✅ `pr revert`：拒绝。Gitea 无 revert 端点。
 6. ⬜ **`search` 与 `status`**。限定符降级，明确报错而非静默忽略。`gh search` 可接 `/repos/search`、`/repos/issues/search`、`/users/search`；issue search 支持 `created`/`assigned`/`mentioned`/`review_requested`/`reviewed` 布尔参数，但没有 GitHub 的 `key:value` 语法。
 7. ✅ **`secret`、`actions` 族**的 secret 部分（见第 4 步）。`actions` 子命令族（run/job/workflow）未开始。
 8. ⬜ **删除清单**。最后统一摘除 2.1/2.2 的命令与 `root.go` 注册。

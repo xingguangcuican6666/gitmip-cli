@@ -9,6 +9,7 @@ import (
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/pkg/cmd/pr/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -178,7 +179,11 @@ func reviewRun(opts *ReviewOptions) error {
 	}
 	apiClient := api.NewClientFromHTTP(httpClient)
 
-	err = api.AddReview(apiClient, baseRepo, pr, reviewData)
+	if hosttype.IsGitea(baseRepo.RepoHost()) {
+		err = api.AddReviewGitea(apiClient, baseRepo, pr.Number, api.GiteaReviewEventFor(reviewData.State), reviewData.Body, "")
+	} else {
+		err = api.AddReview(apiClient, baseRepo, pr, reviewData)
+	}
 	if err != nil {
 		return fmt.Errorf("failed to create review: %w", err)
 	}

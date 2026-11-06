@@ -11,6 +11,7 @@ import (
 	"github.com/cli/cli/v2/internal/browser"
 	fd "github.com/cli/cli/v2/internal/featuredetection"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/text"
 	"github.com/cli/cli/v2/pkg/cmd/pr/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -181,6 +182,12 @@ func checksRun(opts *ChecksOptions) error {
 		includeEvent = features.CheckRunEvent
 	}
 
+	// Gitea has no branch protection rule exposed per commit status, so a
+	// required-check filter there would silently match nothing.
+	if opts.Required && hosttype.IsGitea(repo.RepoHost()) {
+		return fmt.Errorf("Gitea does not report required status checks, so `--required` cannot be applied")
+	}
+
 	checks, counts, err = populateStatusChecks(client, repo, pr, opts.Required, includeEvent)
 	if err != nil {
 		return err
@@ -256,6 +263,28 @@ func checksRun(opts *ChecksOptions) error {
 
 func populateStatusChecks(client *http.Client, repo ghrepo.Interface, pr *api.PullRequest, requiredChecks bool, includeEvent bool) ([]check, checkCounts, error) {
 	apiClient := api.NewClientFromHTTP(client)
+
+	// Gitea serves a flat list of commit statuses for the head commit instead of
+	// a rollup with per-workflow runs attached.
+	if hosttype.IsGitea(repo.RepoHost()) {
+		sha := pr.HeadRefOid
+		if sha == "" {
+			full, err := api.FetchPullRequestGitea(apiClient, repo, pr.Number)
+			if err != nil {
+				return nil, checkCounts{}, err
+			}
+			sha = full.HeadRefOid
+		}
+		statusCheckRollup, err := api.PullRequestStatusChecksGitea(apiClient, repo, sha)
+		if err != nil {
+			return nil, checkCounts{}, err
+		}
+		if len(statusCheckRollup.Nodes) == 0 {
+			return nil, checkCounts{}, fmt.Errorf("no checks reported on the '%s' branch", pr.HeadRefName)
+		}
+		checks, counts := aggregateChecks(statusCheckRollup.Nodes, requiredChecks)
+		return checks, counts, nil
+	}
 
 	type response struct {
 		Node *api.PullRequest

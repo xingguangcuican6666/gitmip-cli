@@ -24,6 +24,7 @@ import (
 	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/internal/text"
 	"github.com/cli/cli/v2/pkg/cmd/pr/shared"
@@ -1105,6 +1106,13 @@ func submitPR(opts CreateOptions, ctx CreateContext, state shared.IssueMetadataS
 		return errors.New("pull request title must not be blank")
 	}
 
+	if hosttype.IsGitea(ctx.PRRefs.BaseRepo().RepoHost()) {
+		// Gitea's create takes logins and numeric ids, and there is no follow-up
+		// update call to attach node ids to, so the metadata helpers that build
+		// GitHub-shaped params are skipped entirely.
+		return submitGiteaPR(opts, ctx, state)
+	}
+
 	err := shared.AddMetadataToIssueParams(client, ctx.PRRefs.BaseRepo(), params, &state, projectV1Support)
 	if err != nil {
 		return err
@@ -1151,6 +1159,34 @@ func submitPR(opts CreateOptions, ctx CreateContext, state shared.IssueMetadataS
 		return errors.Join(uploadErr, err)
 	}
 	return uploadErr
+}
+
+// submitGiteaPR is the Gitea half of submitPR, kept here so the DryRun rendering
+// and the GitHub path stay untouched.
+func submitGiteaPR(opts CreateOptions, ctx CreateContext, state shared.IssueMetadataState) error {
+	if opts.DryRun {
+		params := map[string]any{
+			"title":       state.Title,
+			"draft":       state.Draft,
+			"baseRefName": ctx.PRRefs.BaseRef(),
+			"headRefName": ctx.PRRefs.QualifiedHeadRef(),
+		}
+		if opts.IO.IsStdoutTTY() {
+			return renderPullRequestTTY(opts.IO, params, &state)
+		}
+		return renderPullRequestPlain(opts.IO.Out, params, &state)
+	}
+
+	opts.IO.StartProgressIndicator()
+	pr, err := createGiteaPullRequest(ctx.Client, ctx.PRRefs.BaseRepo(), opts, ctx, state)
+	opts.IO.StopProgressIndicator()
+	if pr != nil && pr.URL != "" {
+		fmt.Fprintln(opts.IO.Out, pr.URL)
+	}
+	if err != nil {
+		return fmt.Errorf("pull request create failed: %w", err)
+	}
+	return nil
 }
 
 func renderPullRequestPlain(w io.Writer, params map[string]any, state *shared.IssueMetadataState) error {

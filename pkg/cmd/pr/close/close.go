@@ -8,6 +8,7 @@ import (
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/git"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmd/pr/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -103,7 +104,13 @@ func closeRun(opts *CloseOptions) error {
 		}
 	}
 
-	err = api.PullRequestClose(httpClient, baseRepo, pr.ID)
+	if hosttype.IsGitea(baseRepo.RepoHost()) {
+		// Gitea closes by PATCHing the state, addressed by index rather than by
+		// node id.
+		err = api.ClosePullRequestGitea(api.NewClientFromHTTP(httpClient), baseRepo, pr.Number)
+	} else {
+		err = api.PullRequestClose(httpClient, baseRepo, pr.ID)
+	}
 	if err != nil {
 		return fmt.Errorf("API call failed: %w", err)
 	}

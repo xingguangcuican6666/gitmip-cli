@@ -6,6 +6,7 @@ import (
 
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmd/pr/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -96,6 +97,14 @@ func revertRun(opts *RevertOptions) error {
 	if pr.State != "MERGED" {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Pull request %s#%d (%s) can't be reverted because it has not been merged\n", cs.FailureIcon(), ghrepo.FullName(baseRepo), pr.Number, pr.Title)
 		return cmdutil.SilentError
+	}
+
+	// GitHub reverts by opening a pull request against the merge commit, which is
+	// a server-side operation. Gitea has no revert endpoint and no equivalent
+	// server-side flow, so the work has to be done with git and a push, which is
+	// a different command from this one.
+	if hosttype.IsGitea(baseRepo.RepoHost()) {
+		return fmt.Errorf("Gitea has no revert endpoint, so `gh pr revert` cannot run against it; revert with git and open a pull request from the branch")
 	}
 
 	httpClient, err := opts.HttpClient()

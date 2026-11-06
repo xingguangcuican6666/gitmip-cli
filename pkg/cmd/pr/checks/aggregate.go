@@ -76,6 +76,13 @@ func aggregateChecks(checkContexts []api.CheckContext, requiredChecks bool) (che
 		case "SKIPPED", "NEUTRAL":
 			item.Bucket = "skipping"
 			counts.Skipping++
+		case "WARNING":
+			// Gitea reports a status the server flagged without failing it. That
+			// is a completed run which did not block, the same thing GitHub
+			// reports as NEUTRAL, so it counts as skipped rather than pending:
+			// treating it as pending would make `--watch` wait forever.
+			item.Bucket = "skipping"
+			counts.Skipping++
 		case "ERROR", "FAILURE", "TIMED_OUT", "ACTION_REQUIRED":
 			item.Bucket = "fail"
 			counts.Failed++

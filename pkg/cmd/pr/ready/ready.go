@@ -7,6 +7,7 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmd/pr/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -78,6 +79,14 @@ func readyRun(opts *ReadyOptions) error {
 	if !pr.IsOpen() {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Pull request %s#%d is closed. Only draft pull requests can be marked as \"ready for review\"\n", cs.FailureIcon(), ghrepo.FullName(baseRepo), pr.Number)
 		return cmdutil.SilentError
+	}
+
+	// Gitea's EditPullRequestOption has no draft field and no endpoint toggles
+	// one, so neither direction of this command can be expressed through its API.
+	// The web UI can, which is why the refusal points there rather than saying
+	// the feature does not exist.
+	if hosttype.IsGitea(baseRepo.RepoHost()) {
+		return fmt.Errorf("Gitea does not expose a draft toggle in its API, so %s cannot change whether a pull request is a draft", ghrepo.FullName(baseRepo))
 	}
 
 	httpClient, err := opts.HttpClient()

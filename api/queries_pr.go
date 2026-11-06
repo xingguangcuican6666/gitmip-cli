@@ -165,6 +165,12 @@ const (
 	StatusStateFailure  StatusState = "FAILURE"
 	StatusStatePending  StatusState = "PENDING"
 	StatusStateSuccess  StatusState = "SUCCESS"
+
+	// Gitea reports these two as commit statuses and GitHub has no StatusState
+	// for either. They exist here so the mapping from Gitea has a value to carry
+	// rather than passing a bare string through the enum.
+	StatusStateWarning StatusState = "WARNING"
+	StatusStateSkipped StatusState = "SKIPPED"
 )
 
 type StatusContextCountByState struct {
@@ -443,6 +449,12 @@ func parseCheckStatusFromStatusState(state StatusState) checkStatus {
 		return passing
 	case StatusStateFailure, StatusStateError:
 		return failing
+	case StatusStateWarning, StatusStateSkipped:
+		// Gitea reports these as commit statuses. A warning is a run the server
+		// flagged without failing it and a skipped run never had to pass, so
+		// neither blocks a merge; counting either as pending would leave
+		// `gh pr status` showing a spinner forever.
+		return passing
 	case StatusStateExpected, StatusStatePending:
 		return pending
 	// Currently, we treat anything unknown as pending, which includes any future unknown

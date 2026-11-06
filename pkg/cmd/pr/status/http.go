@@ -7,6 +7,7 @@ import (
 
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/set"
 
 	ghauth "github.com/cli/go-gh/v2/pkg/auth"
@@ -30,6 +31,10 @@ type pullRequestsPayload struct {
 }
 
 func pullRequestStatus(httpClient *http.Client, repo ghrepo.Interface, options requestOptions) (*pullRequestsPayload, error) {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return pullRequestStatusGitea(httpClient, repo, options)
+	}
+
 	apiClient := api.NewClientFromHTTP(httpClient)
 	type edges struct {
 		TotalCount int

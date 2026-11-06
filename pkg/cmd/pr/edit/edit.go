@@ -16,6 +16,7 @@ import (
 	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/prompter"
 	shared "github.com/cli/cli/v2/pkg/cmd/pr/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -437,7 +438,7 @@ func editRun(opts *EditOptions) error {
 	}
 
 	opts.IO.StartProgressIndicator()
-	err = updatePullRequest(httpClient, repo, pr.ID, pr.Number, editable)
+	err = updatePullRequest(httpClient, repo, pr.ID, pr.Number, editable, pr)
 	opts.IO.StopProgressIndicator()
 	if err != nil {
 		// A failed write does not undo an upload, so both are reported.
@@ -494,7 +495,13 @@ func reviewerSearchFunc(apiClient *api.Client, repo ghrepo.Interface, editable *
 	return searchFunc
 }
 
-func updatePullRequest(httpClient *http.Client, repo ghrepo.Interface, id string, number int, editable shared.Editable) error {
+func updatePullRequest(httpClient *http.Client, repo ghrepo.Interface, id string, number int, editable shared.Editable, pr *api.PullRequest) error {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		// Gitea takes the reviewers on their own endpoint, so the whole edit,
+		// reviewers included, is one call rather than the two goroutines below.
+		return shared.UpdatePullRequestGitea(httpClient, repo, pr, editable)
+	}
+
 	var wg errgroup.Group
 	wg.Go(func() error {
 		return shared.UpdateIssue(httpClient, repo, id, true, editable)

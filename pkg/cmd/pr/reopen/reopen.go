@@ -6,6 +6,7 @@ import (
 
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmd/pr/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -94,7 +95,13 @@ func reopenRun(opts *ReopenOptions) error {
 		}
 	}
 
-	err = api.PullRequestReopen(httpClient, baseRepo, pr.ID)
+	if hosttype.IsGitea(baseRepo.RepoHost()) {
+		// Gitea reopens by PATCHing the state, addressed by index rather than by
+		// node id.
+		err = api.ReopenPullRequestGitea(api.NewClientFromHTTP(httpClient), baseRepo, pr.Number)
+	} else {
+		err = api.PullRequestReopen(httpClient, baseRepo, pr.ID)
+	}
 	if err != nil {
 		return fmt.Errorf("API call failed: %w", err)
 	}

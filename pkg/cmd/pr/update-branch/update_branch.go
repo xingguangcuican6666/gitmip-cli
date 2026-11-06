@@ -9,6 +9,7 @@ import (
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/git"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	shared "github.com/cli/cli/v2/pkg/cmd/pr/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -106,9 +107,16 @@ func updateBranchRun(opts *UpdateBranchOptions) error {
 		headRef = pr.HeadRepositoryOwner.Login + ":" + headRef
 	}
 
-	opts.IO.StartProgressIndicator()
-	comparison, err := api.ComparePullRequestBaseBranchWith(apiClient, repo, pr.Number, headRef)
-	opts.IO.StopProgressIndicator()
+	var comparison *api.RefComparison
+	if hosttype.IsGitea(repo.RepoHost()) {
+		opts.IO.StartProgressIndicator()
+		comparison, err = api.ComparePullRequestBaseBranchGitea(apiClient, repo, pr.Number)
+		opts.IO.StopProgressIndicator()
+	} else {
+		opts.IO.StartProgressIndicator()
+		comparison, err = api.ComparePullRequestBaseBranchWith(apiClient, repo, pr.Number, headRef)
+		opts.IO.StopProgressIndicator()
+	}
 	if err != nil {
 		return err
 	}
@@ -116,6 +124,22 @@ func updateBranchRun(opts *UpdateBranchOptions) error {
 	if comparison.BehindBy == 0 {
 		// The PR branch is not behind the base branch, so it'a already up-to-date.
 		fmt.Fprintf(opts.IO.Out, "%s PR branch already up-to-date\n", cs.SuccessIcon())
+		return nil
+	}
+
+	if hosttype.IsGitea(repo.RepoHost()) {
+		// Gitea merges the base into the head and has no rebase variant, so a
+		// rebase request is refused rather than quietly merged.
+		if opts.Rebase {
+			return fmt.Errorf("Gitea can only merge the base branch into the head branch, so `--rebase` is not supported")
+		}
+		opts.IO.StartProgressIndicator()
+		err = api.UpdatePullRequestBranchGitea(apiClient, repo, pr.Number)
+		opts.IO.StopProgressIndicator()
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(opts.IO.Out, "%s PR branch updated\n", cs.SuccessIcon())
 		return nil
 	}
 
