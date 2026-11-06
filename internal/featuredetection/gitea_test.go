@@ -87,6 +87,8 @@ func TestGiteaDetectorCapabilities(t *testing.T) {
 	t.Run("ActionsFeatures", func(t *testing.T) {
 		f, err := d.ActionsFeatures()
 		require.NoError(t, err)
-		assert.False(t, f.DispatchRunDetails)
+		// Gitea answers with the created run when return_run_details is sent as a
+		// query parameter, which the workflow run command does on this host.
+		assert.True(t, f.DispatchRunDetails)
 	})
 }

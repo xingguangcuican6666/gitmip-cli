@@ -176,7 +176,7 @@ func viewWorkflowContent(opts *ViewOptions, client *api.Client, repo ghrepo.Inte
 
 		fileName := workflow.Base()
 		fmt.Fprintf(out, "%s - %s\n", cs.Bold(workflow.Name), cs.Muted(fileName))
-		fmt.Fprintf(out, "ID: %s", cs.Cyanf("%d", workflow.ID))
+		fmt.Fprintf(out, "ID: %s", cs.Cyan(workflow.Identifier()))
 
 		codeBlock := fmt.Sprintf("```yaml\n%s\n```", yaml)
 		rendered, err := markdown.Render(codeBlock,
@@ -217,7 +217,7 @@ func viewWorkflowInfo(opts *ViewOptions, client *api.Client, repo ghrepo.Interfa
 	// Header
 	filename := workflow.Base()
 	fmt.Fprintf(out, "%s - %s\n", cs.Bold(workflow.Name), cs.Cyan(filename))
-	fmt.Fprintf(out, "ID: %s\n\n", cs.Cyanf("%d", workflow.ID))
+	fmt.Fprintf(out, "ID: %s\n\n", cs.Cyan(workflow.Identifier()))
 
 	// Runs
 	fmt.Fprintf(out, "Total runs %d\n", wr.TotalCount)

@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"reflect"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -17,6 +16,7 @@ import (
 	"github.com/cli/cli/v2/api"
 	fd "github.com/cli/cli/v2/internal/featuredetection"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/pkg/cmd/workflow/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -319,9 +319,49 @@ func runRun(opts *RunOptions) error {
 		return err
 	}
 
-	path, err := safeurl.JoinPath("repos", repo.RepoOwner(), repo.RepoName(), "actions", "workflows", strconv.FormatInt(workflow.ID, 10), "dispatches")
+	path, err := safeurl.JoinPath("repos", repo.RepoOwner(), repo.RepoName(), "actions", "workflows", workflow.Identifier(), "dispatches")
 	if err != nil {
 		return err
+	}
+
+	if hosttype.IsGitea(repo.RepoHost()) {
+		// Gitea wants a full ref, and takes return_run_details as a query
+		// parameter rather than a field of the body. A body field would be
+		// rejected as an unknown parameter, and the run details the rest of this
+		// function prints would then never come back.
+		if features.DispatchRunDetails {
+			path.SetQuery("return_run_details", "true")
+		}
+		requestBody := map[string]any{
+			"ref":    giteaDispatchRef(ref),
+			"inputs": providedInputs,
+		}
+		requestByte, err := json.Marshal(requestBody)
+		if err != nil {
+			return fmt.Errorf("failed to serialize workflow inputs: %w", err)
+		}
+
+		var giteaResponse struct {
+			WorkflowRunID int64  `json:"workflow_run_id"`
+			RunURL        string `json:"run_url"`
+			HtmlURL       string `json:"html_url"`
+		}
+		if err := client.REST(repo.RepoHost(), "POST", path.String(), bytes.NewReader(requestByte), &giteaResponse); err != nil {
+			return fmt.Errorf("could not create workflow dispatch event: %w", err)
+		}
+
+		if opts.IO.IsStdoutTTY() {
+			cs := opts.IO.ColorScheme()
+			fmt.Fprintf(opts.IO.Out, "%s Created workflow_dispatch event for %s at %s\n",
+				cs.SuccessIcon(), cs.Cyan(workflow.Base()), cs.Bold(ref))
+			if giteaResponse.HtmlURL != "" {
+				fmt.Fprintln(opts.IO.Out, giteaResponse.HtmlURL)
+			}
+			if giteaResponse.WorkflowRunID != 0 {
+				fmt.Fprintf(opts.IO.Out, "\nTo view the run: %s\n", cs.Cyanf("gh run view %d", giteaResponse.WorkflowRunID))
+			}
+		}
+		return nil
 	}
 
 	requestBody := map[string]any{
@@ -499,4 +539,18 @@ func findInputs(yamlContent []byte) ([]WorkflowInput, error) {
 	})
 
 	return out, nil
+}
+
+// giteaDispatchRef qualifies a ref for Gitea's workflow dispatch.
+//
+// Gitea parses the ref through git.RefName and rejects anything that is neither a
+// branch nor a tag ref, so the bare branch name GitHub accepts is not enough. The
+// example in Gitea's own API documentation is "refs/heads/main", and that is what
+// this produces. A tag has to be passed as its full ref by the caller, since there
+// is no way to tell a tag name from a branch name without asking the server.
+func giteaDispatchRef(ref string) string {
+	if strings.HasPrefix(ref, "refs/") {
+		return ref
+	}
+	return "refs/heads/" + ref
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/pkg/cmd/run/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -193,9 +194,15 @@ func rerunRun(client *api.Client, repo ghrepo.Interface, run *shared.Run, onlyFa
 		runVerb = "rerun-failed-jobs"
 	}
 
-	body, err := requestBody(debug)
-	if err != nil {
-		return fmt.Errorf("failed to create rerun body: %w", err)
+	var body io.Reader
+	// Gitea's rerun endpoints take no body at all, so a JSON body would be
+	// rejected as an unknown parameter rather than ignored.
+	if !hosttype.IsGitea(repo.RepoHost()) {
+		b, err := requestBody(debug)
+		if err != nil {
+			return fmt.Errorf("failed to create rerun body: %w", err)
+		}
+		body = b
 	}
 
 	path, err := safeurl.JoinPath("repos", repo.RepoOwner(), repo.RepoName(), "actions", "runs", strconv.FormatInt(run.ID, 10), runVerb)
@@ -215,12 +222,27 @@ func rerunRun(client *api.Client, repo ghrepo.Interface, run *shared.Run, onlyFa
 }
 
 func rerunJob(client *api.Client, repo ghrepo.Interface, job *shared.Job, debug bool) error {
-	body, err := requestBody(debug)
-	if err != nil {
-		return fmt.Errorf("failed to create rerun body: %w", err)
+	var body io.Reader
+	if !hosttype.IsGitea(repo.RepoHost()) {
+		b, err := requestBody(debug)
+		if err != nil {
+			return fmt.Errorf("failed to create rerun body: %w", err)
+		}
+		body = b
 	}
 
-	path, err := safeurl.JoinPath("repos", repo.RepoOwner(), repo.RepoName(), "actions", "jobs", strconv.FormatInt(job.ID, 10), "rerun")
+	var path *safeurl.MutableSafeURL
+	var err error
+	if hosttype.IsGitea(repo.RepoHost()) {
+		// Gitea hangs a job's rerun under the run, which is the id the job
+		// carries from the list. GitHub hangs it under the job alone.
+		if job.RunID == 0 {
+			return fmt.Errorf("job %d has no run id, which Gitea needs to rerun it", job.ID)
+		}
+		path, err = safeurl.JoinPath("repos", repo.RepoOwner(), repo.RepoName(), "actions", "runs", strconv.FormatInt(job.RunID, 10), "jobs", strconv.FormatInt(job.ID, 10), "rerun")
+	} else {
+		path, err = safeurl.JoinPath("repos", repo.RepoOwner(), repo.RepoName(), "actions", "jobs", strconv.FormatInt(job.ID, 10), "rerun")
+	}
 	if err != nil {
 		return err
 	}

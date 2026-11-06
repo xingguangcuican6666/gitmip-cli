@@ -13,6 +13,7 @@ import (
 
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -33,10 +34,28 @@ type iprompter interface {
 type WorkflowState string
 
 type Workflow struct {
-	Name  string
-	ID    int64
-	Path  string
-	State WorkflowState
+	Name string
+	ID   int64
+	// StringID is Gitea's workflow identifier, which is the workflow's file name
+	// rather than a number. GitHub's is always numeric and lives in ID. A JSON
+	// decoder would reject a string for an int64 field, so the two are kept
+	// separate and Gitea responses are mapped rather than decoded into this
+	// struct directly.
+	StringID string `json:"-"`
+	Path     string
+	State    WorkflowState
+}
+
+// Identifier returns the id to put in an Actions path.
+//
+// Gitea addresses a workflow by the same name it is listed under, so a workflow
+// that came from Gitea is addressed by that rather than by a number that Gitea
+// never had.
+func (w *Workflow) Identifier() string {
+	if w.StringID != "" {
+		return w.StringID
+	}
+	return strconv.FormatInt(w.ID, 10)
 }
 
 type WorkflowsPayload struct {
@@ -52,10 +71,106 @@ func (w *Workflow) Base() string {
 }
 
 func (w *Workflow) ExportData(fields []string) map[string]any {
-	return cmdutil.StructExportData(w, fields)
+	data := cmdutil.StructExportData(w, fields)
+	// The exported id follows the host. On Gitea it is the workflow's name, which
+	// is what every other part of that command line takes as an id; on GitHub it
+	// is the number the API reported.
+	if w.StringID != "" {
+		data["id"] = w.StringID
+	}
+	return data
+}
+
+// giteaWorkflow is Gitea's ActionWorkflow.
+type giteaWorkflow struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Path  string `json:"path"`
+	State string `json:"state"`
+}
+
+type giteaWorkflowsPayload struct {
+	TotalCount int             `json:"total_count"`
+	Workflows  []giteaWorkflow `json:"workflows"`
+}
+
+// GetWorkflowsGitea lists a repository's workflows.
+//
+// Gitea identifies a workflow by its file name and has no numeric id, so the rows
+// are mapped onto Workflow with StringID set and ID left zero. A caller that put
+// ID in a path would produce a request Gitea cannot resolve.
+func GetWorkflowsGitea(client *api.Client, repo ghrepo.Interface, limit int) ([]Workflow, error) {
+	const pageSize = 50
+
+	workflows := []Workflow{}
+	for page := 1; ; page++ {
+		if limit > 0 && len(workflows) >= limit {
+			break
+		}
+
+		u, err := safeurl.JoinPath("repos", repo.RepoOwner(), repo.RepoName(), "actions", "workflows")
+		if err != nil {
+			return nil, err
+		}
+		u.SetQuery("page", strconv.Itoa(page))
+		api.SetPageSizeMutable(u, repo.RepoHost(), pageSize)
+
+		var result giteaWorkflowsPayload
+		if err := client.REST(repo.RepoHost(), "GET", u.String(), nil, &result); err != nil {
+			return nil, err
+		}
+
+		for _, raw := range result.Workflows {
+			workflows = append(workflows, Workflow{
+				Name:     raw.Name,
+				StringID: raw.ID,
+				Path:     raw.Path,
+				State:    WorkflowState(raw.State),
+			})
+			if limit > 0 && len(workflows) == limit {
+				break
+			}
+		}
+
+		if len(result.Workflows) < pageSize {
+			break
+		}
+	}
+
+	return workflows, nil
+}
+
+// GetWorkflowGitea fetches one workflow by the name or file path Gitea uses.
+func GetWorkflowGitea(client *api.Client, repo ghrepo.Interface, id string) (*Workflow, error) {
+	path, err := safeurl.JoinPath("repos", repo.RepoOwner(), repo.RepoName(), "actions", "workflows", id)
+	if err != nil {
+		return nil, err
+	}
+
+	var raw giteaWorkflow
+	if err := client.REST(repo.RepoHost(), "GET", path.String(), nil, &raw); err != nil {
+		return nil, err
+	}
+
+	workflow := Workflow{
+		Name:     raw.Name,
+		StringID: raw.ID,
+		Path:     raw.Path,
+		State:    WorkflowState(raw.State),
+	}
+	// A response that carries no id is addressed by the path it was fetched with,
+	// so the caller can still use Identifier() in a further request.
+	if workflow.StringID == "" {
+		workflow.StringID = id
+	}
+	return &workflow, nil
 }
 
 func GetWorkflows(client *api.Client, repo ghrepo.Interface, limit int) ([]Workflow, error) {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return GetWorkflowsGitea(client, repo, limit)
+	}
+
 	perPage := limit
 	page := 1
 	if limit > 100 || limit == 0 {
@@ -74,7 +189,7 @@ func GetWorkflows(client *api.Client, repo ghrepo.Interface, limit int) ([]Workf
 		if err != nil {
 			return nil, err
 		}
-		u.SetQuery("per_page", strconv.Itoa(perPage))
+		api.SetPageSizeMutable(u, repo.RepoHost(), perPage)
 		u.SetQuery("page", strconv.Itoa(page))
 
 		err = client.REST(repo.RepoHost(), "GET", u.String(), nil, &result)
@@ -159,6 +274,10 @@ func isWorkflowFile(f string) bool {
 
 // ID can be either a numeric database ID or the workflow file name
 func getWorkflowByID(client *api.Client, repo ghrepo.Interface, ID string) (*Workflow, error) {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return GetWorkflowGitea(client, repo, ID)
+	}
+
 	var workflow Workflow
 
 	path, err := safeurl.JoinPath("repos", repo.RepoOwner(), repo.RepoName(), "actions", "workflows", ID)

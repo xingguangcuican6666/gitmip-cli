@@ -2,7 +2,6 @@ package shared
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/ghrepo"
@@ -34,7 +33,7 @@ func ListArtifacts(httpClient *http.Client, repo ghrepo.Interface, runID string)
 			return nil, err
 		}
 	}
-	u.SetQuery("per_page", strconv.Itoa(perPage))
+	api.SetPageSizeMutable(u, repo.RepoHost(), perPage)
 	var pageURL safeurl.SafeURL = u
 
 	// TODO(api-client-rollout)

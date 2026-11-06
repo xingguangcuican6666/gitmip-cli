@@ -78,7 +78,9 @@ func (d *giteaDetector) ReleaseFeatures() (ReleaseFeatures, error) {
 }
 
 func (d *giteaDetector) ActionsFeatures() (ActionsFeatures, error) {
-	// Gitea's workflow dispatch takes {ref, inputs} only, with no
-	// return_run_details field to ask for the created run.
-	return ActionsFeatures{}, nil
+	// Gitea accepts return_run_details, but as a query parameter rather than as
+	// a field of the dispatch body. The flag says the server can answer with the
+	// created run, which it can, and the workflow run command sends it in the
+	// place Gitea looks for it.
+	return ActionsFeatures{DispatchRunDetails: true}, nil
 }

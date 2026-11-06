@@ -116,7 +116,7 @@ func listRun(opts *ListOptions) error {
 	for _, workflow := range filteredWorkflows {
 		tp.AddField(workflow.Name)
 		tp.AddField(string(workflow.State))
-		tp.AddField(fmt.Sprintf("%d", workflow.ID), tableprinter.WithColor(cs.Cyan))
+		tp.AddField(workflow.Identifier(), tableprinter.WithColor(cs.Cyan))
 		tp.EndRow()
 	}
 
