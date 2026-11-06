@@ -107,6 +107,12 @@ func updateBranchRun(opts *UpdateBranchOptions) error {
 		headRef = pr.HeadRepositoryOwner.Login + ":" + headRef
 	}
 
+	// Checked before the comparison so a run that has nothing to update still
+	// says the flag is unsupported rather than reporting the branch is current.
+	if hosttype.IsGitea(repo.RepoHost()) && opts.Rebase {
+		return fmt.Errorf("Gitea can only merge the base branch into the head branch, so `--rebase` is not supported")
+	}
+
 	var comparison *api.RefComparison
 	if hosttype.IsGitea(repo.RepoHost()) {
 		opts.IO.StartProgressIndicator()
@@ -128,11 +134,6 @@ func updateBranchRun(opts *UpdateBranchOptions) error {
 	}
 
 	if hosttype.IsGitea(repo.RepoHost()) {
-		// Gitea merges the base into the head and has no rebase variant, so a
-		// rebase request is refused rather than quietly merged.
-		if opts.Rebase {
-			return fmt.Errorf("Gitea can only merge the base branch into the head branch, so `--rebase` is not supported")
-		}
 		opts.IO.StartProgressIndicator()
 		err = api.UpdatePullRequestBranchGitea(apiClient, repo, pr.Number)
 		opts.IO.StopProgressIndicator()
