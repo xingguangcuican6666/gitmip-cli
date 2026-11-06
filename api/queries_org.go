@@ -2,7 +2,9 @@ package api
 
 import (
 	"fmt"
+
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/shurcooL/githubv4"
 )
 
@@ -74,7 +76,14 @@ func OrganizationTeam(client *Client, hostname string, org string, teamSlug stri
 }
 
 // OrganizationTeams fetches all the teams in an organization
+// OrganizationTeams lists the teams that may review work in an organization
+// repository. Gitea has organizations and teams but no team assignment on an
+// issue or pull request, so there is nothing to list for that purpose.
 func OrganizationTeams(client *Client, repo ghrepo.Interface) ([]OrgTeam, error) {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return nil, nil
+	}
+
 	type responseData struct {
 		Organization struct {
 			Teams struct {

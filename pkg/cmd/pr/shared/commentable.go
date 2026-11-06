@@ -7,12 +7,14 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/attachments"
 	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/text"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -158,7 +160,14 @@ func CommentableRun(opts *CommentableOptions) error {
 	}
 	opts.Host = repo.RepoHost()
 	if opts.DeleteLast {
-		return deleteComment(commentable, opts)
+		return deleteComment(commentable, repo, opts)
+	}
+
+	// Gitea has no user-attachments endpoint, so there is nowhere to send the
+	// bytes and no URL to reference from the comment. Refusing is better than
+	// posting a comment whose attachment silently never uploaded.
+	if len(opts.Assets) > 0 && hosttype.IsGitea(repo.RepoHost()) {
+		return errGiteaAttachmentsUnsupported
 	}
 
 	// Guarded on the assets, because createComment and updateComment return
@@ -178,11 +187,11 @@ func CommentableRun(opts *CommentableOptions) error {
 
 	// Create new comment, bail before complexities of updating the last comment
 	if !opts.EditLast {
-		return createComment(commentable, opts, uploader)
+		return createComment(commentable, repo, opts, uploader)
 	}
 
 	// Update the last comment, handling success or unexpected errors accordingly
-	err = updateComment(commentable, opts, uploader)
+	err = updateComment(commentable, repo, opts, uploader)
 	if err == nil {
 		return nil
 	}
@@ -206,10 +215,14 @@ func CommentableRun(opts *CommentableOptions) error {
 		fmt.Fprintln(opts.IO.ErrOut, "No comments found. Creating a new comment.")
 	}
 
-	return createComment(commentable, opts, uploader)
+	return createComment(commentable, repo, opts, uploader)
 }
 
-func createComment(commentable Commentable, opts *CommentableOptions, uploader *attachments.Uploader) error {
+// errGiteaAttachmentsUnsupported explains why --attach cannot work on Gitea.
+var errGiteaAttachmentsUnsupported = errors.New(
+	"attaching files is not supported on Gitea, which has no user-attachments upload endpoint")
+
+func createComment(commentable Commentable, repo ghrepo.Interface, opts *CommentableOptions, uploader *attachments.Uploader) error {
 	switch opts.InputType {
 	case InputTypeWeb:
 		openURL := commentable.Link() + "#issuecomment-new"
@@ -252,12 +265,29 @@ func createComment(commentable Commentable, opts *CommentableOptions, uploader *
 	}
 
 	apiClient := api.NewClientFromHTTP(httpClient)
-	params := api.CommentCreateInput{Body: body, SubjectId: commentable.Identifier()}
-	url, err := api.CommentCreate(apiClient, opts.Host, params)
-	if err != nil {
-		// Upload first: an uploaded asset outlives the failed write, and the
-		// user needs to know it exists before hearing the comment did not save.
-		return errors.Join(uploadErr, err)
+
+	// Gitea has no node IDs, so a comment is addressed by repository plus the
+	// issue index, which the commentable carries.
+	var url string
+	if hosttype.IsGitea(repo.RepoHost()) {
+		number, numberErr := giteaIssueNumber(commentable)
+		if numberErr != nil {
+			return numberErr
+		}
+		var createErr error
+		url, createErr = api.CreateCommentGitea(apiClient, repo, number, body)
+		if createErr != nil {
+			// Upload first: an uploaded asset outlives the failed write, and the
+			// user needs to know it exists before hearing the comment did not save.
+			return errors.Join(uploadErr, createErr)
+		}
+	} else {
+		params := api.CommentCreateInput{Body: body, SubjectId: commentable.Identifier()}
+		var createErr error
+		url, createErr = api.CommentCreate(apiClient, opts.Host, params)
+		if createErr != nil {
+			return errors.Join(uploadErr, createErr)
+		}
 	}
 
 	if !opts.Quiet {
@@ -267,7 +297,7 @@ func createComment(commentable Commentable, opts *CommentableOptions, uploader *
 	return uploadErr
 }
 
-func updateComment(commentable Commentable, opts *CommentableOptions, uploader *attachments.Uploader) error {
+func updateComment(commentable Commentable, repo ghrepo.Interface, opts *CommentableOptions, uploader *attachments.Uploader) error {
 	comments := commentable.CurrentUserComments()
 	if len(comments) == 0 {
 		return errNoUserComments
@@ -324,11 +354,28 @@ func updateComment(commentable Commentable, opts *CommentableOptions, uploader *
 	}
 
 	apiClient := api.NewClientFromHTTP(httpClient)
-	params := api.CommentUpdateInput{Body: body, CommentId: lastComment.Identifier()}
-	url, err := api.CommentUpdate(apiClient, opts.Host, params)
-	if err != nil {
-		// Upload first, for the same reason as createComment.
-		return errors.Join(uploadErr, err)
+
+	// Gitea addresses a comment by its numeric id within a repository, which is
+	// what the mapping put in Comment.ID.
+	var url string
+	if hosttype.IsGitea(repo.RepoHost()) {
+		commentID, idErr := giteaCommentID(*lastComment)
+		if idErr != nil {
+			return idErr
+		}
+		var updateErr error
+		url, updateErr = api.UpdateCommentGitea(apiClient, repo, commentID, body)
+		if updateErr != nil {
+			return errors.Join(uploadErr, updateErr)
+		}
+	} else {
+		params := api.CommentUpdateInput{Body: body, CommentId: lastComment.Identifier()}
+		var updateErr error
+		url, updateErr = api.CommentUpdate(apiClient, opts.Host, params)
+		if updateErr != nil {
+			// Upload first, for the same reason as createComment.
+			return errors.Join(uploadErr, updateErr)
+		}
 	}
 
 	if !opts.Quiet {
@@ -357,7 +404,7 @@ func bodyForWrite(opts *CommentableOptions, uploader *attachments.Uploader) (bod
 	return body, true, err
 }
 
-func deleteComment(commentable Commentable, opts *CommentableOptions) error {
+func deleteComment(commentable Commentable, repo ghrepo.Interface, opts *CommentableOptions) error {
 	comments := commentable.CurrentUserComments()
 	if len(comments) == 0 {
 		return errNoUserComments
@@ -391,10 +438,20 @@ func deleteComment(commentable Commentable, opts *CommentableOptions) error {
 	}
 
 	apiClient := api.NewClientFromHTTP(httpClient)
-	params := api.CommentDeleteInput{CommentId: lastComment.Identifier()}
-	deletionErr := api.CommentDelete(apiClient, opts.Host, params)
-	if deletionErr != nil {
-		return deletionErr
+
+	if hosttype.IsGitea(repo.RepoHost()) {
+		commentID, err := giteaCommentID(lastComment)
+		if err != nil {
+			return err
+		}
+		if err := api.DeleteCommentGitea(apiClient, repo, commentID); err != nil {
+			return err
+		}
+	} else {
+		params := api.CommentDeleteInput{CommentId: lastComment.Identifier()}
+		if err := api.CommentDelete(apiClient, opts.Host, params); err != nil {
+			return err
+		}
 	}
 
 	if !opts.Quiet {
@@ -449,4 +506,32 @@ func waitForEnter(r io.Reader) error {
 	scanner := bufio.NewScanner(r)
 	scanner.Scan()
 	return scanner.Err()
+}
+
+// giteaIssueNumber returns the index a comment is posted against.
+//
+// Gitea addresses comments by repository path plus issue index rather than by a
+// node ID, and the index is not part of the Commentable interface. Every caller
+// passes either an issue or a pull request, and both carry a Number, so the
+// concrete type is what supplies it.
+func giteaIssueNumber(commentable Commentable) (int, error) {
+	switch c := commentable.(type) {
+	case *api.Issue:
+		return c.Number, nil
+	case *api.PullRequest:
+		return c.Number, nil
+	default:
+		return 0, fmt.Errorf("cannot comment on a %T on Gitea; expected an issue or pull request", commentable)
+	}
+}
+
+// giteaCommentID parses a comment's numeric Gitea id. The mapping puts it in
+// Comment.ID as a decimal string, so a failure here means the comment did not
+// come from a Gitea lookup.
+func giteaCommentID(comment api.Comment) (int64, error) {
+	id, err := strconv.ParseInt(comment.ID, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("comment id %q is not a Gitea comment id", comment.ID)
+	}
+	return id, nil
 }

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/httpmock"
 	"github.com/stretchr/testify/assert"
 )
@@ -98,6 +99,73 @@ func Test_HeaderHasMinimumScopes(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			err := HeaderHasMinimumScopes(tt.header)
+			if tt.wantErr != "" {
+				assert.EqualError(t, err, tt.wantErr)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func Test_HasMinimumScopesGitea(t *testing.T) {
+	restore := hosttype.SetHostTypeOverride(map[string]hosttype.Type{
+		"git.example.com": hosttype.Gitea,
+	})
+	t.Cleanup(restore)
+
+	tests := []struct {
+		name    string
+		scopes  string
+		wantErr string
+	}{
+		{
+			name:   "all grants everything",
+			scopes: `["all"]`,
+		},
+		{
+			name:   "read and write repository plus org and user",
+			scopes: `["read:repository","write:repository","read:organization","read:user"]`,
+		},
+		{
+			name:    "write:repository satisfies read:repository",
+			scopes:  `["write:repository","read:organization","read:user"]`,
+			wantErr: "",
+		},
+		{
+			name:    "missing write repository",
+			scopes:  `["read:repository","read:organization","read:user"]`,
+			wantErr: "missing required scope 'write:repository'",
+		},
+		{
+			name:    "missing organization and user",
+			scopes:  `["read:repository","write:repository"]`,
+			wantErr: "missing required scopes 'read:organization', 'read:user'",
+		},
+		{
+			// An empty scope list means the server reported nothing, which is
+			// treated as unknown rather than insufficient.
+			name:   "empty scope list is not an error",
+			scopes: `[]`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fakehttp := &httpmock.Registry{}
+			defer fakehttp.Verify(t)
+
+			fakehttp.Register(httpmock.REST("GET", "api/v1/token"), func(req *http.Request) (*http.Response, error) {
+				return &http.Response{
+					Request:    req,
+					StatusCode: 200,
+					Body:       io.NopCloser(bytes.NewBufferString(`{"id":1,"name":"cli","scopes":` + tt.scopes + `}`)),
+					Header:     map[string][]string{},
+				}, nil
+			})
+
+			client := http.Client{Transport: fakehttp}
+			err := HasMinimumScopes(&client, "git.example.com", "ATOKEN")
 			if tt.wantErr != "" {
 				assert.EqualError(t, err, tt.wantErr)
 			} else {

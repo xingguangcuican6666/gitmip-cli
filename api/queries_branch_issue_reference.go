@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/shurcooL/githubv4"
 )
 
@@ -89,7 +90,18 @@ func ListLinkedBranches(client *Client, repo ghrepo.Interface, issueNumber int) 
 	return branchNames, nil
 }
 
+// CheckLinkedBranchFeature reports whether the host supports linked branches.
+//
+// Gitea does not: it has no equivalent of GitHub's LinkedBranch type, so there
+// is no branch that can be recorded as belonging to an issue. The check is
+// answered here rather than by introspection, which would fail on a host with no
+// GraphQL endpoint and report the failure as a transport error rather than as a
+// missing feature.
 func CheckLinkedBranchFeature(client *Client, host string) error {
+	if hosttype.IsGitea(host) {
+		return ErrGiteaLinkedBranchUnsupported
+	}
+
 	var query struct {
 		Name struct {
 			Fields []struct {
@@ -108,6 +120,11 @@ func CheckLinkedBranchFeature(client *Client, host string) error {
 
 	return nil
 }
+
+// ErrGiteaLinkedBranchUnsupported explains why `gh issue develop` cannot work on
+// a Gitea host.
+var ErrGiteaLinkedBranchUnsupported = fmt.Errorf(
+	"the `gh issue develop` command is not available on Gitea, which has no linked branches")
 
 func FindRepoBranchID(client *Client, repo ghrepo.Interface, ref string) (string, string, error) {
 	var query struct {

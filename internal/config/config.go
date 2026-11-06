@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/keyring"
 	o "github.com/cli/cli/v2/pkg/option"
 	ghauth "github.com/cli/go-gh/v2/pkg/auth"
@@ -32,6 +33,7 @@ const (
 	hostsKey               = "hosts" // used by cli/go-gh to locate authenticated host tokens
 	httpUnixSocketKey      = "http_unix_socket"
 	oauthTokenKey          = "oauth_token" // used by cli/go-gh to locate authenticated host tokens
+	hostTypeKey            = "host_type"   // used by internal/hosttype to pick the API shape for a host
 	pagerKey               = "pager"
 	promptKey              = "prompt"
 	preferEditorPromptKey  = "prefer_editor_prompt"
@@ -830,6 +832,16 @@ var Options = []ConfigOption{
 		CurrentValue: func(c gh.Config, hostname string) string {
 			apiHost, _ := c.Authentication().APIHostForHost(hostname)
 			return apiHost
+		},
+	},
+	{
+		Key:           hostTypeKey,
+		Description:   "experimental: the API shape served by a host. Gitea hosts have no GraphQL API, paginate with `limit` instead of `per_page`, and serve REST under `/api/v1` on the host itself",
+		DefaultValue:  "github",
+		AllowedValues: []string{string(hosttype.GitHub), string(hosttype.Gitea)},
+		Scope:         ConfigScopeHostOnly,
+		CurrentValue: func(c gh.Config, hostname string) string {
+			return c.GetOrDefault(hostname, hostTypeKey).UnwrapOrZero().Value
 		},
 	},
 	{

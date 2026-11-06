@@ -196,7 +196,7 @@ func listRun(opts *ListOptions) error {
 		return opts.Browser.Browse(openURL)
 	}
 
-	listResult, err := listPullRequests(httpClient, opts.Detector, baseRepo, filters, opts.LimitResults)
+	listResult, err := listPullRequestsDispatch(httpClient, opts.Detector, baseRepo, filters, opts.LimitResults)
 	if err != nil {
 		return err
 	}

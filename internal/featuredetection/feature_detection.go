@@ -180,6 +180,9 @@ type detector struct {
 }
 
 func NewDetector(httpClient *http.Client, host string) Detector {
+	if gitea := newGiteaDetector(httpClient, host); gitea != nil {
+		return gitea
+	}
 	return &detector{
 		httpClient: httpClient,
 		host:       host,

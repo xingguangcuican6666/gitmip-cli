@@ -11,6 +11,7 @@ import (
 
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	o "github.com/cli/cli/v2/pkg/option"
 	"github.com/cli/cli/v2/pkg/set"
 	"golang.org/x/sync/errgroup"
@@ -103,6 +104,10 @@ type PartialLoadError struct {
 // FindIssuesOrPRs loads 1 or more issues or pull requests with the specified fields. If some of the fields
 // could not be fetched by GraphQL, this returns non-nil issues and a *PartialLoadError.
 func FindIssuesOrPRs(httpClient *http.Client, repo ghrepo.Interface, issueNumbers []int, fields []string) ([]*api.Issue, error) {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return FindIssuesOrPRsGitea(httpClient, repo, issueNumbers, fields)
+	}
+
 	issuesChan := make(chan *api.Issue, len(issueNumbers))
 	g := errgroup.Group{}
 	for _, num := range issueNumbers {
@@ -134,6 +139,10 @@ func FindIssuesOrPRs(httpClient *http.Client, repo ghrepo.Interface, issueNumber
 }
 
 func FindIssueOrPR(httpClient *http.Client, repo ghrepo.Interface, number int, fields []string) (*api.Issue, error) {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return FindIssueOrPRGitea(httpClient, repo, number, fields)
+	}
+
 	fieldSet := set.NewStringSet()
 	fieldSet.AddValues(fields)
 

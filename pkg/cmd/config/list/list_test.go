@@ -96,6 +96,7 @@ func Test_listRun(t *testing.T) {
 			input: &ListOptions{Hostname: "HOST"},
 			stdout: heredoc.Doc(`
 				api_host=api-gateway.example.com
+				host_type=github
 				git_protocol=ssh
 				editor=/usr/bin/vim
 				prompt=disabled

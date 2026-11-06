@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/shurcooL/githubv4"
 )
 
@@ -394,6 +395,10 @@ type IssueStatusOptions struct {
 }
 
 func IssueStatus(client *Client, repo ghrepo.Interface, options IssueStatusOptions) (*IssuesPayload, error) {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return IssueStatusGitea(client, repo, options)
+	}
+
 	type response struct {
 		Repository struct {
 			Assigned struct {
@@ -745,7 +750,16 @@ func DeferredUpdateIssue(client *Client, opts DeferredUpdateIssueOptions) error 
 }
 
 // RepoIssueTypes fetches the available issue types for a repository.
+//
+// Gitea has no issue type concept, so it reports none rather than issuing a
+// query the host cannot answer. An empty list is what makes the interactive
+// type picker skip itself and what makes --type fail with the caller's own
+// message about no types being available.
 func RepoIssueTypes(client *Client, repo ghrepo.Interface) ([]IssueType, error) {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return nil, nil
+	}
+
 	query := `
 	query RepositoryIssueTypes($owner: String!, $name: String!) {
 		repository(owner: $owner, name: $name) {

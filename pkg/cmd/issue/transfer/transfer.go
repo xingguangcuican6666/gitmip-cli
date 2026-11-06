@@ -7,6 +7,7 @@ import (
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmd/issue/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -83,6 +84,12 @@ func transferRun(opts *TransferOptions) error {
 	}
 	if issue.IsPullRequest() {
 		return fmt.Errorf("issue %s#%d is a pull request and cannot be transferred", ghrepo.FullName(baseRepo), issue.Number)
+	}
+
+	// Gitea can transfer a repository but has no endpoint for moving an issue
+	// between repositories.
+	if hosttype.IsGitea(baseRepo.RepoHost()) {
+		return api.ErrGiteaIssueTransferUnsupported
 	}
 
 	destRepo, err := ghrepo.FromFullNameWithHost(opts.DestRepoSelector, baseRepo.RepoHost())

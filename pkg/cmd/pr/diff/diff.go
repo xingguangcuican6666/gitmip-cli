@@ -16,6 +16,7 @@ import (
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/browser"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/internal/text"
 	"github.com/cli/cli/v2/pkg/cmd/pr/shared"
@@ -210,6 +211,17 @@ func diffRun(opts *DiffOptions) error {
 }
 
 func fetchDiff(httpClient *http.Client, baseRepo ghrepo.Interface, prNumber int, asPatch bool) (io.ReadCloser, error) {
+	// Gitea serves the diff as a media type on its own path suffix rather than as
+	// an Accept header, and answers the unsuffixed path with the pull request
+	// JSON. Without the suffix the caller would print that JSON as a diff.
+	if hosttype.IsGitea(baseRepo.RepoHost()) {
+		suffix := ".diff"
+		if asPatch {
+			suffix = ".patch"
+		}
+		return fetchGiteaDiff(httpClient, baseRepo, prNumber, suffix)
+	}
+
 	path, err := safeurl.JoinPath("repos", baseRepo.RepoOwner(), baseRepo.RepoName(), "pulls", strconv.Itoa(prNumber))
 	if err != nil {
 		return nil, err
@@ -418,4 +430,26 @@ func matchesAny(name string, excludePatterns []string) bool {
 		}
 	}
 	return false
+}
+
+// fetchGiteaDiff reads a pull request's diff or patch from Gitea's suffixed
+// path, which answers with text/plain rather than JSON.
+func fetchGiteaDiff(httpClient *http.Client, baseRepo ghrepo.Interface, prNumber int, suffix string) (io.ReadCloser, error) {
+	path, err := safeurl.JoinPath("repos", baseRepo.RepoOwner(), baseRepo.RepoName(),
+		"pulls", strconv.Itoa(prNumber)+suffix)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := api.NewClientFromHTTP(httpClient).Request(baseRepo.RepoHost(), http.MethodGet, path.String(), nil,
+		api.WithHeader("Accept", "text/plain"))
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != 200 {
+		defer resp.Body.Close()
+		return nil, api.UnexpectedStatusError(resp)
+	}
+
+	return resp.Body, nil
 }

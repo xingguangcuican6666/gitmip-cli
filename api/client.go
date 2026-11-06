@@ -13,6 +13,8 @@ import (
 
 	ghAPI "github.com/cli/go-gh/v2/pkg/api"
 	ghauth "github.com/cli/go-gh/v2/pkg/auth"
+
+	"github.com/cli/cli/v2/internal/hosttype"
 )
 
 const (
@@ -105,7 +107,13 @@ func newRequestConfig(opts []RequestOption) requestConfig {
 
 // GraphQL performs a GraphQL request using the query string and parses the response into data receiver. If there are errors in the response,
 // GraphQLError will be returned, but the receiver will also be partially populated.
+//
+// A Gitea host serves no GraphQL API, so this returns an error without sending
+// a request. Commands that work on Gitea hosts use the REST methods instead.
 func (c Client) GraphQL(hostname string, query string, variables map[string]any, data any, opts ...RequestOption) error {
+	if err := requireGraphQLSupport(hostname); err != nil {
+		return err
+	}
 	cfg := newRequestConfig(opts)
 	clientOpts := clientOptions(hostname, c.http.Transport)
 	clientOpts.Headers[graphqlFeatures] = features
@@ -120,6 +128,9 @@ func (c Client) GraphQL(hostname string, query string, variables map[string]any,
 // Mutate performs a GraphQL mutation based on a struct and parses the response with the same struct as the receiver. If there are errors in the response,
 // GraphQLError will be returned, but the receiver will also be partially populated.
 func (c Client) Mutate(hostname, name string, mutation any, variables map[string]any) error {
+	if err := requireGraphQLSupport(hostname); err != nil {
+		return err
+	}
 	opts := clientOptions(hostname, c.http.Transport)
 	opts.Headers[graphqlFeatures] = features
 	gqlClient, err := ghAPI.NewGraphQLClient(opts)
@@ -132,6 +143,9 @@ func (c Client) Mutate(hostname, name string, mutation any, variables map[string
 // Query performs a GraphQL query based on a struct and parses the response with the same struct as the receiver. If there are errors in the response,
 // GraphQLError will be returned, but the receiver will also be partially populated.
 func (c Client) Query(hostname, name string, query any, variables map[string]any) error {
+	if err := requireGraphQLSupport(hostname); err != nil {
+		return err
+	}
 	opts := clientOptions(hostname, c.http.Transport)
 	opts.Headers[graphqlFeatures] = features
 	gqlClient, err := ghAPI.NewGraphQLClient(opts)
@@ -144,6 +158,9 @@ func (c Client) Query(hostname, name string, query any, variables map[string]any
 // QueryWithContext performs a GraphQL query based on a struct and parses the response with the same struct as the receiver. If there are errors in the response,
 // GraphQLError will be returned, but the receiver will also be partially populated.
 func (c Client) QueryWithContext(ctx context.Context, hostname, name string, query any, variables map[string]any) error {
+	if err := requireGraphQLSupport(hostname); err != nil {
+		return err
+	}
 	opts := clientOptions(hostname, c.http.Transport)
 	opts.Headers[graphqlFeatures] = features
 	gqlClient, err := ghAPI.NewGraphQLClient(opts)
@@ -151,6 +168,17 @@ func (c Client) QueryWithContext(ctx context.Context, hostname, name string, que
 		return err
 	}
 	return handleResponse(gqlClient.QueryWithContext(ctx, name, query, variables))
+}
+
+// requireGraphQLSupport reports whether hostname serves a GraphQL API. Gitea
+// does not, so a request would reach a path the server does not have and
+// return a 404 that reads as a missing resource rather than as an unsupported
+// API.
+func requireGraphQLSupport(hostname string) error {
+	if hosttype.IsGitea(hostname) {
+		return fmt.Errorf("host %s does not support the GraphQL API", hostname)
+	}
+	return nil
 }
 
 // REST performs a REST request and parses the response.
@@ -411,6 +439,14 @@ func generateScopesSuggestion(statusCode int, endpointNeedsScopes, tokenHasScope
 }
 
 func clientOptions(hostname string, transport http.RoundTripper) ghAPI.ClientOptions {
+	// A Gitea host serves /api/v1 rather than the /api/v3 prefix go-gh derives
+	// from the host shape, so the base URL go-gh picks has to be corrected.
+	// Doing it here covers every request made through a Client, including the
+	// ones tests issue through a substituted transport.
+	if hosttype.IsGitea(hostname) {
+		transport = rewriteGiteaAPIRoot(transport)
+	}
+
 	// AuthToken, and Headers are being handled by transport,
 	// so let go-gh know that it does not need to resolve them.
 	opts := ghAPI.ClientOptions{
@@ -425,4 +461,34 @@ func clientOptions(hostname string, transport http.RoundTripper) ghAPI.ClientOpt
 		LogIgnoreEnv:       true,
 	}
 	return opts
+}
+
+// go-gh chooses the REST base URL for a client from the host it was given, and
+// gives every host that is not github.com, github.localhost or a tenancy host
+// the GitHub Enterprise Server prefix. A Gitea host has that shape but serves
+// /api/v1 instead, so the prefix has to be corrected after go-gh has chosen it.
+//
+// The rewrite happens here, in the transport the client is built with, rather
+// than in the HTTP client gh hands around. That way it applies however the
+// caller obtained its *http.Client, including in tests that substitute a
+// transport, so a test asserting the request path sees the path that would go
+// on the wire.
+const (
+	giteaAPIRootFrom = "/api/v3/"
+	giteaAPIRootTo   = "/api/v1/"
+)
+
+func rewriteGiteaAPIRoot(rt http.RoundTripper) http.RoundTripper {
+	return &funcTripper{roundTrip: func(req *http.Request) (*http.Response, error) {
+		if req.URL == nil || !strings.HasPrefix(req.URL.Path, giteaAPIRootFrom) {
+			return rt.RoundTrip(req)
+		}
+
+		req.URL.Path = giteaAPIRootTo + strings.TrimPrefix(req.URL.Path, giteaAPIRootFrom)
+		if req.URL.RawPath != "" {
+			req.URL.RawPath = giteaAPIRootTo + strings.TrimPrefix(req.URL.RawPath, giteaAPIRootFrom)
+		}
+
+		return rt.RoundTrip(req)
+	}}
 }

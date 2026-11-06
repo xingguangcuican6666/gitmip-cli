@@ -15,6 +15,7 @@ import (
 	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/internal/text"
 	issueShared "github.com/cli/cli/v2/pkg/cmd/issue/shared"
@@ -298,6 +299,15 @@ func createRun(opts *CreateOptions) (err error) {
 	// Built before the first survey, so a run that cannot upload stops early.
 	var uploader *attachments.Uploader
 	if len(opts.Assets) > 0 {
+		// Gitea's asset endpoint is /repos/{o}/{r}/issues/{index}/assets, so an
+		// upload needs an issue index that does not exist until the issue has
+		// been created. Creating the issue first and then uploading would leave
+		// a body that promises a file which never arrived, which is worse than
+		// refusing, so the flag is rejected before anything is written.
+		if hosttype.IsGitea(baseRepo.RepoHost()) {
+			err = fmt.Errorf("attaching files is not supported when creating an issue on Gitea, whose asset endpoint needs an issue that does not exist yet")
+			return
+		}
 		uploader, err = attachments.NewUploader(httpClient, baseRepo.RepoHost(), repo.DatabaseID, repo.ViewerPermission)
 		if err != nil {
 			return
@@ -440,6 +450,26 @@ func createRun(opts *CreateOptions) (err error) {
 		}
 		return opts.Browser.Browse(openURL)
 	} else if action == prShared.SubmitAction {
+		// Gitea creates an issue with a REST POST and applies relationships
+		// through their own endpoints, so it does not go through the GraphQL
+		// params or the deferred mutation.
+		if hosttype.IsGitea(baseRepo.RepoHost()) {
+			var newIssue *api.Issue
+			newIssue, err = createGiteaIssue(apiClient, baseRepo, tb, opts)
+			if err != nil {
+				if newIssue != nil && newIssue.URL != "" {
+					// The issue exists and the relationship flags failed, so the
+					// user needs the URL as well as the error.
+					fmt.Fprintln(opts.IO.ErrOut, err)
+					fmt.Fprintln(opts.IO.Out, newIssue.URL)
+					return nil
+				}
+				return
+			}
+			fmt.Fprintln(opts.IO.Out, newIssue.URL)
+			return
+		}
+
 		params := map[string]any{
 			"title": tb.Title,
 			"body":  tb.Body,

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -164,9 +165,68 @@ func Test_addPerPage(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := addPerPage(tt.args.p, tt.args.perPage, tt.args.params); got != tt.want {
+			if got := addPerPage("github.com", tt.args.p, tt.args.perPage, tt.args.params); got != tt.want {
 				t.Errorf("addPerPage() = %v, want %v", got, tt.want)
 			}
+		})
+	}
+}
+
+func Test_addPerPageGitea(t *testing.T) {
+	restore := hosttype.SetHostTypeOverride(map[string]hosttype.Type{
+		"git.example.com": hosttype.Gitea,
+	})
+	t.Cleanup(restore)
+
+	tests := []struct {
+		name    string
+		p       string
+		perPage int
+		params  map[string]any
+		want    string
+	}{
+		{
+			name:    "adds limit",
+			p:       "items",
+			perPage: 13,
+			params:  nil,
+			want:    "items?limit=13",
+		},
+		{
+			name:    "avoids adding limit if already in params",
+			p:       "items",
+			perPage: 13,
+			params:  map[string]any{"limit": 20},
+			want:    "items",
+		},
+		{
+			name:    "avoids adding limit if already in query",
+			p:       "items?limit=6&state=open",
+			perPage: 13,
+			params:  nil,
+			want:    "items?limit=6&state=open",
+		},
+		{
+			// gh api takes the path verbatim, so a user-supplied per_page
+			// must not be rewritten even though Gitea ignores the name.
+			name:    "preserves user-supplied per_page spelling",
+			p:       "items?per_page=6",
+			perPage: 13,
+			params:  nil,
+			want:    "items?per_page=6",
+		},
+		{
+			name:    "per_page in fields suppresses limit",
+			p:       "items",
+			perPage: 13,
+			params:  map[string]any{"per_page": 30},
+			want:    "items",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := addPerPage("git.example.com", tt.p, tt.perPage, tt.params)
+			require.Equal(t, tt.want, got)
 		})
 	}
 }

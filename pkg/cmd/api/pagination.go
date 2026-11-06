@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/jsoncolor"
 )
 
@@ -91,22 +92,59 @@ loop:
 	return ""
 }
 
-func addPerPage(p string, perPage int, params map[string]any) string {
-	if _, hasPerPage := params["per_page"]; hasPerPage {
-		return p
+// perPageParam is the query parameter name used to set page size. GitHub and
+// Gitea agree on page but not on the size parameter, and both paginate through
+// a Link header, so findNextPage works for either.
+func perPageParam(hostname string) string {
+	if hosttype.IsGitea(hostname) {
+		return "limit"
+	}
+	return "per_page"
+}
+
+// addPerPage appends the page size parameter to p unless the caller already set
+// a page size, under either parameter spelling, in params or in the query of p.
+//
+// gh api takes its path verbatim from the user, so an explicit page size is
+// passed through unchanged rather than rewritten to the host's spelling or
+// overridden by ours. A server ignores a size parameter it does not know, which
+// leaves its own default in force.
+//
+// A server may also cap the size below the value requested here. Gitea caps at
+// MAX_RESPONSE_ITEMS, which is 50 on gitea.com, so requesting 100 yields 50 per
+// page and pagination continues through the Link header.
+func addPerPage(hostname string, p string, perPage int, params map[string]any) string {
+	name := perPageParam(hostname)
+
+	for _, candidate := range [2]string{name, otherPerPageParam(name)} {
+		if _, has := params[candidate]; has {
+			return p
+		}
 	}
 
 	idx := strings.IndexRune(p, '?')
 	sep := "?"
 
 	if idx >= 0 {
-		if qp, err := url.ParseQuery(p[idx+1:]); err == nil && qp.Get("per_page") != "" {
-			return p
+		qp, err := url.ParseQuery(p[idx+1:])
+		if err == nil {
+			for _, candidate := range [2]string{name, otherPerPageParam(name)} {
+				if qp.Get(candidate) != "" {
+					return p
+				}
+			}
 		}
 		sep = "&"
 	}
 
-	return fmt.Sprintf("%s%sper_page=%d", p, sep, perPage)
+	return fmt.Sprintf("%s%s%s=%d", p, sep, name, perPage)
+}
+
+func otherPerPageParam(name string) string {
+	if name == "limit" {
+		return "per_page"
+	}
+	return "limit"
 }
 
 // paginatedArrayReader wraps a Reader to omit the opening and/or the closing square bracket of a

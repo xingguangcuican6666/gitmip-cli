@@ -113,6 +113,13 @@ func (r PRFindRefs) BaseRepo() ghrepo.Interface {
 	return r.baseRepo
 }
 
+// BaseBranchName returns the base branch the caller pinned the lookup to, or an
+// empty string when it did not pin one. The Gitea finder uses it as a server-side
+// filter, which is the only branch filter Gitea's list endpoint offers.
+func (r PRFindRefs) BaseBranchName() string {
+	return r.baseBranchName.UnwrapOr("")
+}
+
 type RemoteNameToRepoFn func(remoteName string) (ghrepo.Interface, error)
 
 // PullRequestFindRefsResolver interrogates git configuration to try and determine

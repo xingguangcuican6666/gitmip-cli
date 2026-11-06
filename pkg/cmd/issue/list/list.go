@@ -13,6 +13,7 @@ import (
 	fd "github.com/cli/cli/v2/internal/featuredetection"
 	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/text"
 	issueShared "github.com/cli/cli/v2/pkg/cmd/issue/shared"
 	prShared "github.com/cli/cli/v2/pkg/cmd/pr/shared"
@@ -231,6 +232,27 @@ func listRun(opts *ListOptions) error {
 
 func issueList(client *http.Client, detector fd.Detector, repo ghrepo.Interface, filters prShared.FilterOptions, limit int) (*api.IssuesAndTotalCount, error) {
 	apiClient := api.NewClientFromHTTP(client)
+
+	// Gitea has no query syntax, so every filter goes through the list endpoint
+	// rather than splitting between a search path and a list path. Its
+	// milestones parameter takes names and falls back to ids, so a numeric
+	// milestone needs no resolution here: passing it through costs one fewer
+	// request than looking up its title first.
+	if hosttype.IsGitea(repo.RepoHost()) {
+		var err error
+		meReplacer := prShared.NewMeReplacer(apiClient, repo.RepoHost())
+		if filters.Assignee, err = meReplacer.Replace(filters.Assignee); err != nil {
+			return nil, err
+		}
+		if filters.Author, err = meReplacer.Replace(filters.Author); err != nil {
+			return nil, err
+		}
+		if filters.Mention, err = meReplacer.Replace(filters.Mention); err != nil {
+			return nil, err
+		}
+
+		return listIssuesGitea(apiClient, repo, filters, limit)
+	}
 
 	if filters.Search != "" || len(filters.Labels) > 0 || filters.Milestone != "" || filters.IssueType != "" {
 		if milestoneNumber, err := strconv.ParseInt(filters.Milestone, 10, 32); err == nil {

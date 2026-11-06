@@ -12,6 +12,7 @@ import (
 	"github.com/cli/cli/v2/git"
 	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmd/pr/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -200,6 +201,12 @@ type mergeContext struct {
 	crossRepoPR        bool
 	deleteBranch       bool
 	mergeQueueRequired bool
+
+	// giteaDeletedRemoteBranch records that the merge request asked Gitea to
+	// delete the remote branch itself, through delete_branch_after_merge. A
+	// separate delete afterwards would be a second request that can only fail,
+	// since the branch is already gone.
+	giteaDeletedRemoteBranch bool
 }
 
 // Attempt to disable auto merge on the pull request.
@@ -253,6 +260,12 @@ func (m *mergeContext) canMerge() error {
 	}
 
 	reason := blockedReason(m.pr.MergeStateStatus, m.opts.UseAdmin)
+	if hosttype.IsGitea(m.baseRepo.RepoHost()) {
+		// Gitea reports no mergeStateStatus, so the reason above is always empty
+		// and a conflicting pull request would reach the server, which answers
+		// 405 without saying why.
+		reason = giteaBlockedReason(m.pr)
+	}
 
 	if reason == "" || m.autoMerge || m.merged {
 		return nil
@@ -293,6 +306,7 @@ func (m *mergeContext) merge() error {
 		setCommitBody:   m.opts.BodySet,
 		expectedHeadOid: m.opts.MatchHeadCommit,
 		authorEmail:     m.opts.AuthorEmail,
+		pr:              m.pr,
 	}
 
 	if m.shouldAddToMergeQueue() {
@@ -345,8 +359,15 @@ func (m *mergeContext) merge() error {
 		}
 	}
 
-	err := mergePullRequest(m.httpClient, payload)
-	if err != nil {
+	// Gitea takes the branch deletion as part of the merge request, so the
+	// decision is read here rather than from the payload: the survey above may
+	// have set m.deleteBranch after the payload was built.
+	if hosttype.IsGitea(m.baseRepo.RepoHost()) {
+		m.giteaDeletedRemoteBranch = m.deleteBranch && !m.crossRepoPR && !m.autoMerge
+		if err := mergePullRequestGitea(m.httpClient, payload, m.pr.Number, m.opts.UseAdmin, m.giteaDeletedRemoteBranch); err != nil {
+			return err
+		}
+	} else if err := mergePullRequest(m.httpClient, payload); err != nil {
 		return err
 	}
 
@@ -520,9 +541,20 @@ func (m *mergeContext) deleteRemoteBranch() error {
 		return nil
 	}
 
+	// Gitea deleted it as part of the merge request itself.
+	if m.giteaDeletedRemoteBranch {
+		return m.infof("%s Deleted remote branch %s\n", m.cs.SuccessIconWithColor(m.cs.Red), m.cs.Cyan(m.pr.HeadRefName))
+	}
+
 	if !m.merged {
 		apiClient := api.NewClientFromHTTP(m.httpClient)
-		err := api.BranchDeleteRemote(apiClient, m.baseRepo, m.pr.HeadRefName)
+
+		var err error
+		if hosttype.IsGitea(m.baseRepo.RepoHost()) {
+			err = api.BranchDeleteRemoteGitea(apiClient, m.baseRepo, m.pr.HeadRefName)
+		} else {
+			err = api.BranchDeleteRemote(apiClient, m.baseRepo, m.pr.HeadRefName)
+		}
 		if err != nil {
 			// Normally, the API returns 422, with the message "Reference does not exist"
 			// when the branch has already been deleted. It also returns 404 with the same
@@ -609,6 +641,12 @@ func mergeRun(opts *MergeOptions) error {
 
 	// no further action is possible when disabling auto merge
 	if opts.AutoMergeDisable {
+		if hosttype.IsGitea(ctx.baseRepo.RepoHost()) {
+			// Gitea sets auto-merge as a field on the merge request and exposes no
+			// endpoint that clears it, so the mutation GitHub uses has no
+			// counterpart to fall back on.
+			return api.ErrGiteaAutoMergeDisableUnsupported
+		}
 		return ctx.disableAutoMerge()
 	}
 
@@ -720,7 +758,7 @@ func confirmSubmission(client *http.Client, opts *MergeOptions, action shared.Ac
 	switch action {
 	case shared.EditCommitMessageAction:
 		if !payload.setCommitBody {
-			_, payload.commitBody, err = getMergeText(client, payload.repo, payload.pullRequestID, payload.method)
+			_, payload.commitBody, err = mergeTextForHost(client, payload.repo, payload.pullRequestID, payload.method, payload.pr)
 			if err != nil {
 				return false, err
 			}
@@ -736,7 +774,7 @@ func confirmSubmission(client *http.Client, opts *MergeOptions, action shared.Ac
 
 	case shared.EditCommitSubjectAction:
 		if payload.commitSubject == "" {
-			payload.commitSubject, _, err = getMergeText(client, payload.repo, payload.pullRequestID, payload.method)
+			payload.commitSubject, _, err = mergeTextForHost(client, payload.repo, payload.pullRequestID, payload.method, payload.pr)
 			if err != nil {
 				return false, err
 			}

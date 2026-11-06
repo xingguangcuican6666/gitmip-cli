@@ -7,6 +7,7 @@ import (
 
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 )
 
 const (
@@ -41,6 +42,11 @@ type listQueryOptions struct {
 	Order string
 	Sort  string
 
+	// sortSpecified records whether `--sort` was passed. "created" is the
+	// default, and a host that cannot honour it can only refuse an explicit
+	// request, not every plain invocation.
+	sortSpecified bool
+
 	fields []string
 }
 
@@ -66,6 +72,10 @@ func (opts listQueryOptions) OrderBy() map[string]string {
 // listLabels lists the labels in the given repo. Pass -1 for limit to list all labels;
 // otherwise, only that number of labels is returned for any number of pages.
 func listLabels(client *http.Client, repo ghrepo.Interface, opts listQueryOptions) ([]label, int, error) {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return listLabelsGitea(client, repo, opts)
+	}
+
 	if len(opts.fields) == 0 {
 		opts.fields = defaultFields
 	}

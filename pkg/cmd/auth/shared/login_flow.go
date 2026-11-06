@@ -1,8 +1,10 @@
 package shared
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"slices"
@@ -14,6 +16,7 @@ import (
 	"github.com/cli/cli/v2/internal/browser"
 	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmd/ssh-key/add"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -356,12 +359,36 @@ func sshKeyUpload(httpClient *http.Client, hostname, keyFile string, title strin
 // the transport has nothing to attach. The transport only sets Authorization when it is
 // absent, so the header set here wins.
 func GetCurrentLogin(httpClient *http.Client, hostname, authToken string) (string, error) {
+	client := api.NewClientFromHTTP(httpClient)
+
+	if hosttype.IsGitea(hostname) {
+		// Gitea has no GraphQL API. GET /user is its equivalent of the
+		// viewer query, and the token is attached the same way.
+		res, err := client.Request(hostname, http.MethodGet, "user", nil,
+			api.WithHeader("Authorization", "token "+authToken))
+		if err != nil {
+			return "", err
+		}
+		defer func() {
+			_, _ = io.Copy(io.Discard, res.Body)
+			res.Body.Close()
+		}()
+
+		var user struct {
+			Login string `json:"login"`
+		}
+		if err := json.NewDecoder(res.Body).Decode(&user); err != nil {
+			return "", err
+		}
+		return user.Login, nil
+	}
+
 	var result struct{ Viewer struct{ Login string } }
 
 	// TODO(api-client-rollout)
 	// This line of code is part of a mechanical roll out of the api client.
 	// As a follow up, consider whether the api client can be injected to this call site, rather than constructed
-	err := api.NewClientFromHTTP(httpClient).GraphQL(hostname, `query UserCurrent{viewer{login}}`, nil, &result,
+	err := client.GraphQL(hostname, `query UserCurrent{viewer{login}}`, nil, &result,
 		api.WithHeader("Authorization", "token "+authToken))
 	if err != nil {
 		return "", err

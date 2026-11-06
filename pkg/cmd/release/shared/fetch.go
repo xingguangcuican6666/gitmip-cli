@@ -14,6 +14,7 @@ import (
 
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/pkg/httpmock"
 	"github.com/shurcooL/githubv4"
@@ -181,6 +182,10 @@ func DigestAlgForRef(digest string) string {
 
 // FetchRelease finds a published repository release by its tagName, or a draft release by its pending tag name.
 func FetchRelease(ctx context.Context, httpClient *http.Client, repo ghrepo.Interface, tagName string) (*Release, error) {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return fetchReleaseGitea(ctx, httpClient, repo, tagName)
+	}
+
 	publishedPath, err := safeurl.JoinPath("repos", repo.RepoOwner(), repo.RepoName(), "releases", "tags", tagName)
 	if err != nil {
 		return nil, err

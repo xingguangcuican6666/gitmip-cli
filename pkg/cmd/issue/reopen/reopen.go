@@ -7,6 +7,7 @@ import (
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmd/issue/shared"
 	prShared "github.com/cli/cli/v2/pkg/cmd/pr/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -116,6 +117,13 @@ func reopenRun(opts *ReopenOptions) error {
 }
 
 func apiReopen(httpClient *http.Client, repo ghrepo.Interface, issue *api.Issue) error {
+	// Gitea's PATCH /issues/{index} handles both issue and pull request
+	// indexes, so there is no branch on issue type here.
+	if hosttype.IsGitea(repo.RepoHost()) {
+		client := api.NewClientFromHTTP(httpClient)
+		return api.SetIssueStateGitea(client, repo, issue.Number, "open")
+	}
+
 	if issue.IsPullRequest() {
 		return api.PullRequestReopen(httpClient, repo, issue.ID)
 	}

@@ -37,6 +37,12 @@ type mergePayload struct {
 	setCommitBody   bool
 	expectedHeadOid string
 	authorEmail     string
+
+	// pr is the pull request being merged. Only the Gitea path reads it: a merge
+	// there is addressed by index rather than by node id, and Gitea has no
+	// server-generated merge text to seed the commit message editor with, so the
+	// title and body come from the object already loaded.
+	pr *api.PullRequest
 }
 
 // TODO: drop after githubv4 gets updated

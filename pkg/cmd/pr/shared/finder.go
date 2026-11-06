@@ -247,13 +247,13 @@ func (f *finder) Find(opts FindOptions) (*api.PullRequest, ghrepo.Interface, err
 
 	var pr *api.PullRequest
 	if f.prNumber > 0 {
-		pr, err = findByNumber(httpClient, f.baseRefRepo, f.prNumber, fields.ToSlice())
+		pr, err = findByNumberDispatch(httpClient, f.baseRefRepo, f.prNumber, fields.ToSlice())
 		if err != nil {
 			return pr, f.baseRefRepo, err
 		}
 	} else if prRefs.BaseRepo() != nil && f.branchName != "" {
 		// No PR number, but we have a base repo and branch name.
-		pr, err = findForRefs(httpClient, prRefs, opts.States, fields.ToSlice())
+		pr, err = findForRefsDispatch(httpClient, prRefs, opts.States, fields.ToSlice())
 		if err != nil {
 			return pr, f.baseRefRepo, err
 		}
@@ -261,6 +261,13 @@ func (f *finder) Find(opts FindOptions) (*api.PullRequest, ghrepo.Interface, err
 		// If we don't have a PR number or a base repo and branch name,
 		// we can't do anything
 		return nil, f.baseRefRepo, &NotFoundError{fmt.Errorf("no pull requests found")}
+	}
+
+	if giteaHost(f.baseRefRepo) {
+		if err := preloadGiteaPullRequest(httpClient, f.baseRefRepo, pr, fields.ToSlice()); err != nil {
+			return pr, f.baseRefRepo, err
+		}
+		return pr, f.baseRefRepo, nil
 	}
 
 	g, _ := errgroup.WithContext(context.Background())

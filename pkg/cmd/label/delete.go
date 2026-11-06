@@ -6,6 +6,7 @@ import (
 
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -94,6 +95,10 @@ func deleteRun(opts *deleteOptions) error {
 }
 
 func deleteLabel(client *http.Client, repo ghrepo.Interface, name string) error {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return deleteLabelGitea(client, repo, name)
+	}
+
 	apiClient := api.NewClientFromHTTP(client)
 	path, err := safeurl.JoinPath("repos", repo.RepoOwner(), repo.RepoName(), "labels", name)
 	if err != nil {

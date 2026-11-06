@@ -7,6 +7,7 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmd/issue/shared"
 	prShared "github.com/cli/cli/v2/pkg/cmd/pr/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -109,6 +110,18 @@ func closeRun(opts *CloseOptions) error {
 		return err
 	}
 
+	// Gitea records no close reason and has no duplicate-of relationship. Check
+	// before the lookup so the user is not made to wait on a request whose
+	// result could not be stored.
+	if hosttype.IsGitea(baseRepo.RepoHost()) {
+		if closeReason != "" {
+			return cmdutil.FlagErrorf("Gitea records no close reason, so `--reason` is not supported")
+		}
+		if opts.DuplicateOf != "" {
+			return cmdutil.FlagErrorf("Gitea has no duplicate-of relationship, so `--duplicate-of` is not supported")
+		}
+	}
+
 	issue, err := shared.FindIssueOrPR(httpClient, baseRepo, opts.IssueNumber, []string{"id", "number", "title", "state"})
 	if err != nil {
 		return err
@@ -172,6 +185,10 @@ func closeRun(opts *CloseOptions) error {
 }
 
 func apiClose(httpClient *http.Client, repo ghrepo.Interface, issue *api.Issue, reason string, duplicateIssueID string) error {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return apiCloseGitea(httpClient, repo, issue, reason, duplicateIssueID)
+	}
+
 	if issue.IsPullRequest() {
 		return api.PullRequestClose(httpClient, repo, issue.ID)
 	}
@@ -211,4 +228,23 @@ type CloseIssueInput struct {
 	IssueID          string `json:"issueId"`
 	StateReason      string `json:"stateReason,omitempty"`
 	DuplicateIssueID string `json:"duplicateIssueId,omitempty"`
+}
+
+// apiCloseGitea closes an issue or pull request on a Gitea host.
+//
+// Gitea's PATCH /repos/{o}/{r}/issues/{index} accepts a state field and handles
+// both issue and pull request indexes, so there is no branch on issue type here.
+// It stores no close reason and has no duplicate-of relationship, so a reason or
+// a duplicate reference is rejected rather than dropped: the flag would look
+// like it had taken effect when nothing was recorded.
+func apiCloseGitea(httpClient *http.Client, repo ghrepo.Interface, issue *api.Issue, reason string, duplicateIssueID string) error {
+	if reason != "" {
+		return fmt.Errorf("Gitea records no close reason, so `--reason` is not supported")
+	}
+	if duplicateIssueID != "" {
+		return fmt.Errorf("Gitea has no duplicate-of relationship, so `--duplicate-of` is not supported")
+	}
+
+	client := api.NewClientFromHTTP(httpClient)
+	return api.SetIssueStateGitea(client, repo, issue.Number, "closed")
 }

@@ -3,6 +3,7 @@ package ghinstance
 import (
 	"testing"
 
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -235,4 +236,43 @@ func TestCategorizeHost(t *testing.T) {
 			assert.Equal(t, tt.want, CategorizeHost(tt.host))
 		})
 	}
+}
+
+func TestGiteaHostEndpoints(t *testing.T) {
+	restore := hosttype.SetHostTypeOverride(map[string]hosttype.Type{
+		"git.example.com": hosttype.Gitea,
+	})
+	t.Cleanup(restore)
+
+	t.Run("RESTPrefix serves from the host itself", func(t *testing.T) {
+		assert.Equal(t, "https://git.example.com/api/v1/", RESTPrefix("git.example.com"))
+	})
+
+	t.Run("GraphQLEndpoint is empty", func(t *testing.T) {
+		assert.Equal(t, "", GraphQLEndpoint("git.example.com"))
+	})
+
+	t.Run("CategorizeHost returns gitea", func(t *testing.T) {
+		assert.Equal(t, "gitea", CategorizeHost("git.example.com"))
+	})
+
+	t.Run("unconfigured host keeps GitHub behavior", func(t *testing.T) {
+		assert.Equal(t, "https://ghe.io/api/v3/", RESTPrefix("ghe.io"))
+		assert.Equal(t, "https://ghe.io/api/graphql", GraphQLEndpoint("ghe.io"))
+		assert.Equal(t, "ghes", CategorizeHost("ghe.io"))
+	})
+}
+
+// A Gitea host is also an "enterprise" host as far as go-gh is concerned, since
+// it is not github.com, github.localhost or a tenancy host. The Gitea branch
+// must be reached first or these hosts would get GHES's /api/v3 prefix.
+func TestGiteaTakesPrecedenceOverEnterpriseShape(t *testing.T) {
+	restore := hosttype.SetHostTypeOverride(map[string]hosttype.Type{
+		"ghe.io": hosttype.Gitea,
+	})
+	t.Cleanup(restore)
+
+	assert.Equal(t, "https://ghe.io/api/v1/", RESTPrefix("ghe.io"))
+	assert.Equal(t, "", GraphQLEndpoint("ghe.io"))
+	assert.Equal(t, "gitea", CategorizeHost("ghe.io"))
 }

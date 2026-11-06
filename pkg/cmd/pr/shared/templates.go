@@ -156,6 +156,8 @@ func NewTemplateManager(httpClient *http.Client, repo ghrepo.Interface, p ipromp
 
 func (m *templateManager) hasAPI() (bool, error) {
 	if !m.isPR {
+		// Gitea serves issue templates over REST, so the API path is available
+		// there too; only the lister differs, and it dispatches on host type.
 		return true, nil
 	}
 
@@ -244,7 +246,7 @@ func (m *templateManager) fetch() error {
 	}
 
 	if hasAPI {
-		lister := listIssueTemplates
+		lister := listIssueTemplatesForHost
 		if m.isPR {
 			lister = listPullRequestTemplates
 		}

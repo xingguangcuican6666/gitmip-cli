@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/cli/cli/v2/internal/hosttype"
 	ghauth "github.com/cli/go-gh/v2/pkg/auth"
 )
 
@@ -16,6 +17,11 @@ const localhost = "github.localhost"
 
 // TenancyHost is the domain name of a tenancy GitHub instance.
 const tenancyHost = "ghe.com"
+
+// giteaAPIRoot is the path prefix a Gitea instance serves its API under. Unlike
+// GitHub, Gitea serves the API from the host itself, so there is no "api."
+// subdomain to add and no separate GraphQL root.
+const giteaAPIRoot = "/api/v1/"
 
 // Default returns the host name of the default GitHub instance.
 func Default() string {
@@ -43,7 +49,13 @@ func HostnameValidator(hostname string) error {
 	return nil
 }
 
+// GraphQLEndpoint returns the GraphQL API root for hostname, or an empty string
+// when the host serves no GraphQL API. Gitea has no GraphQL endpoint, so
+// callers must check for the empty string rather than assuming a URL.
 func GraphQLEndpoint(hostname string) string {
+	if hosttype.IsGitea(hostname) {
+		return ""
+	}
 	if isGarage(hostname) {
 		return fmt.Sprintf("https://%s/api/graphql", hostname)
 	}
@@ -56,7 +68,14 @@ func GraphQLEndpoint(hostname string) string {
 	return fmt.Sprintf("https://api.%s/graphql", hostname)
 }
 
+// RESTPrefix returns the REST API root for hostname, including the trailing
+// slash. Gitea serves its API from the host itself under /api/v1, rather than
+// from an "api." subdomain, so it is checked before the host shape rules that
+// decide between GitHub's subdomain and GHES's path prefix.
 func RESTPrefix(hostname string) string {
+	if hosttype.IsGitea(hostname) {
+		return fmt.Sprintf("https://%s%s", hostname, giteaAPIRoot)
+	}
 	if isGarage(hostname) {
 		return fmt.Sprintf("https://%s/api/v3/", hostname)
 	}
@@ -69,6 +88,8 @@ func RESTPrefix(hostname string) string {
 	return fmt.Sprintf("https://api.%s/", hostname)
 }
 
+// GistPrefix returns the gist URL prefix for hostname. Gitea has no gist
+// service, so gist commands are not usable against a Gitea host.
 func GistPrefix(hostname string) string {
 	prefix := "https://"
 	if strings.EqualFold(hostname, localhost) {
@@ -107,6 +128,10 @@ func HostPrefix(hostname string) string {
 }
 
 func CategorizeHost(host string) string {
+	if hosttype.IsGitea(host) {
+		return "gitea"
+	}
+
 	if host == defaultHostname {
 		return "github.com"
 	}

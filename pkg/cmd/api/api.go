@@ -21,6 +21,7 @@ import (
 	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
 	"github.com/cli/cli/v2/internal/ghinstance"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmd/factory"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -316,7 +317,25 @@ func apiRun(opts *ApiOptions) error {
 		return err
 	}
 
+	// The host is resolved before the request is built because pagination
+	// depends on it: GitHub and Gitea name the page size parameter differently,
+	// and gh api has no other way to know which API shape the host serves.
+	cfg, err := opts.Config()
+	if err != nil {
+		return err
+	}
+
+	host, _ := cfg.Authentication().DefaultHost()
+	if opts.Hostname != "" {
+		host = opts.Hostname
+	}
+	apiHost, _ := cfg.Authentication().APIHostForHost(host)
+
 	isGraphQL := opts.RequestPath == "graphql"
+	if isGraphQL && hosttype.IsGitea(host) {
+		return fmt.Errorf("the GraphQL API is not supported on Gitea host %q", host)
+	}
+
 	requestPath, err := fillPlaceholders(opts.RequestPath, opts)
 	if err != nil {
 		return fmt.Errorf("unable to expand placeholder in path: %w", err)
@@ -358,7 +377,7 @@ func apiRun(opts *ApiOptions) error {
 	}
 
 	if opts.Paginate && !isGraphQL {
-		requestPath = addPerPage(requestPath, 100, params)
+		requestPath = addPerPage(host, requestPath, 100, params)
 	}
 
 	// Similar to `jq --slurp`, write all pages JSON arrays or objects into a JSON array.
@@ -389,11 +408,6 @@ func apiRun(opts *ApiOptions) error {
 		requestHeaders = append(requestHeaders, "Accept: "+previewNamesToMIMETypes(opts.Previews))
 	}
 
-	cfg, err := opts.Config()
-	if err != nil {
-		return err
-	}
-
 	if opts.HttpClient == nil {
 		opts.HttpClient = api.NewHTTPClient
 	}
@@ -415,14 +429,6 @@ func apiRun(opts *ApiOptions) error {
 	if err != nil {
 		return err
 	}
-
-	host, _ := cfg.Authentication().DefaultHost()
-
-	if opts.Hostname != "" {
-		host = opts.Hostname
-	}
-
-	apiHost, _ := cfg.Authentication().APIHostForHost(host)
 
 	tmpl := template.New(bodyWriter, opts.IO.TerminalWidth(), opts.IO.ColorEnabled())
 	err = tmpl.Parse(opts.Template)

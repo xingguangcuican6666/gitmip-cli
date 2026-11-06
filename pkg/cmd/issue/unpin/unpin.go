@@ -8,6 +8,7 @@ import (
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmd/issue/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -114,6 +115,11 @@ func unpinRun(opts *UnpinOptions) error {
 }
 
 func unpinIssue(httpClient *http.Client, repo ghrepo.Interface, issue *api.Issue) error {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		client := api.NewClientFromHTTP(httpClient)
+		return api.UnpinIssueGitea(client, repo, issue.Number)
+	}
+
 	var mutation struct {
 		UnpinIssue struct {
 			Issue struct {

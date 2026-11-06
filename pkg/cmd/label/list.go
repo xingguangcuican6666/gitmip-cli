@@ -63,6 +63,8 @@ func newCmdList(f *cmdutil.Factory, runF func(*listOptions) error) *cobra.Comman
 				return cmdutil.FlagErrorf("cannot specify `--order` or `--sort` with `--search`")
 			}
 
+			opts.Query.sortSpecified = c.Flags().Changed("sort")
+
 			if runF != nil {
 				return runF(&opts)
 			}

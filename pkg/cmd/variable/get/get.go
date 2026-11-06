@@ -9,6 +9,7 @@ import (
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/pkg/cmd/variable/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -105,6 +106,9 @@ func getRun(opts *GetOptions) error {
 		path, err = safeurl.JoinPath("orgs", orgName, "actions", "variables", opts.VariableName)
 		host, _ = cfg.Authentication().DefaultHost()
 	case shared.Environment:
+		if hosttype.IsGitea(baseRepo.RepoHost()) {
+			return fmt.Errorf("Gitea has no deployment environments, so `--env` is not supported")
+		}
 		path, err = safeurl.JoinPath("repos", baseRepo.RepoOwner(), baseRepo.RepoName(), "environments", envName, "variables", opts.VariableName)
 		host = baseRepo.RepoHost()
 	case shared.Repository:
@@ -113,6 +117,12 @@ func getRun(opts *GetOptions) error {
 	}
 	if err != nil {
 		return err
+	}
+
+	// Gitea serves the same path but names the value field "data" and reports
+	// no timestamps or visibility, so it needs its own decode.
+	if hosttype.IsGitea(host) {
+		return getVariableGitea(opts, client, host, path.String())
 	}
 
 	var variable shared.Variable

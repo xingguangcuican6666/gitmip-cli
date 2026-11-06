@@ -2,12 +2,14 @@ package delete
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/pkg/cmd/variable/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -114,7 +116,13 @@ func removeRun(opts *DeleteOptions) error {
 		return err
 	}
 
-	err = client.REST(host, "DELETE", path.String(), nil, nil)
+	// The repository and organization paths match Gitea's exactly, so only the
+	// environment case needs refusing: Gitea has no deployment environments.
+	if variableEntity == shared.Environment && hosttype.IsGitea(host) {
+		return fmt.Errorf("Gitea has no deployment environments, so `--env` is not supported")
+	}
+
+	err = deleteVariable(client, host, path.String())
 	if err != nil {
 		return fmt.Errorf("failed to delete variable %s: %w", opts.VariableName, err)
 	}
@@ -136,5 +144,24 @@ func removeRun(opts *DeleteOptions) error {
 		}
 	}
 
+	return nil
+}
+
+// deleteVariable issues the DELETE for one variable.
+//
+// Gitea answers 200 with an empty body, and api.Client.REST decodes every 2xx
+// body as JSON, which fails on nothing, so the response is drained instead.
+// GitHub's answers carry a document and go through REST unchanged.
+func deleteVariable(client *api.Client, host, path string) error {
+	if !hosttype.IsGitea(host) {
+		return client.REST(host, "DELETE", path, nil, nil)
+	}
+
+	resp, err := client.Request(host, "DELETE", path, nil)
+	if err != nil {
+		return err
+	}
+	_, _ = io.Copy(io.Discard, resp.Body)
+	resp.Body.Close()
 	return nil
 }

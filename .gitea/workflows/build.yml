@@ -1,0 +1,115 @@
+# Build and test for this fork, which is hosted on Gitea.
+#
+# Gitea Actions reads workflows from .gitea/workflows as well as
+# .github/workflows. This one lives here so the upstream cli/cli workflows under
+# .github/workflows, which assume GitHub-hosted runners and their preinstalled
+# toolchain, are left alone.
+#
+# The build matrix cross-compiles from a single Linux runner rather than taking
+# a runner per operating system. CGO is off for the whole workflow, so the
+# resulting binaries are static and a macOS or Windows runner would not produce
+# anything a Linux runner cannot.
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # The module graph is committed through go.sum, so a build that needs to
+  # change go.mod is a build that would have modified the tree.
+  GOFLAGS: -mod=readonly
+  CGO_ENABLED: "0"
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          # The build stamps the version from git describe, so the tags have to
+          # be present.
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Check formatting
+        run: |
+          unformatted=$(gofmt -l ./api ./cmd ./internal ./pkg ./script)
+          if [ -n "$unformatted" ]; then
+            echo "These files are not gofmt-clean:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: Vet
+        run: go vet ./...
+
+      # -count=1 disables Go's test result cache, so every test runs even when
+      # the runner restores a warm build cache.
+      - name: Test
+        run: go test -count=1 ./...
+
+  build:
+    name: Build ${{ matrix.goos }}/${{ matrix.goarch }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          - goos: darwin
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
+          - goos: windows
+            goarch: amd64
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: false
+
+      - name: Build
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          suffix=""
+          if [ "$GOOS" = "windows" ]; then
+            suffix=".exe"
+          fi
+          mkdir -p dist
+          go build -trimpath -buildvcs=false \
+            -ldflags "-s -w -X github.com/cli/cli/v2/internal/build.Version=$(git describe --tags --always)" \
+            -o "dist/gh_${GOOS}_${GOARCH}${suffix}" ./cmd/gh
+          ls -l dist
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: gh_${{ matrix.goos }}_${{ matrix.goarch }}
+          path: dist/*
+          if-no-files-found: error

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/cli/cli/v2/api"
+	"github.com/cli/cli/v2/internal/hosttype"
 )
 
 type OrganizationList struct {
@@ -17,6 +18,10 @@ type Organization struct {
 }
 
 func listOrgs(httpClient *http.Client, hostname string, limit int) (*OrganizationList, error) {
+	if hosttype.IsGitea(hostname) {
+		return listOrgsGitea(httpClient, hostname, limit)
+	}
+
 	type response struct {
 		User struct {
 			Login         string
@@ -88,4 +93,31 @@ loop:
 	}
 
 	return &listResult, nil
+}
+
+// listOrgsGitea lists the organizations the authenticated user belongs to.
+//
+// Gitea's GET /user/orgs has no GraphQL connection and reports no total count,
+// so the count here is the number of organizations fetched: exact when the
+// limit is not reached, a lower bound when it is. api.CurrentLoginNameAndOrgs
+// owns that request sequence, and reusing it keeps the login lookup in one
+// place rather than duplicating it here.
+func listOrgsGitea(httpClient *http.Client, hostname string, limit int) (*OrganizationList, error) {
+	client := api.NewClientFromHTTP(httpClient)
+
+	user, orgNames, err := api.CurrentLoginNameAndOrgs(client, hostname)
+	if err != nil {
+		return nil, err
+	}
+
+	listResult := &OrganizationList{User: user}
+	for _, login := range orgNames {
+		if limit > 0 && len(listResult.Organizations) == limit {
+			break
+		}
+		listResult.Organizations = append(listResult.Organizations, Organization{Login: login})
+	}
+
+	listResult.TotalCount = len(listResult.Organizations)
+	return listResult, nil
 }

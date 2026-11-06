@@ -22,7 +22,12 @@ func httpRequest(client *http.Client, hostname string, apiHost string, method st
 	} else if isGraphQL {
 		// First we determine the GQL endpoint for the canonical host, which depends on what type of host it is
 		// e.g github.com will be at https://api.github.com/graphql and GHES myghes.com will be at https://myghes.com/api/graphql.
+		// A Gitea host has no GraphQL API at all, so there is no endpoint to
+		// build and the request must fail rather than go to a made-up URL.
 		requestURL = ghinstance.GraphQLEndpoint(hostname)
+		if requestURL == "" {
+			return nil, fmt.Errorf("host %s does not support the GraphQL API", hostname)
+		}
 		if apiHost != "" {
 			requestURL = swapURLHost(requestURL, apiHost)
 		}

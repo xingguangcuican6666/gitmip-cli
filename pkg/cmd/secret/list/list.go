@@ -12,6 +12,7 @@ import (
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/internal/tableprinter"
@@ -149,6 +150,41 @@ func listRun(opts *ListOptions) error {
 		showSelectedRepoInfo = slices.Contains(opts.Exporter.Fields(), fieldNumSelectedRepos)
 	}
 
+	// Gitea answers a bare array, names the timestamp created_at, and has no
+	// visibility model, so it needs its own fetch. --org and --user name no
+	// repository, so the default host decides the host in those cases.
+	host := ""
+	if baseRepo != nil {
+		host = baseRepo.RepoHost()
+	} else {
+		cfg, err := opts.Config()
+		if err != nil {
+			return err
+		}
+		host, _ = cfg.Authentication().DefaultHost()
+	}
+
+	if hosttype.IsGitea(host) {
+		if err := shared.IsSupportedOnGitea(secretApp, secretEntity); err != nil {
+			return err
+		}
+		if secretEntity == shared.User {
+			return shared.ErrUserSecretsListUnsupportedOnGitea
+		}
+
+		var secrets []Secret
+		if secretEntity == shared.Organization {
+			secrets, err = getOrgSecretsGitea(client, host, orgName)
+		} else {
+			secrets, err = getRepoSecretsGitea(client, host, baseRepo.RepoOwner(), baseRepo.RepoName())
+		}
+		if err != nil {
+			return fmt.Errorf("failed to get secrets: %w", err)
+		}
+
+		return printSecrets(opts, secrets, false, showSelectedRepoInfo)
+	}
+
 	var secrets []Secret
 	switch secretEntity {
 	case shared.Repository:
@@ -156,16 +192,6 @@ func listRun(opts *ListOptions) error {
 	case shared.Environment:
 		secrets, err = getEnvSecrets(client, baseRepo, envName)
 	case shared.Organization, shared.User:
-		var cfg gh.Config
-		var host string
-
-		cfg, err = opts.Config()
-		if err != nil {
-			return err
-		}
-
-		host, _ = cfg.Authentication().DefaultHost()
-
 		if secretEntity == shared.User {
 			secrets, err = getUserSecrets(client, host, showSelectedRepoInfo)
 		} else {
@@ -177,6 +203,14 @@ func listRun(opts *ListOptions) error {
 		return fmt.Errorf("failed to get secrets: %w", err)
 	}
 
+	return printSecrets(opts, secrets, secretEntity == shared.Organization || secretEntity == shared.User, showSelectedRepoInfo)
+}
+
+// printSecrets renders the secret list. withVisibility adds the column that
+// GitHub reports for organization and user secrets; Gitea has no visibility
+// model, so it passes false and gets a two-column table instead of one with an
+// empty third column.
+func printSecrets(opts *ListOptions, secrets []Secret, withVisibility, showSelectedRepoInfo bool) error {
 	if len(secrets) == 0 && opts.Exporter == nil {
 		return cmdutil.NewNoResultsError("no secrets found")
 	}
@@ -192,7 +226,7 @@ func listRun(opts *ListOptions) error {
 	}
 
 	var headers []string
-	if secretEntity == shared.Organization || secretEntity == shared.User {
+	if withVisibility {
 		headers = []string{"Name", "Updated", "Visibility"}
 	} else {
 		headers = []string{"Name", "Updated"}
@@ -202,7 +236,7 @@ func listRun(opts *ListOptions) error {
 	for _, secret := range secrets {
 		table.AddField(secret.Name)
 		table.AddTimeField(opts.Now(), secret.UpdatedAt, nil)
-		if secret.Visibility != "" {
+		if withVisibility && secret.Visibility != "" {
 			if showSelectedRepoInfo {
 				table.AddField(fmtVisibility(secret))
 			} else {
@@ -212,12 +246,7 @@ func listRun(opts *ListOptions) error {
 		table.EndRow()
 	}
 
-	err = table.Render()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return table.Render()
 }
 
 type Secret struct {

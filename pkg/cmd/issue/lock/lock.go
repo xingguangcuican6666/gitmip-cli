@@ -19,6 +19,7 @@ import (
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmd/issue/shared"
 	issueShared "github.com/cli/cli/v2/pkg/cmd/issue/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -306,6 +307,14 @@ func lockRun(state string, opts *LockOptions) error {
 
 // lockLockable will lock an issue or pull request
 func lockLockable(httpClient *http.Client, repo ghrepo.Interface, lockable *api.Issue, opts *LockOptions) error {
+	// Gitea stores the reason as free text and does not validate it, so GitHub's
+	// reason values pass through unchanged. It also handles both issue and pull
+	// request indexes on the issue path.
+	if hosttype.IsGitea(repo.RepoHost()) {
+		client := api.NewClientFromHTTP(httpClient)
+		return api.LockIssueGitea(client, repo, lockable.Number, opts.Reason)
+	}
+
 	var mutation struct {
 		LockLockable struct {
 			LockedRecord struct {
@@ -327,6 +336,10 @@ func lockLockable(httpClient *http.Client, repo ghrepo.Interface, lockable *api.
 
 // unlockLockable will unlock an issue or pull request
 func unlockLockable(httpClient *http.Client, repo ghrepo.Interface, lockable *api.Issue) error {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		client := api.NewClientFromHTTP(httpClient)
+		return api.UnlockIssueGitea(client, repo, lockable.Number)
+	}
 
 	var mutation struct {
 		UnlockLockable struct {

@@ -17,6 +17,7 @@ import (
 	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/text"
 	issueShared "github.com/cli/cli/v2/pkg/cmd/issue/shared"
 	prShared "github.com/cli/cli/v2/pkg/cmd/pr/shared"
@@ -484,8 +485,40 @@ func editRun(opts *EditOptions) error {
 		go func(issue *api.Issue) {
 			defer g.Done()
 
-			if err := prShared.UpdateIssue(httpClient, baseRepo, issue.ID, issue.IsPullRequest(), editable); err != nil {
+			// Gitea addresses an issue by index and replaces labels and
+			// assignees against what is on it now, so it takes the issue
+			// rather than an id.
+			var updateErr error
+			if hosttype.IsGitea(baseRepo.RepoHost()) {
+				updateErr = prShared.UpdateIssueGitea(httpClient, baseRepo, issue, editable)
+			} else {
+				updateErr = prShared.UpdateIssue(httpClient, baseRepo, issue.ID, issue.IsPullRequest(), editable)
+			}
+			if err := updateErr; err != nil {
 				failedIssueChan <- fmt.Sprintf("failed to update %s: %s", issue.URL, err)
+				return
+			}
+
+			if hosttype.IsGitea(baseRepo.RepoHost()) {
+				// Relationships go through their own REST endpoints, and the
+				// unsupported ones are refused here so a run that asks for one
+				// fails on the flag rather than after the edit has landed.
+				if err := giteaEditRelationshipsUnsupported(opts); err != nil {
+					failedIssueChan <- fmt.Sprintf("failed to update %s: %s", issue.URL, err)
+					return
+				}
+				changes := issueShared.GiteaRelationshipChanges{
+					AddBlockedBy:    opts.AddBlockedBy,
+					RemoveBlockedBy: opts.RemoveBlockedBy,
+					AddBlocking:     opts.AddBlocking,
+					RemoveBlocking:  opts.RemoveBlocking,
+				}
+				if err := issueShared.UpdateGiteaRelationships(apiClient, baseRepo, issue.Number, changes); err != nil {
+					failedIssueChan <- fmt.Sprintf("failed to update %s:\n%s", issue.URL, err)
+					return
+				}
+
+				editedIssueChan <- issue.URL
 				return
 			}
 
@@ -545,6 +578,18 @@ func editRun(opts *EditOptions) error {
 	}
 
 	return uploadErr
+}
+
+// giteaEditRelationshipsUnsupported refuses the relationship flags Gitea has no
+// counterpart for.
+func giteaEditRelationshipsUnsupported(opts *EditOptions) error {
+	if opts.RemoveIssueType {
+		return issueShared.ErrGiteaIssueTypeUnsupported
+	}
+	if opts.Parent != "" || opts.RemoveParent || len(opts.AddSubIssues) > 0 || len(opts.RemoveSubIssues) > 0 {
+		return issueShared.ErrGiteaSubIssuesUnsupported
+	}
+	return nil
 }
 
 // lookupIssueTypeID resolves the chosen issue type to its node ID using the

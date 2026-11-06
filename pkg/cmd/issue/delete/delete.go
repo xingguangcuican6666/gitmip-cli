@@ -7,6 +7,7 @@ import (
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmd/issue/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -105,7 +106,7 @@ func deleteRun(opts *DeleteOptions) error {
 		}
 	}
 
-	if err := apiDelete(httpClient, baseRepo, issue.ID); err != nil {
+	if err := apiDelete(httpClient, baseRepo, issue); err != nil {
 		return err
 	}
 
@@ -116,7 +117,16 @@ func deleteRun(opts *DeleteOptions) error {
 	return nil
 }
 
-func apiDelete(httpClient *http.Client, repo ghrepo.Interface, issueID string) error {
+func apiDelete(httpClient *http.Client, repo ghrepo.Interface, issue *api.Issue) error {
+	// Gitea addresses an issue by repository path plus index, so the whole issue
+	// is passed rather than an id string.
+	if hosttype.IsGitea(repo.RepoHost()) {
+		client := api.NewClientFromHTTP(httpClient)
+		return api.DeleteIssueGitea(client, repo, issue.Number)
+	}
+
+	issueID := issue.ID
+
 	var mutation struct {
 		DeleteIssue struct {
 			Repository struct {

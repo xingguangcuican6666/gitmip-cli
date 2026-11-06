@@ -16,6 +16,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/safeurl"
 	ghAPI "github.com/cli/go-gh/v2/pkg/api"
 	"github.com/shurcooL/githubv4"
@@ -283,42 +284,19 @@ func (r Repository) ViewerCanTriage() bool {
 	}
 }
 
-func FetchRepository(client *Client, repo ghrepo.Interface, fields []string) (*Repository, error) {
-	query := fmt.Sprintf(`query RepositoryInfo($owner: String!, $name: String!) {
-		repository(owner: $owner, name: $name) {%s}
-	}`, RepositoryGraphQL(fields))
-
-	variables := map[string]any{
-		"owner": repo.RepoOwner(),
-		"name":  repo.RepoName(),
-	}
-
-	var result struct {
-		Repository *Repository
-	}
-	if err := client.GraphQL(repo.RepoHost(), query, variables, &result); err != nil {
-		return nil, err
-	}
-	// The GraphQL API should have returned an error in case of a missing repository, but this isn't
-	// guaranteed to happen when an authentication token with insufficient permissions is being used.
-	if result.Repository == nil {
-		return nil, GraphQLError{
-			GraphQLError: &ghAPI.GraphQLError{
-				Errors: []ghAPI.GraphQLErrorItem{{
-					Type:    "NOT_FOUND",
-					Message: fmt.Sprintf("Could not resolve to a Repository with the name '%s/%s'.", repo.RepoOwner(), repo.RepoName()),
-				}},
-			},
-		}
-	}
-
-	return InitRepoHostname(result.Repository, repo.RepoHost()), nil
-}
-
 // IssueRepoInfo fetches only the repository fields needed for issue operations such as
 // issue creation and transfer, avoiding fields like defaultBranchRef that require additional
 // token permissions.
+//
+// On a Gitea host the narrow selection is meaningless: GET /repos/{owner}/{repo}
+// returns the whole repository in one response, so the same request serves both
+// this and the full fetch. The narrower permission requirement it exists for is
+// a property of GitHub's field-level access, which Gitea does not have.
 func IssueRepoInfo(client *Client, repo ghrepo.Interface) (*Repository, error) {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return fetchGiteaRepository(client, repo)
+	}
+
 	query := `
 	query IssueRepositoryInfo($owner: String!, $name: String!) {
 		repository(owner: $owner, name: $name) {
@@ -358,6 +336,10 @@ func IssueRepoInfo(client *Client, repo ghrepo.Interface) (*Repository, error) {
 }
 
 func GitHubRepo(client *Client, repo ghrepo.Interface) (*Repository, error) {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return fetchGiteaRepository(client, repo)
+	}
+
 	query := `
 	fragment repo on Repository {
 		id
@@ -439,6 +421,17 @@ func CanPushToRepo(httpClient *http.Client, repo ghrepo.Interface) (bool, error)
 
 // RepoParent finds out the parent repository of a fork
 func RepoParent(client *Client, repo ghrepo.Interface) (ghrepo.Interface, error) {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		parent, err := fetchGiteaRepository(client, repo)
+		if err != nil {
+			return nil, err
+		}
+		if parent.Parent == nil {
+			return nil, nil
+		}
+		return ghrepo.NewWithHost(parent.Parent.Owner.Login, parent.Parent.Name, repo.RepoHost()), nil
+	}
+
 	var query struct {
 		Repository struct {
 			Parent *struct {
@@ -674,6 +667,10 @@ func RenameRepo(client *Client, repo ghrepo.Interface, newRepoName string) (*Rep
 }
 
 func LastCommit(client *Client, repo ghrepo.Interface) (*Commit, error) {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return lastCommitGitea(client, repo)
+	}
+
 	var responseData struct {
 		Repository struct {
 			DefaultBranchRef struct {
@@ -1235,6 +1232,10 @@ func (b AssignableBot) sealedAssignableActor() {}
 
 // RepoAssignableUsers fetches all the assignable users for a repository
 func RepoAssignableUsers(client *Client, repo ghrepo.Interface) ([]AssignableUser, error) {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return RepoAssignableUsersGitea(client, repo)
+	}
+
 	type responseData struct {
 		Repository struct {
 			AssignableUsers struct {
@@ -1285,7 +1286,26 @@ func RepoAssignableUsers(client *Client, repo ghrepo.Interface) ([]AssignableUse
 
 // RepoAssignableActors fetches all the assignable actors for a repository on
 // GitHub hosts that support Actor assignees.
+// RepoAssignableActors lists the actors a repository suggests for assignment.
+//
+// Gitea has no actor type distinct from user: every assignable party is a user
+// account, and bots are ordinary accounts there too. The assignable user list is
+// therefore wrapped as actors rather than fetched from a different endpoint, so
+// a caller that asks for actors still gets the display names it resolves
+// against.
 func RepoAssignableActors(client *Client, repo ghrepo.Interface) ([]AssignableActor, error) {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		users, err := RepoAssignableUsersGitea(client, repo)
+		if err != nil {
+			return nil, err
+		}
+		actors := make([]AssignableActor, 0, len(users))
+		for _, u := range users {
+			actors = append(actors, u)
+		}
+		return actors, nil
+	}
+
 	type responseData struct {
 		Repository struct {
 			SuggestedActors struct {
@@ -1419,6 +1439,10 @@ type RepoLabel struct {
 
 // RepoLabels fetches all the labels in a repository
 func RepoLabels(client *Client, repo ghrepo.Interface) ([]RepoLabel, error) {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return RepoLabelsGitea(client, repo)
+	}
+
 	type responseData struct {
 		Repository struct {
 			Labels struct {
@@ -1462,6 +1486,10 @@ type RepoMilestone struct {
 
 // RepoMilestones fetches milestones in a repository
 func RepoMilestones(client *Client, repo ghrepo.Interface, state string) ([]RepoMilestone, error) {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return RepoMilestonesGitea(client, repo, state)
+	}
+
 	type responseData struct {
 		Repository struct {
 			Milestones struct {
@@ -1514,7 +1542,19 @@ func RepoMilestones(client *Client, repo ghrepo.Interface, state string) ([]Repo
 // v1Projects retrieves set of RepoProjects relevant to given repository:
 // - Projects for repository
 // - Projects for repository organization, if it belongs to one
+// v1Projects lists the classic projects an issue may be attached to.
+//
+// Gitea has projects but not in this shape: its projects are repository and
+// organization boards addressed by numeric id, with no resource path for gh to
+// resolve a title against. Reporting none is what makes a `--project` request
+// fail with "'title' not found" rather than attaching an issue to an unrelated
+// board, and the Gitea issue create path rejects project titles outright with a
+// message that says so.
 func v1Projects(client *Client, repo ghrepo.Interface) ([]RepoProject, error) {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return nil, nil
+	}
+
 	var repoProjects []RepoProject
 	var orgProjects []RepoProject
 
@@ -1554,7 +1594,13 @@ func v1Projects(client *Client, repo ghrepo.Interface) ([]RepoProject, error) {
 // - ProjectsV2 owned by current user
 // - ProjectsV2 linked to repository
 // - ProjectsV2 owned by repository organization, if it belongs to one
+// v2Projects lists the projects (new) an issue may be attached to. Gitea has no
+// equivalent, for the reason recorded on v1Projects.
 func v2Projects(client *Client, repo ghrepo.Interface) ([]ProjectV2, error) {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return nil, nil
+	}
+
 	var userProjectsV2 []ProjectV2
 	var repoProjectsV2 []ProjectV2
 	var orgProjectsV2 []ProjectV2

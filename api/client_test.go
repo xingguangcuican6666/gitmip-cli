@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/httpmock"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/stretchr/testify/assert"
@@ -18,6 +19,69 @@ func newTestClient(reg *httpmock.Registry) *Client {
 	client := &http.Client{}
 	httpmock.ReplaceTripper(client, reg)
 	return NewClientFromHTTP(client)
+}
+
+func TestGiteaHostsRejectGraphQL(t *testing.T) {
+	restore := hosttype.SetHostTypeOverride(map[string]hosttype.Type{
+		"git.example.com": hosttype.Gitea,
+	})
+	t.Cleanup(restore)
+
+	reg := &httpmock.Registry{}
+	client := newTestClient(reg)
+	defer reg.Verify(t)
+
+	want := "host git.example.com does not support the GraphQL API"
+
+	t.Run("GraphQL", func(t *testing.T) {
+		var out struct{}
+		err := client.GraphQL("git.example.com", "query {}", nil, &out)
+		require.EqualError(t, err, want)
+	})
+
+	t.Run("Query", func(t *testing.T) {
+		var out struct{}
+		err := client.Query("git.example.com", "TestQuery", &out, nil)
+		require.EqualError(t, err, want)
+	})
+
+	t.Run("QueryWithContext", func(t *testing.T) {
+		var out struct{}
+		err := client.QueryWithContext(t.Context(), "git.example.com", "TestQuery", &out, nil)
+		require.EqualError(t, err, want)
+	})
+
+	t.Run("Mutate", func(t *testing.T) {
+		var out struct{}
+		err := client.Mutate("git.example.com", "TestMutation", &out, nil)
+		require.EqualError(t, err, want)
+	})
+}
+
+// REST keeps working on a Gitea host, which is the point of the guard above:
+// only the GraphQL surface is unavailable, and a command rewritten to REST must
+// not trip the same check.
+//
+// The request goes through api.Client.REST, whose clientOptions wraps the
+// transport to correct go-gh's /api/v3 prefix to Gitea's /api/v1, so the stub
+// matches the rewritten path.
+func TestGiteaHostServesREST(t *testing.T) {
+	restore := hosttype.SetHostTypeOverride(map[string]hosttype.Type{
+		"git.example.com": hosttype.Gitea,
+	})
+	t.Cleanup(restore)
+
+	reg := &httpmock.Registry{}
+	reg.Register(httpmock.REST("GET", "api/v1/version"), httpmock.StringResponse(`{"version":"1.24.0"}`))
+	client := newTestClient(reg)
+	defer reg.Verify(t)
+
+	var out struct {
+		Version string `json:"version"`
+	}
+	err := client.REST("git.example.com", "GET", "version", nil, &out)
+	require.NoError(t, err)
+	assert.Equal(t, "1.24.0", out.Version)
 }
 
 func TestGraphQL(t *testing.T) {

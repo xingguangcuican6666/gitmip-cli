@@ -8,6 +8,7 @@ import (
 	"github.com/shurcooL/githubv4"
 
 	"github.com/cli/cli/v2/api"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/search"
 )
 
@@ -30,6 +31,10 @@ type FilterOptions struct {
 }
 
 func listRepos(client *http.Client, hostname string, limit int, owner string, filter FilterOptions) (*RepositoryList, error) {
+	if hosttype.IsGitea(hostname) {
+		return listReposGitea(client, hostname, limit, owner, filter)
+	}
+
 	if filter.Language != "" || filter.Archived || filter.NonArchived || len(filter.Topic) > 0 || filter.Visibility == "internal" {
 		return searchRepos(client, hostname, limit, owner, filter)
 	}

@@ -16,6 +16,7 @@ import (
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmd/secret/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -245,6 +246,12 @@ func setRun(opts *SetOptions) error {
 
 	if !shared.IsSupportedSecretEntity(secretApp, secretEntity) {
 		return fmt.Errorf("%s secrets are not supported for %s", secretEntity, secretApp)
+	}
+
+	// Gitea takes the value in plaintext and has no public-key endpoint, so the
+	// key fetch, the encryption and --no-store all drop out.
+	if hosttype.IsGitea(host) {
+		return setRunGitea(opts, client, host, baseRepo, orgName, secrets, secretApp, secretEntity)
 	}
 
 	var pk *PubKey

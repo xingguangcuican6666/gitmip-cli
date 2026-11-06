@@ -9,6 +9,7 @@ import (
 
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/pkg/cmd/variable/shared"
 )
@@ -43,6 +44,10 @@ type setResult struct {
 }
 
 func setVariable(client *api.Client, host string, opts setOptions) setResult {
+	if hosttype.IsGitea(host) {
+		return setVariableGitea(client, host, opts)
+	}
+
 	var err error
 	var postErr api.HTTPError
 	result := setResult{Operation: createdOperation, Key: opts.Key}

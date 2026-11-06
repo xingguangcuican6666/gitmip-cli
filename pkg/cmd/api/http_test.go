@@ -6,7 +6,9 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_groupGraphQLVariables(t *testing.T) {
@@ -459,6 +461,57 @@ func Test_httpRequest(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_httpRequestGitea(t *testing.T) {
+	restore := hosttype.SetHostTypeOverride(map[string]hosttype.Type{
+		"git.example.com": hosttype.Gitea,
+	})
+	t.Cleanup(restore)
+
+	var got *http.Request
+	var tr roundTripper = func(req *http.Request) (*http.Response, error) {
+		got = req
+		return &http.Response{Request: req}, nil
+	}
+	httpClient := http.Client{Transport: tr}
+
+	t.Run("REST goes to /api/v1 on the host itself", func(t *testing.T) {
+		got = nil
+		_, err := httpRequest(&httpClient, "git.example.com", "", "GET", "repos/owner/name", nil, nil)
+		require.NoError(t, err)
+		assert.Equal(t, "https://git.example.com/api/v1/repos/owner/name", got.URL.String())
+	})
+
+	t.Run("leading slash is trimmed", func(t *testing.T) {
+		got = nil
+		_, err := httpRequest(&httpClient, "git.example.com", "", "GET", "/version", nil, nil)
+		require.NoError(t, err)
+		assert.Equal(t, "https://git.example.com/api/v1/version", got.URL.String())
+	})
+
+	t.Run("graphql path fails rather than inventing an endpoint", func(t *testing.T) {
+		got = nil
+		_, err := httpRequest(&httpClient, "git.example.com", "", "POST", "graphql", map[string]any{"query": "{}"}, nil)
+		require.Error(t, err)
+		assert.Equal(t, "host git.example.com does not support the GraphQL API", err.Error())
+		assert.Nil(t, got, "no request should be sent")
+	})
+
+	t.Run("absolute URL is used as-is", func(t *testing.T) {
+		got = nil
+		_, err := httpRequest(&httpClient, "git.example.com", "", "GET",
+			"https://git.example.com/owner/name/releases/download/v1/a.tar.gz", nil, nil)
+		require.NoError(t, err)
+		assert.Equal(t, "https://git.example.com/owner/name/releases/download/v1/a.tar.gz", got.URL.String())
+	})
+
+	t.Run("api_host swaps only the hostname", func(t *testing.T) {
+		got = nil
+		_, err := httpRequest(&httpClient, "git.example.com", "gateway.example.net", "GET", "version", nil, nil)
+		require.NoError(t, err)
+		assert.Equal(t, "https://gateway.example.net/api/v1/version", got.URL.String())
+	})
 }
 
 func Test_addQuery(t *testing.T) {

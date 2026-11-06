@@ -13,6 +13,7 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -127,6 +128,10 @@ func createRun(opts *createOptions) error {
 }
 
 func createLabel(client *http.Client, repo ghrepo.Interface, opts *createOptions) error {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return createLabelGitea(client, repo, opts)
+	}
+
 	apiClient := api.NewClientFromHTTP(client)
 	path, err := safeurl.JoinPath("repos", repo.RepoOwner(), repo.RepoName(), "labels")
 	if err != nil {
@@ -160,6 +165,10 @@ func createLabel(client *http.Client, repo ghrepo.Interface, opts *createOptions
 }
 
 func updateLabel(apiClient *api.Client, repo ghrepo.Interface, opts *editOptions) error {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return updateLabelGitea(apiClient, repo, opts)
+	}
+
 	path, err := safeurl.JoinPath("repos", repo.RepoOwner(), repo.RepoName(), "labels", opts.Name)
 	if err != nil {
 		return err

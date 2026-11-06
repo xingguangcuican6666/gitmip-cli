@@ -9,7 +9,7 @@ import (
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
-	"github.com/cli/cli/v2/internal/safeurl"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmd/secret/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -123,23 +123,19 @@ func removeRun(opts *DeleteOptions) error {
 	if err != nil {
 		return err
 	}
+	host := resolveSecretHost(cfg, baseRepo)
 
-	var path *safeurl.MutableSafeURL
-	var host string
-	switch secretEntity {
-	case shared.Organization:
-		path, err = safeurl.JoinPath("orgs", orgName, string(secretApp), "secrets", opts.SecretName)
-		host, _ = cfg.Authentication().DefaultHost()
-	case shared.Environment:
-		path, err = safeurl.JoinPath("repos", baseRepo.RepoOwner(), baseRepo.RepoName(), "environments", envName, "secrets", opts.SecretName)
-		host = baseRepo.RepoHost()
-	case shared.User:
-		path, err = safeurl.JoinPath("user", "codespaces", "secrets", opts.SecretName)
-		host, _ = cfg.Authentication().DefaultHost()
-	case shared.Repository:
-		path, err = safeurl.JoinPath("repos", baseRepo.RepoOwner(), baseRepo.RepoName(), string(secretApp), "secrets", opts.SecretName)
-		host = baseRepo.RepoHost()
+	// Gitea accepts the same DELETE shape but stores Actions secrets under
+	// /actions/secrets and has no Codespaces, Dependabot, Agents or environment
+	// secret stores, so those combinations are refused on the flag the user
+	// passed rather than on a request that cannot succeed.
+	if hosttype.IsGitea(host) {
+		if err := shared.IsSupportedOnGitea(secretApp, secretEntity); err != nil {
+			return err
+		}
 	}
+
+	path, err := secretPath(host, secretEntity, secretApp, orgName, baseRepo, envName, opts.SecretName)
 	if err != nil {
 		return err
 	}

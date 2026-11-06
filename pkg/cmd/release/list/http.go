@@ -8,6 +8,7 @@ import (
 	"github.com/cli/cli/v2/api"
 	fd "github.com/cli/cli/v2/internal/featuredetection"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/shurcooL/githubv4"
 )
@@ -39,6 +40,10 @@ func (r *Release) ExportData(fields []string) map[string]any {
 }
 
 func fetchReleases(httpClient *http.Client, repo ghrepo.Interface, limit int, excludeDrafts bool, excludePreReleases bool, order string, releaseFeatures fd.ReleaseFeatures) ([]Release, error) {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return fetchReleasesGitea(httpClient, repo, limit, excludeDrafts, excludePreReleases, order)
+	}
+
 	// TODO: immutableReleaseFullSupport
 	// This is a temporary workaround until all supported GHES versions fully
 	// support immutable releases, which would probably be when GHES 3.18 goes

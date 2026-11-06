@@ -11,6 +11,7 @@ import (
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/internal/tableprinter"
 	"github.com/cli/cli/v2/pkg/cmd/variable/shared"
@@ -112,6 +113,25 @@ func listRun(opts *ListOptions) error {
 		showSelectedRepoInfo = slices.Contains(opts.Exporter.Fields(), fieldNumSelectedRepos)
 	}
 
+	// --org names no repository, so the default host is what decides the host in
+	// that case. The same host is used below for the organization lookup.
+	host := ""
+	if baseRepo != nil {
+		host = baseRepo.RepoHost()
+	} else {
+		cfg, err := opts.Config()
+		if err != nil {
+			return err
+		}
+		host, _ = cfg.Authentication().DefaultHost()
+	}
+
+	// Gitea answers a bare array from a different path shape and reports no
+	// timestamps or visibility, so it needs its own fetch and its own output.
+	if hosttype.IsGitea(host) {
+		return listVariablesGitea(opts, client, host, baseRepo, variableEntity, orgName)
+	}
+
 	var variables []shared.Variable
 	switch variableEntity {
 	case shared.Repository:
@@ -119,13 +139,6 @@ func listRun(opts *ListOptions) error {
 	case shared.Environment:
 		variables, err = getEnvVariables(client, baseRepo, envName)
 	case shared.Organization:
-		var cfg gh.Config
-		var host string
-		cfg, err = opts.Config()
-		if err != nil {
-			return err
-		}
-		host, _ = cfg.Authentication().DefaultHost()
 		variables, err = getOrgVariables(client, host, orgName, showSelectedRepoInfo)
 	}
 
