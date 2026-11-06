@@ -12,6 +12,7 @@ import (
 
 	"github.com/cli/cli/v2/api"
 	fd "github.com/cli/cli/v2/internal/featuredetection"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/safeurl"
 )
 
@@ -62,7 +63,18 @@ func NewSearcher(client *http.Client, host string, detector fd.Detector) Searche
 	}
 }
 
+// ErrGiteaCodeSearchUnsupported explains why code search cannot run on Gitea:
+// there is no code index in its API, so nothing can answer the query.
+var ErrGiteaCodeSearchUnsupported = errors.New("Gitea has no code search API")
+
+// ErrGiteaCommitSearchUnsupported explains why commit search cannot run on Gitea:
+// its API indexes issues and repositories, not commits.
+var ErrGiteaCommitSearchUnsupported = errors.New("Gitea has no commit search API")
+
 func (s searcher) Code(query Query) (CodeResult, error) {
+	if hosttype.IsGitea(s.host) {
+		return CodeResult{}, ErrGiteaCodeSearchUnsupported
+	}
 	result := CodeResult{}
 
 	// We will request either the query limit if it's less than 1 page, or our max page size.
@@ -103,6 +115,9 @@ func (s searcher) Code(query Query) (CodeResult, error) {
 }
 
 func (s searcher) Commits(query Query) (CommitsResult, error) {
+	if hosttype.IsGitea(s.host) {
+		return CommitsResult{}, ErrGiteaCommitSearchUnsupported
+	}
 	result := CommitsResult{}
 
 	numItemsToRetrieve := query.Limit
@@ -131,6 +146,10 @@ func (s searcher) Commits(query Query) (CommitsResult, error) {
 }
 
 func (s searcher) Repositories(query Query) (RepositoriesResult, error) {
+	if hosttype.IsGitea(s.host) {
+		return s.searchRepositoriesGiteaAll(query)
+	}
+
 	result := RepositoriesResult{}
 
 	numItemsToRetrieve := query.Limit
@@ -159,6 +178,10 @@ func (s searcher) Repositories(query Query) (RepositoriesResult, error) {
 }
 
 func (s searcher) Issues(query Query) (IssuesResult, error) {
+	if hosttype.IsGitea(s.host) {
+		return s.searchIssuesGiteaAll(query)
+	}
+
 	result := IssuesResult{}
 
 	// Semantic and hybrid searches use a separate, smaller rate-limit bucket and
@@ -288,6 +311,10 @@ func (s searcher) search(query Query, result any) (string, error) {
 
 // URL returns URL to the global search in web GUI (i.e. github.com/search).
 func (s searcher) URL(query Query) string {
+	if hosttype.IsGitea(s.host) {
+		return s.giteaWebURL(query)
+	}
+
 	path := fmt.Sprintf("https://%s/search", s.host)
 	qs := url.Values{}
 	qs.Set("type", query.Kind)

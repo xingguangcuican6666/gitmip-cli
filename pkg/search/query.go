@@ -123,6 +123,19 @@ type Qualifiers struct {
 //
 // At the moment, the advanced search syntax is only available for searching
 // issues, and it's called advanced issue search.
+// KeywordsString returns only the keyword part of the query, with no qualifiers
+// rendered in.
+//
+// A search backend that takes its filters as parameters rather than as part of a
+// query string needs this: putting qualifiers in the text would ask it to match
+// the literal words "type:issue" rather than to filter by type.
+func (q Query) KeywordsString() string {
+	if q.ImmutableKeywords != "" {
+		return strings.TrimSpace(q.ImmutableKeywords)
+	}
+	return strings.TrimSpace(strings.Join(formatKeywords(q.Keywords), " "))
+}
+
 func (q Query) StandardSearchString() string {
 	qualifiers := formatQualifiers(q.Qualifiers, nil)
 	var keywords []string
