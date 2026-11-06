@@ -16,6 +16,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/internal/tableprinter"
 	"github.com/cli/cli/v2/pkg/cmd/factory"
@@ -643,20 +644,42 @@ func statusRun(opts *StatusOptions) error {
 	// TODO break out sections into individual subcommands
 
 	g := new(errgroup.Group)
+	// Gitea has no GraphQL API, so its sections come from its own endpoints. The
+	// three goroutines below stay the same shape; only the loader each calls
+	// differs. Every section is about the caller, so an unauthenticated run on
+	// Gitea is reported up front rather than three times from three goroutines.
+	if hosttype.IsGitea(hostname) {
+		if _, err := sg.CurrentUsername(); err != nil {
+			if giteaUnauthenticated(err) {
+				return errors.New("gh status shows work assigned to you, so it needs an authenticated session; run `gh auth login` first")
+			}
+			return err
+		}
+	}
+
+	loadNotifications := sg.LoadNotifications
+	loadEvents := sg.LoadEvents
+	loadSearch := sg.LoadSearchResults
+	if hosttype.IsGitea(hostname) {
+		loadNotifications = sg.loadNotificationsGitea
+		loadEvents = sg.loadEventsGitea
+		loadSearch = sg.loadSearchResultsGitea
+	}
+
 	g.Go(func() error {
-		if err := sg.LoadNotifications(); err != nil {
+		if err := loadNotifications(); err != nil {
 			return fmt.Errorf("could not load notifications: %w", err)
 		}
 		return nil
 	})
 	g.Go(func() error {
-		if err := sg.LoadEvents(); err != nil {
+		if err := loadEvents(); err != nil {
 			return fmt.Errorf("could not load events: %w", err)
 		}
 		return nil
 	})
 	g.Go(func() error {
-		if err := sg.LoadSearchResults(); err != nil {
+		if err := loadSearch(); err != nil {
 			return fmt.Errorf("failed to search: %w", err)
 		}
 		return nil
