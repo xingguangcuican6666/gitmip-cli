@@ -676,15 +676,28 @@ type giteaTasksPayload struct {
 
 // giteaRunFromTask maps a task row onto the Run gh works with.
 //
-// Two fields cannot be filled honestly. Run.WorkflowID is a number on GitHub and
-// the task row carries a file name, so it stays zero and the name goes where gh
-// caches the workflow name. Status and conclusion are one field on Gitea: the
+// The id needs care: the task row's id is the task's own identifier, while every
+// per-run endpoint (GET a run, its jobs, its logs) is addressed by the run id,
+// which the row carries in its web URL (.../actions/runs/<run id>). Reading the
+// run id from the URL is what keeps `gh run view <id>` and the jobs fetch working
+// for ids the task list handed out; falling back to the task id only happens when
+// the URL does not contain one, and those commands then answer 404 rather than
+// silently addressing a different resource.
+//
+// Two other fields cannot be filled honestly. Run.WorkflowID is a number on GitHub
+// and the task row carries a file name, so it stays zero and the name goes where
+// gh caches the workflow name. Status and conclusion are one field on Gitea: the
 // row's status is a run status such as queued or in_progress while the run is
 // live, and a conclusion such as success or failure once it is done, so the
 // mapping decides which of the two gh fields it belongs in.
 func giteaRunFromTask(task giteaTask, hostname string) Run {
+	id := task.ID
+	if runID, ok := runIDFromWebURL(task.URL); ok {
+		id = runID
+	}
+
 	run := Run{
-		ID:           task.ID,
+		ID:           id,
 		Name:         task.Name,
 		DisplayTitle: task.DisplayTitle,
 		HeadBranch:   task.HeadBranch,
@@ -704,6 +717,17 @@ func giteaRunFromTask(task giteaTask, hostname string) Run {
 	run.workflowName = task.Name
 	run.workflowFile = task.WorkflowID
 	return run
+}
+
+// runIDFromWebURL reads the run id out of a task row's web URL, whose last path
+// segment is the id the run endpoints are addressed by.
+func runIDFromWebURL(webURL string) (int64, bool) {
+	last := webURL[strings.LastIndex(webURL, "/")+1:]
+	id, err := strconv.ParseInt(last, 10, 64)
+	if err != nil || id <= 0 {
+		return 0, false
+	}
+	return id, true
 }
 
 // giteaRunState splits Gitea's single status word into the two fields gh keeps.

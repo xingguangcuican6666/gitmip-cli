@@ -1,10 +1,12 @@
 package shared
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
 	"github.com/cli/cli/v2/api"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/safeurl"
 )
 
@@ -32,7 +34,9 @@ func UserKeys(httpClient *http.Client, host, userHandle string) ([]sshKey, error
 			return nil, err
 		}
 	}
-	u.SetQuery("per_page", "100")
+	// Gitea spells the page size limit and caps it at its own maximum, so the
+	// GitHub spelling is only correct for GitHub hosts.
+	api.SetPageSizeMutable(u, host, 100)
 
 	keys, err := getUserKeys(httpClient, host, u)
 
@@ -47,7 +51,17 @@ func UserKeys(httpClient *http.Client, host, userHandle string) ([]sshKey, error
 	return keys, nil
 }
 
+// ErrGiteaSigningKeysUnsupported explains why signing keys cannot be listed on a
+// Gitea host: its API stores every SSH key in one collection and has no
+// ssh_signing_keys endpoint. A key's use for signing is a client-side setting
+// (gpg.format), not a server-side property, so there is nothing to list.
+var ErrGiteaSigningKeysUnsupported = errors.New("Gitea keeps no separate signing-key collection; every SSH key lives in the single keys list")
+
 func UserSigningKeys(httpClient *http.Client, host, userHandle string) ([]sshKey, error) {
+	if hosttype.IsGitea(host) {
+		return nil, ErrGiteaSigningKeysUnsupported
+	}
+
 	u, err := safeurl.JoinPath("user", "ssh_signing_keys")
 	if err != nil {
 		return nil, err
