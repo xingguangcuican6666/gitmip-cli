@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 
 	api "github.com/cli/cli/v2/api"
 )
@@ -36,6 +37,10 @@ func NewLister(httpClient *http.Client) PRLister {
 }
 
 func (l *lister) List(opts ListOptions) (*api.PullRequestAndTotalCount, error) {
+	if hosttype.IsGitea(opts.BaseRepo.RepoHost()) {
+		return listGitea(l.httpClient, opts)
+	}
+
 	type response struct {
 		Repository struct {
 			PullRequests struct {
@@ -178,4 +183,82 @@ func (m *mockLister) List(opt ListOptions) (*api.PullRequestAndTotalCount, error
 
 func (m *mockLister) ExpectFields(fields []string) {
 	m.expectFields = fields
+}
+
+// listGitea lists pull requests on a Gitea host.
+//
+// Gitea filters by state and by base branch and takes one state per request, so
+// the states gh offers are mapped onto the ones Gitea has. "merged" is not one of
+// them: Gitea reports a merged pull request as closed with merged set, which the
+// list mapping derives, so a merged state filter is applied after the fetch.
+//
+// A head branch filter has no server-side counterpart, so it is applied here too.
+// That means a filtered list can need more than one page before it is full.
+func listGitea(httpClient *http.Client, opts ListOptions) (*api.PullRequestAndTotalCount, error) {
+	state := giteaListState(opts.State)
+	if state == "" {
+		return nil, fmt.Errorf("invalid state: %s", opts.State)
+	}
+
+	client := api.NewClientFromHTTP(httpClient)
+	wantedMerged := opts.State == "merged"
+
+	res := &api.PullRequestAndTotalCount{}
+	for page := 1; len(res.PullRequests) < opts.LimitResults; page++ {
+		pagePRs, total, err := api.ListPullRequestsGitea(client, opts.BaseRepo, api.ListPullRequestsGiteaInput{
+			State:      state,
+			BaseBranch: opts.BaseBranch,
+			Page:       page,
+		})
+		if err != nil {
+			return nil, err
+		}
+		if page == 1 {
+			res.TotalCount = total
+		}
+		if len(pagePRs) == 0 {
+			break
+		}
+
+		for _, pr := range pagePRs {
+			if wantedMerged && pr.State != "MERGED" {
+				continue
+			}
+			if opts.HeadBranch != "" && pr.HeadRefName != opts.HeadBranch {
+				continue
+			}
+			res.PullRequests = append(res.PullRequests, pr)
+			if len(res.PullRequests) == opts.LimitResults {
+				break
+			}
+		}
+
+		if len(pagePRs) < api.GiteaPageSize {
+			break
+		}
+	}
+
+	// A locally filtered list cannot claim the server's unfiltered count.
+	if wantedMerged || opts.HeadBranch != "" {
+		res.TotalCount = len(res.PullRequests)
+	}
+
+	return res, nil
+}
+
+// giteaListState maps gh's state onto Gitea's, or "" when it is not one gh offers.
+func giteaListState(state string) string {
+	switch state {
+	case "open":
+		return "open"
+	case "closed":
+		// Gitea reports a merged pull request as closed, so asking for closed
+		// returns merged ones too. That matches what the caller asked for: gh
+		// treats merged as a kind of closed unless it is asked for alone.
+		return "closed"
+	case "merged", "all":
+		return "all"
+	default:
+		return ""
+	}
 }
