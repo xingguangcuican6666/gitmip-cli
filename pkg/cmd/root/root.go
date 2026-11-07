@@ -139,7 +139,12 @@ func NewCmdRoot(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder, ve
 	cmd.AddCommand(authCmd.NewCmdAuth(f, telemetry))
 	cmd.AddCommand(attestationCmd.NewCmdAttestation(f))
 	cmd.AddCommand(configCmd.NewCmdConfig(f))
-	cmd.AddCommand(gistCmd.NewCmdGist(f))
+	// Gists are a GitHub feature with no counterpart on Gitea, so the whole family
+	// is refused there rather than each command failing against an endpoint that
+	// does not exist.
+	gistCmdRoot := gistCmd.NewCmdGist(f)
+	cmdutil.RefuseFamilyOnGitea(gistCmdRoot, f, "Gists")
+	cmd.AddCommand(gistCmdRoot)
 	cmd.AddCommand(gpgKeyCmd.NewCmdGPGKey(f))
 	cmd.AddCommand(completionCmd.NewCmdCompletion(f.IOStreams))
 	cmd.AddCommand(extensionCmd.NewCmdExtension(f))
@@ -147,8 +152,18 @@ func NewCmdRoot(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder, ve
 	cmd.AddCommand(secretCmd.NewCmdSecret(f))
 	cmd.AddCommand(variableCmd.NewCmdVariable(f))
 	cmd.AddCommand(sshKeyCmd.NewCmdSSHKey(f))
-	cmd.AddCommand(codespaceCmd.NewCmdCodespace(f))
-	cmd.AddCommand(projectCmd.NewCmdProject(f))
+	// Codespaces is a GitHub-hosted product with no Gitea equivalent.
+	codespaceCmdRoot := codespaceCmd.NewCmdCodespace(f)
+	cmdutil.RefuseFamilyOnGitea(codespaceCmdRoot, f, "Codespaces")
+	cmd.AddCommand(codespaceCmdRoot)
+
+	// Gitea has project boards, but they are a different model: an issue is moved
+	// between columns rather than being an item with typed fields. Mapping one
+	// onto the other would produce a command that only looks like this one, so the
+	// family is refused rather than partially reinterpreted.
+	projectCmdRoot := projectCmd.NewCmdProject(f)
+	cmdutil.RefuseFamilyOnGitea(projectCmdRoot, f, "Projects")
+	cmd.AddCommand(projectCmdRoot)
 	cmd.AddCommand(previewCmd.NewCmdPreview(f))
 	cmd.AddCommand(skillsCmd.NewCmdSkills(f, telemetry))
 
@@ -163,19 +178,33 @@ func NewCmdRoot(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder, ve
 	repoResolvingCmdFactory := *f
 	repoResolvingCmdFactory.BaseRepo = factory.SmartBaseRepoFunc(f)
 
-	cmd.AddCommand(agentTaskCmd.NewCmdAgentTask(&repoResolvingCmdFactory))
+	agentTaskCmdRoot := agentTaskCmd.NewCmdAgentTask(&repoResolvingCmdFactory)
+	cmdutil.RefuseFamilyOnGitea(agentTaskCmdRoot, &repoResolvingCmdFactory, "Agent tasks")
+	cmd.AddCommand(agentTaskCmdRoot)
 	cmd.AddCommand(browseCmd.NewCmdBrowse(&repoResolvingCmdFactory, nil))
-	cmd.AddCommand(discussionCmd.NewCmdDiscussion(&repoResolvingCmdFactory))
+
+	// Gitea has no forum discussions.
+	discussionCmdRoot := discussionCmd.NewCmdDiscussion(&repoResolvingCmdFactory)
+	cmdutil.RefuseFamilyOnGitea(discussionCmdRoot, &repoResolvingCmdFactory, "Discussions")
+	cmd.AddCommand(discussionCmdRoot)
 	cmd.AddCommand(prCmd.NewCmdPR(&repoResolvingCmdFactory, telemetry))
 	cmd.AddCommand(orgCmd.NewCmdOrg(&repoResolvingCmdFactory))
 	cmd.AddCommand(issueCmd.NewCmdIssue(&repoResolvingCmdFactory, telemetry))
 	cmd.AddCommand(releaseCmd.NewCmdRelease(&repoResolvingCmdFactory))
 	cmd.AddCommand(repoCmd.NewCmdRepo(&repoResolvingCmdFactory))
-	cmd.AddCommand(rulesetCmd.NewCmdRuleset(&repoResolvingCmdFactory))
+	// Gitea has branch protections, which cover part of what a ruleset does, but
+	// it has no ruleset API and no ruleset object to read, so the family is refused
+	// rather than answered from something that is not a ruleset.
+	rulesetCmdRoot := rulesetCmd.NewCmdRuleset(&repoResolvingCmdFactory)
+	cmdutil.RefuseFamilyOnGitea(rulesetCmdRoot, &repoResolvingCmdFactory, "Rulesets")
+	cmd.AddCommand(rulesetCmdRoot)
 	cmd.AddCommand(runCmd.NewCmdRun(&repoResolvingCmdFactory))
 	cmd.AddCommand(workflowCmd.NewCmdWorkflow(&repoResolvingCmdFactory))
 	cmd.AddCommand(labelCmd.NewCmdLabel(&repoResolvingCmdFactory))
-	cmd.AddCommand(cacheCmd.NewCmdCache(&repoResolvingCmdFactory))
+	// Gitea has no actions cache endpoint, so there is nothing to list or delete.
+	cacheCmdRoot := cacheCmd.NewCmdCache(&repoResolvingCmdFactory)
+	cmdutil.RefuseFamilyOnGitea(cacheCmdRoot, &repoResolvingCmdFactory, "The Actions cache")
+	cmd.AddCommand(cacheCmdRoot)
 	cmd.AddCommand(apiCmd.NewCmdApi(&repoResolvingCmdFactory, nil))
 
 	// Help topics
