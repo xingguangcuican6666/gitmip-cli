@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	"github.com/cli/cli/v2/api"
+	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/shurcooL/githubv4"
 )
@@ -21,12 +23,16 @@ type repoCreateInput struct {
 	OwnerLogin           string
 	TeamSlug             string
 	TemplateRepositoryID string
-	HasIssuesEnabled     bool
-	HasWikiEnabled       bool
-	GitIgnoreTemplate    string
-	LicenseTemplate      string
-	IncludeAllBranches   bool
-	InitReadme           bool
+	// TemplateRepositoryName is the template's owner/name, which Gitea's generate
+	// endpoint is addressed by. GitHub's mutation takes a node id instead, so both
+	// are carried and each host reads its own.
+	TemplateRepositoryName string
+	HasIssuesEnabled       bool
+	HasWikiEnabled         bool
+	GitIgnoreTemplate      string
+	LicenseTemplate        string
+	IncludeAllBranches     bool
+	InitReadme             bool
 }
 
 // createRepositoryInputV3 is the payload for the repo create REST API
@@ -75,6 +81,17 @@ type updateRepositoryInput struct {
 
 // repoCreate creates a new GitHub repository
 func repoCreate(client *http.Client, hostname string, input repoCreateInput) (*api.Repository, error) {
+	if hosttype.IsGitea(hostname) {
+		if input.TemplateRepositoryName != "" {
+			templateRepo, err := ghrepo.FromFullNameWithHost(input.TemplateRepositoryName, hostname)
+			if err != nil {
+				return nil, err
+			}
+			return repoCreateFromTemplateGitea(client, hostname, templateRepo, input)
+		}
+		return repoCreateGitea(client, hostname, input)
+	}
+
 	isOrg := false
 	var ownerID string
 	var teamID string
@@ -288,6 +305,10 @@ func resolveOrganizationTeam(client *api.Client, hostname, orgName, teamSlug str
 }
 
 func listTemplateRepositories(client *http.Client, hostname, owner string) ([]api.Repository, error) {
+	if hosttype.IsGitea(hostname) {
+		return listTemplateRepositoriesGitea(client, hostname, owner)
+	}
+
 	ownerConnection := "repositoryOwner(login: $owner)"
 
 	variables := map[string]any{

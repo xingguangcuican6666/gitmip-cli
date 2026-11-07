@@ -9,12 +9,20 @@ import (
 
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/pkg/cmd/release/shared"
 	"github.com/shurcooL/githubv4"
 )
 
 func editRelease(httpClient *http.Client, repo ghrepo.Interface, releaseID int64, params map[string]any) (*shared.Release, error) {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		if err := shared.CheckGiteaReleaseEditParams(params); err != nil {
+			return nil, err
+		}
+		params = shared.NarrowGiteaReleaseParams(params)
+	}
+
 	bodyBytes, err := json.Marshal(params)
 	if err != nil {
 		return nil, err
@@ -23,6 +31,11 @@ func editRelease(httpClient *http.Client, repo ghrepo.Interface, releaseID int64
 	path, err := safeurl.JoinPath("repos", repo.RepoOwner(), repo.RepoName(), "releases", strconv.FormatInt(releaseID, 10))
 	if err != nil {
 		return nil, err
+	}
+
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return shared.DecodeGiteaReleaseFromURL(httpClient, repo.RepoHost(), http.MethodPatch,
+			safeurl.NewImmutableSafeURL(path.String()), bytes.NewBuffer(bodyBytes))
 	}
 
 	var newRelease shared.Release
@@ -37,6 +50,10 @@ func editRelease(httpClient *http.Client, repo ghrepo.Interface, releaseID int64
 }
 
 func remoteTagExists(httpClient *http.Client, repo ghrepo.Interface, tagName string) (bool, error) {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return shared.RemoteTagExistsGitea(httpClient, repo, tagName)
+	}
+
 	gql := api.NewClientFromHTTP(httpClient)
 	qualifiedTagName := fmt.Sprintf("refs/tags/%s", tagName)
 	var query struct {

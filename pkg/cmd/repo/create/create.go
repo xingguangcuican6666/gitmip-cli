@@ -388,6 +388,9 @@ func createFromScratch(opts *CreateOptions) error {
 		}
 
 		input.TemplateRepositoryID = repo.ID
+		// Gitea's generate endpoint is addressed by owner/name rather than by an
+		// id, so both spellings travel together and each host reads its own.
+		input.TemplateRepositoryName = ghrepo.FullName(templateRepo)
 		templateRepoMainBranch = repo.DefaultBranchRef.Name
 	}
 
@@ -484,6 +487,8 @@ func createFromTemplate(opts *CreateOptions) error {
 		IncludeAllBranches:   opts.IncludeAllBranches,
 		InitReadme:           opts.AddReadme,
 		TemplateRepositoryID: templateRepo.ID,
+		// Gitea's generate endpoint is addressed by owner/name, not by an id.
+		TemplateRepositoryName: ghrepo.FullName(templateRepo),
 	}
 	templateRepoMainBranch := templateRepo.DefaultBranchRef.Name
 

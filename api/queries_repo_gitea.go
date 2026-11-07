@@ -1,7 +1,10 @@
 package api
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -267,4 +270,35 @@ func FetchRepository(client *Client, repo ghrepo.Interface, fields []string) (*R
 	}
 
 	return InitRepoHostname(result.Repository, repo.RepoHost()), nil
+}
+
+// SetRepositoryArchivedGitea sets a repository's archived flag.
+//
+// GitHub has archiveRepository and unarchiveRepository mutations, both addressed
+// by node id. Gitea has neither: archived is a field of EditRepoOption, so both
+// directions are the same PATCH with a boolean, and the repository is addressed by
+// its path.
+//
+// The body carries only archived. Gitea treats an omitted field as no change, and
+// sending the fields gh happened to have loaded would risk overwriting an edit
+// made between the read and the write.
+func SetRepositoryArchivedGitea(client *Client, repo ghrepo.Interface, archived bool) error {
+	path := fmt.Sprintf("repos/%s/%s", repo.RepoOwner(), repo.RepoName())
+
+	payload, err := json.Marshal(struct {
+		Archived bool `json:"archived"`
+	}{Archived: archived})
+	if err != nil {
+		return fmt.Errorf("failed to serialize: %w", err)
+	}
+
+	resp, err := client.Request(repo.RepoHost(), http.MethodPatch, path, bytes.NewReader(payload))
+	if err != nil {
+		return err
+	}
+	// A successful edit answers 200 with the repository body, which the caller does
+	// not need: the command prints its own confirmation.
+	_, _ = io.Copy(io.Discard, resp.Body)
+	resp.Body.Close()
+	return nil
 }

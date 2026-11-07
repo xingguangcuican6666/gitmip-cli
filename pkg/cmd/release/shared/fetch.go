@@ -235,6 +235,9 @@ func FetchLatestRelease(ctx context.Context, httpClient *http.Client, repo ghrep
 	if err != nil {
 		return nil, err
 	}
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return fetchReleaseGiteaPath(ctx, httpClient, repo, path)
+	}
 	return fetchReleasePath(ctx, httpClient, repo.RepoHost(), path)
 }
 

@@ -516,3 +516,32 @@ func TestIssueRepoInfoGitea(t *testing.T) {
 	assert.True(t, repo.HasIssuesEnabled)
 	assert.Equal(t, "READ", repo.ViewerPermission)
 }
+
+func TestSetRepositoryArchivedGitea(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		archived bool
+	}{
+		{name: "archived", archived: true},
+		{name: "unarchived", archived: false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			withGiteaHost(t)
+			reg := &httpmock.Registry{}
+			defer reg.Verify(t)
+
+			var body map[string]any
+			reg.Register(
+				httpmock.REST("PATCH", "api/v1/repos/gitea/tea"),
+				httpmock.RESTPayload(200, `{}`, func(p map[string]any) { body = p }),
+			)
+
+			client := NewClientFromHTTP(&http.Client{Transport: reg})
+			require.NoError(t, SetRepositoryArchivedGitea(client, giteaRepo, tc.archived))
+
+			// Only the archived flag is sent, so a concurrent edit to any other
+			// field cannot be clobbered by this request.
+			assert.Equal(t, map[string]any{"archived": tc.archived}, body)
+		})
+	}
+}

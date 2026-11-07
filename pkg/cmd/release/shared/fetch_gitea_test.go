@@ -1,197 +1,104 @@
 package shared
 
 import (
-	"context"
-	"net/http"
-	"strconv"
 	"testing"
 
-	"github.com/cli/go-gh/v2/pkg/api"
-
-	"github.com/cli/cli/v2/internal/ghrepo"
-	"github.com/cli/cli/v2/internal/hosttype"
-	"github.com/cli/cli/v2/pkg/httpmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-var giteaRepo = ghrepo.NewWithHost("gitea", "tea", "git.example.com")
-
-func TestFetchReleaseGiteaPublished(t *testing.T) {
-	restore := hosttype.SetHostTypeOverride(map[string]hosttype.Type{
-		"git.example.com": hosttype.Gitea,
-	})
-	t.Cleanup(restore)
-
-	reg := &httpmock.Registry{}
-	defer reg.Verify(t)
-
-	// Only the published lookup is registered. A draft listing would fail the
-	// test, since the tag was found on the first request.
-	reg.Register(
-		httpmock.REST("GET", "api/v1/repos/gitea/tea/releases/tags/v1.2.3"),
-		httpmock.StringResponse(`{"id":7,"tag_name":"v1.2.3","draft":false}`),
-	)
-
-	release, err := FetchRelease(context.Background(), &http.Client{Transport: reg}, giteaRepo, "v1.2.3")
-	require.NoError(t, err)
-	assert.Equal(t, "v1.2.3", release.TagName)
-	assert.False(t, release.IsDraft)
-}
-
-// Gitea has no query for a draft by pending tag, so a miss on the tags endpoint
-// falls back to listing drafts and matching tag_name locally.
-func TestFetchReleaseGiteaDraftByPendingTag(t *testing.T) {
-	restore := hosttype.SetHostTypeOverride(map[string]hosttype.Type{
-		"git.example.com": hosttype.Gitea,
-	})
-	t.Cleanup(restore)
-
-	reg := &httpmock.Registry{}
-	defer reg.Verify(t)
-
-	reg.Register(
-		httpmock.REST("GET", "api/v1/repos/gitea/tea/releases/tags/v2.0.0"),
-		httpmock.JSONErrorResponse(404, api.HTTPError{StatusCode: 404, Message: "Not Found"}),
-	)
-
-	var gotQuery string
-	reg.Register(
-		httpmock.REST("GET", "api/v1/repos/gitea/tea/releases"),
-		func(req *http.Request) (*http.Response, error) {
-			gotQuery = req.URL.RawQuery
-			return httpmock.StringResponse(`[
-				{"id":8,"tag_name":"v1.9.0","draft":true},
-				{"id":9,"tag_name":"v2.0.0","draft":true}
-			]`)(req)
+func TestMapGiteaRelease(t *testing.T) {
+	raw := giteaRelease{
+		DatabaseID:      42,
+		TagName:         "v1.0.0",
+		Name:            "the name",
+		Body:            "the body",
+		IsDraft:         false,
+		IsPrerelease:    true,
+		CreatedAt:       "2024-01-01T00:00:00Z",
+		PublishedAt:     "2024-01-02T00:00:00Z",
+		TargetCommitish: "abc123",
+		APIURL:          "https://git.example.com/api/v1/repos/gitea/tea/releases/42",
+		UploadURL:       "https://git.example.com/api/v1/repos/gitea/tea/releases/42/assets",
+		URL:             "https://git.example.com/gitea/tea/releases/tag/v1.0.0",
+		Assets: []giteaAsset{
+			{ID: 7, Name: "file.tar.gz", Size: 100, DownloadCount: 3,
+				BrowserDownloadURL: "https://git.example.com/gitea/tea/releases/download/v1.0.0/file.tar.gz"},
 		},
-	)
-
-	release, err := FetchRelease(context.Background(), &http.Client{Transport: reg}, giteaRepo, "v2.0.0")
-	require.NoError(t, err)
-	assert.Equal(t, int64(9), release.DatabaseID)
-	assert.True(t, release.IsDraft)
-
-	// draft=true is Gitea's inclusion filter, which narrows to drafts only.
-	assert.Contains(t, gotQuery, "draft=true")
-}
-
-func TestFetchReleaseGiteaIgnoresPublishedRowsInDraftList(t *testing.T) {
-	restore := hosttype.SetHostTypeOverride(map[string]hosttype.Type{
-		"git.example.com": hosttype.Gitea,
-	})
-	t.Cleanup(restore)
-
-	reg := &httpmock.Registry{}
-	defer reg.Verify(t)
-
-	reg.Register(
-		httpmock.REST("GET", "api/v1/repos/gitea/tea/releases/tags/v3.0.0"),
-		httpmock.JSONErrorResponse(404, api.HTTPError{StatusCode: 404, Message: "Not Found"}),
-	)
-	// A row carrying the tag but not flagged draft must not be returned, so a
-	// published release is never mistaken for a draft of the same name.
-	reg.Register(
-		httpmock.REST("GET", "api/v1/repos/gitea/tea/releases"),
-		httpmock.StringResponse(`[{"id":3,"tag_name":"v3.0.0","draft":false}]`),
-	)
-
-	_, err := FetchRelease(context.Background(), &http.Client{Transport: reg}, giteaRepo, "v3.0.0")
-	require.ErrorIs(t, err, ErrReleaseNotFound)
-}
-
-func TestFetchReleaseGiteaNotFoundWhenBothLookupsMiss(t *testing.T) {
-	restore := hosttype.SetHostTypeOverride(map[string]hosttype.Type{
-		"git.example.com": hosttype.Gitea,
-	})
-	t.Cleanup(restore)
-
-	reg := &httpmock.Registry{}
-	defer reg.Verify(t)
-
-	reg.Register(
-		httpmock.REST("GET", "api/v1/repos/gitea/tea/releases/tags/v9.9.9"),
-		httpmock.JSONErrorResponse(404, api.HTTPError{StatusCode: 404, Message: "Not Found"}),
-	)
-	reg.Register(
-		httpmock.REST("GET", "api/v1/repos/gitea/tea/releases"),
-		httpmock.StringResponse(`[]`),
-	)
-
-	_, err := FetchRelease(context.Background(), &http.Client{Transport: reg}, giteaRepo, "v9.9.9")
-	require.ErrorIs(t, err, ErrReleaseNotFound)
-}
-
-// A server error on the published lookup must not be masked by the draft lookup
-// reporting not found, which is the behaviour the GitHub path has.
-func TestFetchReleaseGiteaReportsServerError(t *testing.T) {
-	restore := hosttype.SetHostTypeOverride(map[string]hosttype.Type{
-		"git.example.com": hosttype.Gitea,
-	})
-	t.Cleanup(restore)
-
-	reg := &httpmock.Registry{}
-	defer reg.Verify(t)
-
-	reg.Register(
-		httpmock.REST("GET", "api/v1/repos/gitea/tea/releases/tags/v1.0.0"),
-		httpmock.JSONErrorResponse(500, api.HTTPError{StatusCode: 500, Message: "boom"}),
-	)
-	reg.Register(
-		httpmock.REST("GET", "api/v1/repos/gitea/tea/releases"),
-		httpmock.StringResponse(`[]`),
-	)
-
-	_, err := FetchRelease(context.Background(), &http.Client{Transport: reg}, giteaRepo, "v1.0.0")
-	require.Error(t, err)
-	assert.NotErrorIs(t, err, ErrReleaseNotFound)
-	assert.Contains(t, err.Error(), "500")
-}
-
-func TestFetchReleaseGiteaPagesDrafts(t *testing.T) {
-	restore := hosttype.SetHostTypeOverride(map[string]hosttype.Type{
-		"git.example.com": hosttype.Gitea,
-	})
-	t.Cleanup(restore)
-
-	reg := &httpmock.Registry{}
-	defer reg.Verify(t)
-
-	reg.Register(
-		httpmock.REST("GET", "api/v1/repos/gitea/tea/releases/tags/v2.0.0"),
-		httpmock.JSONErrorResponse(404, api.HTTPError{StatusCode: 404, Message: "Not Found"}),
-	)
-
-	// A full page of unrelated drafts, then the short page holding the match.
-	// httpmock stubs are one-shot, so each page needs its own registration.
-	fullPage := "["
-	for i := range giteaReleasePageSize {
-		if i > 0 {
-			fullPage += ","
-		}
-		fullPage += `{"id":` + strconv.Itoa(1000+i) + `,"tag_name":"other","draft":true}`
 	}
-	fullPage += "]"
+	raw.Author.Login = "someone"
 
-	pages := 0
-	countPage := func(responder httpmock.Responder) httpmock.Responder {
-		return func(req *http.Request) (*http.Response, error) {
-			pages++
-			return responder(req)
-		}
-	}
+	release := mapGiteaRelease(raw)
 
-	reg.Register(
-		httpmock.REST("GET", "api/v1/repos/gitea/tea/releases"),
-		countPage(httpmock.StringResponse(fullPage)),
-	)
-	reg.Register(
-		httpmock.REST("GET", "api/v1/repos/gitea/tea/releases"),
-		countPage(httpmock.StringResponse(`[{"id":99,"tag_name":"v2.0.0","draft":true}]`)),
-	)
+	assert.Equal(t, int64(42), release.DatabaseID)
+	assert.Equal(t, "42", release.ID)
+	assert.Equal(t, "v1.0.0", release.TagName)
+	assert.Equal(t, "someone", release.Author.Login)
+	assert.True(t, release.IsPrerelease)
+	assert.False(t, release.IsDraft)
+	require.NotNil(t, release.PublishedAt)
+	assert.Equal(t, 2024, release.PublishedAt.Year())
 
-	release, err := FetchRelease(context.Background(), &http.Client{Transport: reg}, giteaRepo, "v2.0.0")
-	require.NoError(t, err)
-	assert.Equal(t, int64(99), release.DatabaseID)
-	assert.Equal(t, 2, pages)
+	require.Len(t, release.Assets, 1)
+	asset := release.Assets[0]
+	assert.Equal(t, "7", asset.ID)
+	assert.Equal(t, "file.tar.gz", asset.Name)
+	assert.Equal(t, int64(100), asset.Size)
+	assert.Equal(t, 3, asset.DownloadCount)
+	// The API URL is rebuilt from the release's own, because Gitea's asset
+	// response has no url field and every write to an asset is addressed by it.
+	assert.Equal(t, "https://git.example.com/api/v1/repos/gitea/tea/releases/42/assets/7", asset.APIURL)
+}
+
+func TestMapGiteaReleaseToleratesMissingTimes(t *testing.T) {
+	release := mapGiteaRelease(giteaRelease{DatabaseID: 1, CreatedAt: "not a time"})
+	assert.True(t, release.CreatedAt.IsZero())
+	assert.Nil(t, release.PublishedAt)
+}
+
+func TestCheckGiteaReleaseParams(t *testing.T) {
+	t.Run("create allows its fields", func(t *testing.T) {
+		err := CheckGiteaReleaseCreateParams(map[string]any{
+			"tag_name": "v1", "body": "b", "draft": true, "prerelease": false,
+		})
+		assert.NoError(t, err)
+	})
+
+	t.Run("edit rejects make_latest when set", func(t *testing.T) {
+		err := CheckGiteaReleaseEditParams(map[string]any{"make_latest": "true"})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "latest-release marker")
+	})
+
+	t.Run("empty unsupported values pass", func(t *testing.T) {
+		err := CheckGiteaReleaseCreateParams(map[string]any{
+			"tag_name":                 "v1",
+			"discussion_category_name": "",
+			"generate_release_notes":   false,
+			"make_latest":              "",
+		})
+		assert.NoError(t, err)
+	})
+
+	t.Run("unknown field is reported", func(t *testing.T) {
+		err := CheckGiteaReleaseCreateParams(map[string]any{"something_new": "x"})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), `no "something_new" field`)
+	})
+}
+
+func TestNarrowGiteaReleaseParams(t *testing.T) {
+	out := NarrowGiteaReleaseParams(map[string]any{
+		"tag_name":                 "v1",
+		"make_latest":              "true",
+		"discussion_category_name": "General",
+		"body":                     "b",
+	})
+	assert.Equal(t, map[string]any{"tag_name": "v1", "body": "b"}, out)
+}
+
+func TestGiteaAssetURLFromUpload(t *testing.T) {
+	assert.Equal(t,
+		"https://git.example.com/api/v1/repos/gitea/tea/releases/42/assets/7",
+		giteaAssetURLFromUpload("https://git.example.com/api/v1/repos/gitea/tea/releases/42/assets?name=x", 7))
 }

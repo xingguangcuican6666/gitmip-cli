@@ -7,6 +7,7 @@ import (
 
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/shurcooL/githubv4"
 )
 
@@ -127,6 +128,10 @@ func (d *repoDir) ExportData(fields []string) map[string]any {
 // the path points to a file rather than a directory. The original ref (empty for
 // the default branch) is only used when building error messages.
 func fetchTree(httpClient *http.Client, repo ghrepo.Interface, dirPath, ref string) (*repoDir, error) {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return fetchTreeGitea(httpClient, repo, dirPath, ref)
+	}
+
 	client := api.NewClientFromHTTP(httpClient)
 
 	expressionRef := ref

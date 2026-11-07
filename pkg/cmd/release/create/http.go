@@ -12,6 +12,7 @@ import (
 
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/pkg/cmd/release/shared"
 	"github.com/shurcooL/githubv4"
@@ -39,6 +40,10 @@ func (e errMissingRequiredWorkflowScope) Error() string {
 }
 
 func remoteTagExists(httpClient *http.Client, repo ghrepo.Interface, tagName string) (bool, error) {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return shared.RemoteTagExistsGitea(httpClient, repo, tagName)
+	}
+
 	gql := api.NewClientFromHTTP(httpClient)
 	qualifiedTagName := fmt.Sprintf("refs/tags/%s", tagName)
 	var query struct {
@@ -73,6 +78,13 @@ func getTags(httpClient *http.Client, repo ghrepo.Interface, limit int) ([]tag, 
 }
 
 func generateReleaseNotes(httpClient *http.Client, repo ghrepo.Interface, tagName, target, previousTagName string) (*releaseNotes, error) {
+	// Gitea has no release-notes generation endpoint. The caller treats
+	// notImplementedError as "no notes available" and continues, which is the
+	// honest answer here rather than fabricating a changelog from the commit log.
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return nil, notImplementedError
+	}
+
 	params := map[string]any{
 		"tag_name": tagName,
 	}
@@ -138,6 +150,15 @@ func publishedReleaseExists(httpClient *http.Client, repo ghrepo.Interface, tagN
 }
 
 func createRelease(httpClient *http.Client, repo ghrepo.Interface, params map[string]any) (*shared.Release, error) {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		// Gitea rejects a body carrying a field it does not know, so the params are
+		// checked for anything it cannot accept, then narrowed to what it can.
+		if err := shared.CheckGiteaReleaseCreateParams(params); err != nil {
+			return nil, err
+		}
+		params = shared.NarrowGiteaReleaseParams(params)
+	}
+
 	bodyBytes, err := json.Marshal(params)
 	if err != nil {
 		return nil, err
@@ -159,6 +180,15 @@ func createRelease(httpClient *http.Client, repo ghrepo.Interface, params map[st
 	// beyond returning a 404.
 	//
 	// https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/scopes-for-oauth-apps#available-scopes
+	// Gitea answers with the same release shape but names its ids differently and
+	// gives assets no API url, so the response is mapped rather than decoded
+	// straight into gh's Release.
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return shared.DecodeGiteaRelease(httpClient, repo, func() (*http.Response, error) {
+			return api.NewClientFromHTTP(httpClient).Request(repo.RepoHost(), http.MethodPost, path.String(), bytes.NewBuffer(bodyBytes))
+		})
+	}
+
 	var newRelease shared.Release
 	// TODO(api-client-rollout)
 	// This line of code is part of a mechanical roll out of the api client.
@@ -192,6 +222,14 @@ func publishRelease(httpClient *http.Client, host string, releaseURL safeurl.Saf
 	bodyBytes, err := json.Marshal(params)
 	if err != nil {
 		return nil, err
+	}
+
+	if hosttype.IsGitea(host) {
+		// A publish on Gitea is the same PATCH that edits a release, and it
+		// carries neither discussion categories nor a latest marker, so both are
+		// dropped: the caller has already been refused if it asked for them
+		// explicitly, and this call only clears draft.
+		return shared.DecodeGiteaReleaseFromURL(httpClient, host, http.MethodPatch, releaseURL, bytes.NewBuffer(bodyBytes))
 	}
 
 	var release shared.Release
