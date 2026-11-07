@@ -10,6 +10,7 @@ import (
 
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/tableprinter"
 	"github.com/cli/cli/v2/pkg/cmd/ssh-key/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -63,16 +64,22 @@ func listRun(opts *ListOptions) error {
 		printError(opts.IO.ErrOut, authKeyErr)
 	}
 
-	sshSigningKeys, signKeyErr := shared.UserSigningKeys(apiClient, host, "")
-	if signKeyErr != nil {
-		printError(opts.IO.ErrOut, signKeyErr)
-	}
-
-	if authKeyErr != nil && signKeyErr != nil {
+	// Gitea keeps no signing-key collection, so there is nothing to list and the
+	// absence is not worth a warning: every key Gitea stores is in the single
+	// keys list printed below, and signing with one is a local git setting.
+	sshKeys := sshAuthKeys
+	if !hosttype.IsGitea(host) {
+		sshSigningKeys, signKeyErr := shared.UserSigningKeys(apiClient, host, "")
+		if signKeyErr != nil {
+			printError(opts.IO.ErrOut, signKeyErr)
+			if authKeyErr != nil {
+				return cmdutil.SilentError
+			}
+		}
+		sshKeys = append(sshKeys, sshSigningKeys...)
+	} else if authKeyErr != nil {
 		return cmdutil.SilentError
 	}
-
-	sshKeys := append(sshAuthKeys, sshSigningKeys...)
 
 	if len(sshKeys) == 0 {
 		return cmdutil.NewNoResultsError("no SSH keys present in the GitHub account")

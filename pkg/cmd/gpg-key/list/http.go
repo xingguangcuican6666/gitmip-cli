@@ -45,7 +45,9 @@ func userKeys(httpClient *http.Client, host, userHandle string) ([]gpgKey, error
 			return nil, err
 		}
 	}
-	u.SetQuery("per_page", "100")
+	// Gitea names the page size limit and caps it server-side, so the GitHub
+	// spelling would be ignored and a shorter page returned.
+	api.SetPageSizeMutable(u, host, 100)
 
 	var keys []gpgKey
 	// TODO(api-client-rollout)

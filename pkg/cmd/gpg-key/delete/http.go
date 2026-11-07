@@ -28,7 +28,9 @@ func getGPGKeys(httpClient *http.Client, host string) ([]gpgKey, error) {
 	if err != nil {
 		return nil, err
 	}
-	u.SetQuery("per_page", "100")
+	// Gitea names the page size limit, so the GitHub spelling would be ignored
+	// and the search for the key to delete could miss it past the server default.
+	api.SetPageSizeMutable(u, host, 100)
 
 	var keys []gpgKey
 	// TODO(api-client-rollout)
