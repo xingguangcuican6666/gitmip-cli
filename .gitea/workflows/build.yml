@@ -86,6 +86,8 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
         with:
+          # script/package stamps the version from git describe, so the tags have
+          # to be present.
           fetch-depth: 0
 
       - name: Set up Go
@@ -94,45 +96,27 @@ jobs:
           go-version-file: go.mod
           cache: false
 
-      - name: Build
-        env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-        run: |
-          # The binary is gm, not gh: this fork renamed the command and does
-          # not ship a gh-named executable.
-          suffix=""
-          if [ "$GOOS" = "windows" ]; then
-            suffix=".exe"
-          fi
-          version=$(git describe --tags --always)
-          pkgdir="gitmip-cli_${version}_${GOOS}_${GOARCH}"
-          mkdir -p "dist/${pkgdir}"
-          go build -trimpath -buildvcs=false \
-            -ldflags "-s -w -X github.com/cli/cli/v2/internal/build.Version=${version}" \
-            -o "dist/${pkgdir}/gm${suffix}" ./cmd/gm
-          # Package the man pages and LICENSE alongside the binary so the
-          # archive is self-describing the way the upstream release tarballs are.
-          go run ./cmd/gen-docs --man-page --doc-path "dist/${pkgdir}/share/man/man1" || true
-          cp LICENSE "dist/${pkgdir}/" 2>/dev/null || true
+      - name: Package
+        # script/package is shared with the GitHub workflow, so both hosts ship
+        # archives with the same name and the same contents.
+        run: script/package "${{ matrix.goos }}" "${{ matrix.goarch }}"
 
-      - name: Package archive
-        env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
+      - name: Verify archive
         run: |
-          # tar.gz for every platform, Windows included: the runner image always
-          # has tar, and installing zip for one matrix entry would make the
-          # Windows package depend on a package-manager step the others do not.
-          version=$(git describe --tags --always)
-          pkgdir="gitmip-cli_${version}_${GOOS}_${GOARCH}"
-          tar -czf "dist/${pkgdir}.tar.gz" -C dist "${pkgdir}"
-          rm -rf "dist/${pkgdir}"
-          ls -l dist/
+          set -euo pipefail
+          archive=$(ls dist/gitmip-cli_*_${{ matrix.goos }}_${{ matrix.goarch }}.tar.gz)
+          (cd dist && sha256sum -c "$(basename "$archive").sha256")
+          tar -tzf "$archive" > /tmp/contents
+          grep -q "/gm\(.exe\)\?$" /tmp/contents || { echo "no gm binary in $archive"; exit 1; }
+          grep -q "/LICENSE$" /tmp/contents || { echo "no LICENSE in $archive"; exit 1; }
+          grep -q "/share/man/man1/gm.1$" /tmp/contents || { echo "no man pages in $archive"; exit 1; }
+          echo "verified $archive ($(wc -l < /tmp/contents) entries)"
 
       - name: Upload archive
         uses: actions/upload-artifact@v4
         with:
           name: gitmip-cli_${{ matrix.goos }}_${{ matrix.goarch }}
-          path: dist/*.tar.gz
+          path: |
+            dist/*.tar.gz
+            dist/*.tar.gz.sha256
           if-no-files-found: error

@@ -1,0 +1,75 @@
+#!/bin/bash
+#
+# Build one distributable package for a single target.
+#
+# Usage:
+#   script/package <goos> <goarch> [version]
+#
+# Writes dist/gitmip-cli_<version>_<goos>_<goarch>.tar.gz holding the gm binary,
+# the man pages and LICENSE, next to a .sha256 checksum file for it. The version
+# defaults to `git describe --tags --always` and is stamped into the binary too,
+# so the archive name and `gm --version` agree.
+#
+# Both packaging workflows call this script rather than inlining the build, so
+# the two hosts cannot drift apart on what an archive contains.
+
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+if [ $# -lt 2 ]; then
+  echo "usage: script/package <goos> <goarch> [version]" >&2
+  exit 1
+fi
+
+goos="$1"
+goarch="$2"
+version="${3:-$(git describe --tags --always)}"
+
+exe=""
+if [ "$goos" = windows ]; then
+  exe=".exe"
+fi
+
+name="gitmip-cli_${version}_${goos}_${goarch}"
+
+hostdir="$(mktemp -d)"
+trap 'rm -rf "$hostdir"' EXIT
+hostbuild="${hostdir}/build"
+
+# script/build.go has to be compiled for the host before it can drive a build for
+# another target: `go run` would honour GOOS and produce an executable this
+# machine cannot run. This mirrors the `script/build` rule in the Makefile.
+env GOOS= GOARCH= GOARM= GOFLAGS= CGO_ENABLED= go build -o "$hostbuild" script/build.go
+
+# The man pages are plain roff, identical on every platform, and gen-docs built
+# for a foreign GOOS cannot execute here, so they are generated once with the
+# host toolchain and copied into each target's package.
+if [ ! -f share/man/man1/gm.1 ]; then
+  env GOOS= GOARCH= GOARM= CGO_ENABLED= "$hostbuild" manpages
+fi
+
+# bin/gm is removed first because script/build.go skips the rebuild when the
+# binary on disk is newer than every source file, which would otherwise leave the
+# previous target's architecture in this package.
+rm -f bin/gm bin/gm.exe
+GOOS="$goos" GOARCH="$goarch" CGO_ENABLED=0 GH_VERSION="$version" \
+  "$hostbuild" "bin/gm${exe}"
+
+rm -rf "dist/${name}"
+mkdir -p "dist/${name}/share/man/man1"
+mv "bin/gm${exe}" "dist/${name}/gm${exe}"
+cp LICENSE "dist/${name}/"
+cp share/man/man1/*.1 "dist/${name}/share/man/man1/"
+
+tar -czf "dist/${name}.tar.gz" -C dist "$name"
+rm -rf "dist/${name}"
+
+# macOS has no sha256sum; shasum writes the same "<hash>  <file>" format.
+if command -v sha256sum >/dev/null 2>&1; then
+  (cd dist && sha256sum "${name}.tar.gz" > "${name}.tar.gz.sha256")
+else
+  (cd dist && shasum -a 256 "${name}.tar.gz" > "${name}.tar.gz.sha256")
+fi
+
+ls -l "dist/${name}.tar.gz" "dist/${name}.tar.gz.sha256"
