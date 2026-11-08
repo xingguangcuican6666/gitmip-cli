@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
-	ghmock "github.com/cli/cli/v2/internal/gh/mock"
+	"github.com/cli/cli/v2/internal/gm"
+	ghmock "github.com/cli/cli/v2/internal/gm/mock"
 	"github.com/cli/cli/v2/pkg/cmd/attestation/api"
 	"github.com/cli/cli/v2/pkg/cmd/attestation/test"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -25,7 +25,7 @@ func TestNewTrustedRootCmd(t *testing.T) {
 	testIO, _, _, _ := iostreams.Test()
 	f := &cmdutil.Factory{
 		IOStreams: testIO,
-		Config: func() (gh.Config, error) {
+		Config: func() (gm.Config, error) {
 			return &ghmock.ConfigMock{}, nil
 		},
 		HttpClient: func() (*http.Client, error) {
@@ -115,9 +115,9 @@ func TestNewTrustedRootWithTenancy(t *testing.T) {
 	t.Run("Host with NO auth configured", func(t *testing.T) {
 		f := &cmdutil.Factory{
 			IOStreams: testIO,
-			Config: func() (gh.Config, error) {
+			Config: func() (gm.Config, error) {
 				return &ghmock.ConfigMock{
-					AuthenticationFunc: func() gh.AuthConfig {
+					AuthenticationFunc: func() gm.AuthConfig {
 						return &stubAuthConfig{hasActiveToken: false}
 					},
 				}, nil
@@ -146,9 +146,9 @@ func TestNewTrustedRootWithTenancy(t *testing.T) {
 	t.Run("Host with auth configured", func(t *testing.T) {
 		f := &cmdutil.Factory{
 			IOStreams: testIO,
-			Config: func() (gh.Config, error) {
+			Config: func() (gm.Config, error) {
 				return &ghmock.ConfigMock{
-					AuthenticationFunc: func() gh.AuthConfig {
+					AuthenticationFunc: func() gm.AuthConfig {
 						return &stubAuthConfig{hasActiveToken: true}
 					},
 				}, nil
@@ -211,7 +211,7 @@ type stubAuthConfig struct {
 	hasActiveToken bool
 }
 
-var _ gh.AuthConfig = (*stubAuthConfig)(nil)
+var _ gm.AuthConfig = (*stubAuthConfig)(nil)
 
 func (c *stubAuthConfig) HasActiveToken(host string) bool {
 	return c.hasActiveToken

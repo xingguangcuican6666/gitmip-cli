@@ -19,7 +19,7 @@ import (
 //
 // Three differences carry into the result.
 //
-// A tree has no id. GitHub's Tree carries a node id and gh exports it; Gitea's
+// A tree has no id. GitHub's Tree carries a node id and gm exports it; Gitea's
 // response has only the tree's SHA, so the exported id is empty. Filling it with
 // the SHA would put a different kind of identifier in a field that means a node id
 // everywhere else.

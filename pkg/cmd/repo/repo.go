@@ -32,9 +32,9 @@ func NewCmdRepo(f *cmdutil.Factory) *cobra.Command {
 		Short: "Manage repositories",
 		Long:  `Work with GitHub repositories.`,
 		Example: heredoc.Doc(`
-			$ gh repo create
-			$ gh repo clone cli/cli
-			$ gh repo view --web
+			$ gm repo create
+			$ gm repo clone cli/cli
+			$ gm repo view --web
 		`),
 		Annotations: map[string]string{
 			"help:arguments": heredoc.Doc(`

@@ -18,9 +18,9 @@ import (
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/attachments"
 	fd "github.com/cli/cli/v2/internal/featuredetection"
-	"github.com/cli/cli/v2/internal/gh"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/internal/run"
 	"github.com/cli/cli/v2/internal/telemetry"
 	prShared "github.com/cli/cli/v2/pkg/cmd/pr/shared"
@@ -1081,7 +1081,7 @@ func Test_editRun(t *testing.T) {
 				IssueNumbers: []int{123},
 				Interactive:  false,
 				Parent:       "100",
-				FetchOptions: func(_ *api.Client, _ ghrepo.Interface, _ *prShared.Editable, _ gh.ProjectsV1Support) error {
+				FetchOptions: func(_ *api.Client, _ ghrepo.Interface, _ *prShared.Editable, _ gm.ProjectsV1Support) error {
 					return nil
 				},
 			},
@@ -1113,7 +1113,7 @@ func Test_editRun(t *testing.T) {
 				IssueNumbers: []int{123},
 				Interactive:  false,
 				RemoveParent: true,
-				FetchOptions: func(_ *api.Client, _ ghrepo.Interface, _ *prShared.Editable, _ gh.ProjectsV1Support) error {
+				FetchOptions: func(_ *api.Client, _ ghrepo.Interface, _ *prShared.Editable, _ gm.ProjectsV1Support) error {
 					return nil
 				},
 			},
@@ -1155,7 +1155,7 @@ func Test_editRun(t *testing.T) {
 				IssueNumbers: []int{100},
 				Interactive:  false,
 				AddSubIssues: []string{"123", "124"},
-				FetchOptions: func(_ *api.Client, _ ghrepo.Interface, _ *prShared.Editable, _ gh.ProjectsV1Support) error {
+				FetchOptions: func(_ *api.Client, _ ghrepo.Interface, _ *prShared.Editable, _ gm.ProjectsV1Support) error {
 					return nil
 				},
 			},
@@ -1199,7 +1199,7 @@ func Test_editRun(t *testing.T) {
 				IssueNumbers:    []int{100},
 				Interactive:     false,
 				RemoveSubIssues: []string{"123"},
-				FetchOptions: func(_ *api.Client, _ ghrepo.Interface, _ *prShared.Editable, _ gh.ProjectsV1Support) error {
+				FetchOptions: func(_ *api.Client, _ ghrepo.Interface, _ *prShared.Editable, _ gm.ProjectsV1Support) error {
 					return nil
 				},
 			},
@@ -1231,7 +1231,7 @@ func Test_editRun(t *testing.T) {
 				Interactive:     false,
 				AddBlockedBy:    []string{"200"},
 				RemoveBlockedBy: []string{"201"},
-				FetchOptions: func(_ *api.Client, _ ghrepo.Interface, _ *prShared.Editable, _ gh.ProjectsV1Support) error {
+				FetchOptions: func(_ *api.Client, _ ghrepo.Interface, _ *prShared.Editable, _ gm.ProjectsV1Support) error {
 					return nil
 				},
 			},
@@ -1277,7 +1277,7 @@ func Test_editRun(t *testing.T) {
 				IssueNumbers: []int{123},
 				Interactive:  false,
 				AddBlocking:  []string{"300"},
-				FetchOptions: func(_ *api.Client, _ ghrepo.Interface, _ *prShared.Editable, _ gh.ProjectsV1Support) error {
+				FetchOptions: func(_ *api.Client, _ ghrepo.Interface, _ *prShared.Editable, _ gm.ProjectsV1Support) error {
 					return nil
 				},
 			},
@@ -1309,7 +1309,7 @@ func Test_editRun(t *testing.T) {
 				IssueNumbers:   []int{123},
 				Interactive:    false,
 				RemoveBlocking: []string{"300"},
-				FetchOptions: func(_ *api.Client, _ ghrepo.Interface, _ *prShared.Editable, _ gh.ProjectsV1Support) error {
+				FetchOptions: func(_ *api.Client, _ ghrepo.Interface, _ *prShared.Editable, _ gm.ProjectsV1Support) error {
 					return nil
 				},
 			},
@@ -1767,7 +1767,7 @@ func Test_editRun(t *testing.T) {
 			// Given a pending event when operation counts are under test
 			attachmentRecorder := &telemetry.InvocationRecorderSpy{}
 			if tt.wantOperations != nil {
-				tt.input.AttachEvent = attachments.BeginTelemetry(attachmentRecorder, "gh test", len(tt.attach))
+				tt.input.AttachEvent = attachments.BeginTelemetry(attachmentRecorder, "gm test", len(tt.attach))
 			}
 
 			// When issue editing runs
@@ -2105,7 +2105,7 @@ func Test_editRun_crossHostRelationshipRefs(t *testing.T) {
 			tt.input.Detector = &fd.EnabledDetectorMock{}
 			tt.input.IssueNumbers = []int{123}
 			tt.input.Interactive = false
-			tt.input.FetchOptions = func(_ *api.Client, _ ghrepo.Interface, _ *prShared.Editable, _ gh.ProjectsV1Support) error {
+			tt.input.FetchOptions = func(_ *api.Client, _ ghrepo.Interface, _ *prShared.Editable, _ gm.ProjectsV1Support) error {
 				return nil
 			}
 			tt.input.IO = ios

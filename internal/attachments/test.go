@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/pkg/httpmock"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
@@ -49,7 +49,7 @@ func AssertTestTelemetryEvents(t *testing.T, events []ghtelemetry.Event, attachC
 	require.Equal(t, []ghtelemetry.Event{
 		{
 			Type:       "attachment_invocation",
-			Dimensions: ghtelemetry.Dimensions{"command": "gh test"},
+			Dimensions: ghtelemetry.Dimensions{"command": "gm test"},
 			Measures: ghtelemetry.Measures{
 				"attach_count":      int64(attachCount),
 				"append_ops_count":  int64(result.AppendOperations),

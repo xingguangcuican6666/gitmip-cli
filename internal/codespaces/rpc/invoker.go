@@ -31,7 +31,7 @@ const (
 const (
 	codespacesInternalPort        = 16634
 	codespacesInternalSessionName = "CodespacesInternal"
-	clientName                    = "gh"
+	clientName                    = "gm"
 	connectedEventName            = "connected"
 	keepAliveEventName            = "keepAlive"
 )

@@ -46,29 +46,29 @@ func NewCmdCommits(f *cmdutil.Factory, runF func(*CommitsOptions) error) *cobra.
 			GitHub search syntax is documented at:
 			<https://docs.github.com/search-github/searching-on-github/searching-commits>
 
-			For more information on handling search queries containing a hyphen, run %[1]sgh search --help%[1]s.
+			For more information on handling search queries containing a hyphen, run %[1]sgm search --help%[1]s.
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Search commits matching set of keywords "readme" and "typo"
-			$ gh search commits readme typo
+			$ gm search commits readme typo
 
 			# Search commits matching phrase "bug fix"
-			$ gh search commits "bug fix"
+			$ gm search commits "bug fix"
 
 			# Search commits using raw search qualifiers as separate arguments
-			$ gh search commits fix author:monalisa merge:false
+			$ gm search commits fix author:monalisa merge:false
 
 			# Search commits committed by user "monalisa"
-			$ gh search commits --committer=monalisa
+			$ gm search commits --committer=monalisa
 
 			# Search commits authored by users with name "Jane Doe"
-			$ gh search commits --author-name="Jane Doe"
+			$ gm search commits --author-name="Jane Doe"
 
 			# Search commits matching hash "8dd03144ffdc6c0d486d6b705f9c7fba871ee7c3"
-			$ gh search commits --hash=8dd03144ffdc6c0d486d6b705f9c7fba871ee7c3
+			$ gm search commits --hash=8dd03144ffdc6c0d486d6b705f9c7fba871ee7c3
 
 			# Search commits authored before February 1st, 2022
-			$ gh search commits --author-date="<2022-02-01"
+			$ gm search commits --author-date="<2022-02-01"
 		`),
 		RunE: func(c *cobra.Command, args []string) error {
 			if len(args) == 0 && c.Flags().NFlag() == 0 {

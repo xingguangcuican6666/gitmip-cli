@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/pkg/auth"
 	"github.com/cli/cli/v2/utils"
 	ghAPI "github.com/cli/go-gh/v2/pkg/api"
@@ -25,7 +25,7 @@ type config interface {
 }
 
 // refreshingConfig is a refresh-aware token source. It can renew a near-expiry token before a request and
-// is implemented by gh's own configuration. It references the public auth credential types rather than primitive
+// is implemented by gm's own configuration. It references the public auth credential types rather than primitive
 // strings so the resolved token and its refresh metadata travel together.
 type refreshingConfig interface {
 	ActiveTokenWithRefresh(string) (auth.Credential, auth.RefreshStatus, error)
@@ -40,7 +40,7 @@ type HTTPClientOptions struct {
 	// RefreshingConfig, never both; NewHTTPClient returns an error if both are set. A token from Config is used as-is,
 	// with no refresh.
 	Config config
-	// RefreshingConfig is the refresh-aware token source gh supplies for its own clients. Provide either Config or
+	// RefreshingConfig is the refresh-aware token source gm supplies for its own clients. Provide either Config or
 	// RefreshingConfig, never both; NewHTTPClient returns an error if both are set. When set, a near-expiry
 	// token is refreshed on demand before each request.
 	RefreshingConfig refreshingConfig
@@ -61,7 +61,7 @@ func NewHTTPClient(opts HTTPClientOptions) (*http.Client, error) {
 		return nil, errors.New("provide either Config or RefreshingConfig, not both")
 	}
 
-	// Provide invalid host, and token values so gh.HTTPClient will not automatically resolve them.
+	// Provide invalid host, and token values so gm.HTTPClient will not automatically resolve them.
 	// The real host and token are inserted at request time.
 	clientOpts := ghAPI.ClientOptions{
 		Host:               "none",
@@ -81,7 +81,9 @@ func NewHTTPClient(opts HTTPClientOptions) (*http.Client, error) {
 		clientOpts.LogVerboseHTTP = opts.LogVerboseHTTP
 	}
 
-	ua := fmt.Sprintf("GitHub CLI %s", opts.AppVersion)
+	// The user agent identifies this fork, not the upstream project it came from:
+	// a server-side log that says "GitHub CLI" would misattribute the traffic.
+	ua := fmt.Sprintf("gitmip-cli %s", opts.AppVersion)
 	if opts.InvokingAgent != "" {
 		ua = fmt.Sprintf("%s Agent/%s", ua, opts.InvokingAgent)
 	}
@@ -151,7 +153,7 @@ func NewExternalHTTPClient(opts ExternalHTTPClientOptions) (*http.Client, error)
 	}
 
 	clientOpts.Headers = map[string]string{
-		userAgent: fmt.Sprintf("GitHub CLI %s", opts.AppVersion),
+		userAgent: fmt.Sprintf("gitmip-cli %s", opts.AppVersion),
 	}
 
 	client, err := ghAPI.NewHTTPClient(clientOpts)
@@ -181,13 +183,13 @@ func AddCacheTTLHeader(rt http.RoundTripper, ttl time.Duration) http.RoundTrippe
 }
 
 // AddAuthTokenHeader adds an authentication token header for the host specified by the request, using the primitive
-// token source. It is the backward-compatible entry point retained for external callers of this package; gh's own code
+// token source. It is the backward-compatible entry point retained for external callers of this package; gm's own code
 // authenticates through the refresh-aware AddAuthTokenHeaderWithRefresh.
 func AddAuthTokenHeader(rt http.RoundTripper, cfg config) http.RoundTripper {
 	return addAuthHeaderRoundTripper(rt, func(host string) string {
 		token, _ := cfg.ActiveToken(host)
 		if token == "" {
-			// The request may be aimed at a host's api_host, which gh is
+			// The request may be aimed at a host's api_host, which gm is
 			// not logged in to and so has no token of its own. Fall back
 			// to the token of the host it stands in for. This only ever
 			// adds a token where there would have been none, so hosts we
@@ -201,7 +203,7 @@ func AddAuthTokenHeader(rt http.RoundTripper, cfg config) http.RoundTripper {
 }
 
 // AddAuthTokenHeaderWithRefresh is the refresh-aware counterpart of AddAuthTokenHeader. It renews a near-expiry
-// token before attaching it, and is the attach helper gh's own code uses so its requests go through the
+// token before attaching it, and is the attach helper gm's own code uses so its requests go through the
 // refresh path rather than the backward-compatible primitive seam.
 func AddAuthTokenHeaderWithRefresh(rt http.RoundTripper, cfg refreshingConfig) http.RoundTripper {
 	return addAuthHeaderRoundTripper(rt, func(host string) string {
@@ -210,7 +212,7 @@ func AddAuthTokenHeaderWithRefresh(rt http.RoundTripper, cfg refreshingConfig) h
 		cred, _, _ := cfg.ActiveTokenWithRefresh(host)
 		token := cred.Token
 		if token == "" {
-			// The request may be aimed at a host's api_host, which gh is
+			// The request may be aimed at a host's api_host, which gm is
 			// not logged in to and so has no token of its own. Fall back
 			// to the token of the host it stands in for. This only ever
 			// adds a token where there would have been none, so hosts we

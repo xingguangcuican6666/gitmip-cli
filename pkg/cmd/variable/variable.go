@@ -16,7 +16,7 @@ func NewCmdVariable(f *cmdutil.Factory) *cobra.Command {
 		Short: "Manage GitHub Actions variables",
 		Long: heredoc.Docf(`
 			Variables can be set at the repository, environment or organization level for use in
-			GitHub Actions or Dependabot. Run %[1]sgh help variable set%[1]s to learn how to get started.
+			GitHub Actions or Dependabot. Run %[1]sgm help variable set%[1]s to learn how to get started.
 		`, "`"),
 	}
 

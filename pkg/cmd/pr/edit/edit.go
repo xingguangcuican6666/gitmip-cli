@@ -13,9 +13,9 @@ import (
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/attachments"
 	fd "github.com/cli/cli/v2/internal/featuredetection"
-	"github.com/cli/cli/v2/internal/gh"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/prompter"
 	shared "github.com/cli/cli/v2/pkg/cmd/pr/shared"
@@ -72,7 +72,7 @@ func NewCmdEdit(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder, ru
 			is selected.
 
 			Editing a pull request's projects requires authorization with the %[1]sproject%[1]s scope.
-			To authorize, run %[1]sgh auth refresh -s project%[1]s.
+			To authorize, run %[1]sgm auth refresh -s project%[1]s.
 
 			Use %[1]s--attach%[1]s to upload an image or video. Without a body flag the pull
 			request keeps the body it already has and the attachment is appended to it. If the
@@ -101,39 +101,39 @@ func NewCmdEdit(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder, ru
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Edit the title and body of a pull request
-			$ gh pr edit 23 --title "I found a bug" --body "Nothing works"
+			$ gm pr edit 23 --title "I found a bug" --body "Nothing works"
 
 			# Use a file as the body
-			$ gh pr edit 23 --body-file body.txt
+			$ gm pr edit 23 --body-file body.txt
 
 			# Append a screenshot to the body, with alt text after "#"
-			$ gh pr edit 23 --attach './login.png#The login error state'
+			$ gm pr edit 23 --attach './login.png#The login error state'
 
 			# Append multiple files by repeating the flag
-			$ gh pr edit 23 --attach ./before.png --attach ./after.png
+			$ gm pr edit 23 --attach ./before.png --attach ./after.png
 
 			# Manage labels
-			$ gh pr edit 23 --add-label "bug,help wanted" --remove-label "core"
+			$ gm pr edit 23 --add-label "bug,help wanted" --remove-label "core"
 
 			# Manage reviewers
-			$ gh pr edit 23 --add-reviewer monalisa,hubot --remove-reviewer myorg/team-name
+			$ gm pr edit 23 --add-reviewer monalisa,hubot --remove-reviewer myorg/team-name
 
 			# Re-request review
-			$ gh pr edit 23 --add-reviewer monalisa
+			$ gm pr edit 23 --add-reviewer monalisa
 
 			# Request a review from GitHub Copilot
-			$ gh pr edit 23 --add-reviewer "@copilot"
+			$ gm pr edit 23 --add-reviewer "@copilot"
 
 			# Manage assignees
-			$ gh pr edit 23 --add-assignee "@me" --remove-assignee monalisa,hubot
+			$ gm pr edit 23 --add-assignee "@me" --remove-assignee monalisa,hubot
 
 			# Assign GitHub Copilot
-			$ gh pr edit 23 --add-assignee "@copilot"
+			$ gm pr edit 23 --add-assignee "@copilot"
 
 			# Manage projects and milestones
-			$ gh pr edit 23 --add-project "Roadmap" --remove-project v1,v2
-			$ gh pr edit 23 --milestone "Version 1"
-			$ gh pr edit 23 --remove-milestone
+			$ gm pr edit 23 --add-project "Roadmap" --remove-project v1,v2
+			$ gm pr edit 23 --milestone "Version 1"
+			$ gm pr edit 23 --remove-milestone
 		`),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -608,12 +608,12 @@ func (s surveyor) EditFields(editable *shared.Editable, editorCmd string) error 
 }
 
 type EditableOptionsFetcher interface {
-	EditableOptionsFetch(*api.Client, ghrepo.Interface, *shared.Editable, gh.ProjectsV1Support) error
+	EditableOptionsFetch(*api.Client, ghrepo.Interface, *shared.Editable, gm.ProjectsV1Support) error
 }
 
 type fetcher struct{}
 
-func (f fetcher) EditableOptionsFetch(client *api.Client, repo ghrepo.Interface, opts *shared.Editable, projectsV1Support gh.ProjectsV1Support) error {
+func (f fetcher) EditableOptionsFetch(client *api.Client, repo ghrepo.Interface, opts *shared.Editable, projectsV1Support gm.ProjectsV1Support) error {
 	return shared.FetchOptions(client, repo, opts, projectsV1Support)
 }
 
@@ -622,7 +622,7 @@ type EditorRetriever interface {
 }
 
 type editorRetriever struct {
-	config func() (gh.Config, error)
+	config func() (gm.Config, error)
 }
 
 func (e editorRetriever) Retrieve() (string, error) {

@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/tableprinter"
 	"github.com/cli/cli/v2/pkg/cmd/ssh-key/shared"
@@ -20,7 +20,7 @@ import (
 
 type ListOptions struct {
 	IO         *iostreams.IOStreams
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 	HTTPClient func() (*http.Client, error)
 }
 

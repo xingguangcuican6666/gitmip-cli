@@ -43,7 +43,7 @@ func downloadArtifact(httpClient *http.Client, hostname string, url safeurl.Safe
 	}
 	defer resp.Body.Close()
 
-	tmpfile, err := os.CreateTemp("", "gh-artifact.*.zip")
+	tmpfile, err := os.CreateTemp("", "gm-artifact.*.zip")
 	if err != nil {
 		return fmt.Errorf("error initializing temporary file: %w", err)
 	}

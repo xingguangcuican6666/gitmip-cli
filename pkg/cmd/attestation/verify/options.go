@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghinstance"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmd/attestation/api"
 	"github.com/cli/cli/v2/pkg/cmd/attestation/artifact/oci"
 	"github.com/cli/cli/v2/pkg/cmd/attestation/io"
@@ -19,7 +19,7 @@ type Options struct {
 	ArtifactPath          string
 	BundlePath            string
 	UseBundleFromRegistry bool
-	Config                func() (gh.Config, error)
+	Config                func() (gm.Config, error)
 	TrustedRoot           string
 	DenySelfHostedRunner  bool
 	DigestAlgorithm       string

@@ -36,7 +36,7 @@ func TestOfficialExtensionStubRun(t *testing.T) {
 		{
 			name:       "non-TTY outside CI prints install instructions and returns silent error",
 			isTTY:      false,
-			wantStderr: "gh extension install github/gh-cool",
+			wantStderr: "gm extension install github/gh-cool",
 			wantErr:    "SilentError",
 		},
 		{

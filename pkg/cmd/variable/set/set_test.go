@@ -10,8 +10,8 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/pkg/cmd/variable/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -211,7 +211,7 @@ func Test_setRun_repo(t *testing.T) {
 				HttpClient: func() (*http.Client, error) {
 					return &http.Client{Transport: reg}, nil
 				},
-				Config: func() (gh.Config, error) { return config.NewMockConfig(), nil },
+				Config: func() (gm.Config, error) { return config.NewMockConfig(), nil },
 				BaseRepo: func() (ghrepo.Interface, error) {
 					return ghrepo.FromFullName("owner/repo")
 				},
@@ -284,7 +284,7 @@ func Test_setRun_env(t *testing.T) {
 				HttpClient: func() (*http.Client, error) {
 					return &http.Client{Transport: reg}, nil
 				},
-				Config: func() (gh.Config, error) { return config.NewMockConfig(), nil },
+				Config: func() (gm.Config, error) { return config.NewMockConfig(), nil },
 				BaseRepo: func() (ghrepo.Interface, error) {
 					return ghrepo.FromFullName("owner/repo")
 				},
@@ -395,7 +395,7 @@ func Test_setRun_org(t *testing.T) {
 			tt.opts.HttpClient = func() (*http.Client, error) {
 				return &http.Client{Transport: reg}, nil
 			}
-			tt.opts.Config = func() (gh.Config, error) {
+			tt.opts.Config = func() (gm.Config, error) {
 				return config.NewMockConfig(), nil
 			}
 			tt.opts.IO = ios

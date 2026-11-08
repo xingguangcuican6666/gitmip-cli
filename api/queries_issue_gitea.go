@@ -31,7 +31,7 @@ import (
 // GET /repos/{o}/{r}/issues/{index} answers for both. GitHub's lookup goes
 // through issueOrPullRequest and reports which of the two came back, so the
 // pull_request member of the response is what decides Typename here. Callers
-// such as `gh issue close` rely on that to refuse to act on a pull request.
+// such as `gm issue close` rely on that to refuse to act on a pull request.
 
 // giteaIssue is the subset of Gitea's Issue schema this package maps.
 type giteaIssue struct {
@@ -220,11 +220,11 @@ func FetchIssueGitea(client *Client, repo ghrepo.Interface, number int) (*Issue,
 //
 // Marking which comments the current user wrote costs one extra request for
 // GET /user, since Gitea reports no viewer flag on a comment. It is worth it:
-// `gh issue comment --edit-last` and `--delete-last` select the comment from
+// `gm issue comment --edit-last` and `--delete-last` select the comment from
 // exactly that set, and without the flag they would find nothing to act on.
 //
 // A failure to identify the viewer is not a failure to read the comments. An
-// unauthenticated run of `gh issue view` on a public repository gets the
+// unauthenticated run of `gm issue view` on a public repository gets the
 // conversation with no comment attributed to a viewer, which is the truth of the
 // situation; turning it into an error would break anonymous browsing that Gitea
 // otherwise allows.

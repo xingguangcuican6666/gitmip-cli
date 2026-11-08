@@ -3,7 +3,7 @@ package shared
 import (
 	"fmt"
 
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	ghauth "github.com/cli/go-gh/v2/pkg/auth"
 )
 

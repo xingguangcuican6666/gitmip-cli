@@ -9,8 +9,8 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/cli/cli/v2/git"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
-	ghmock "github.com/cli/cli/v2/internal/gh/mock"
+	"github.com/cli/cli/v2/internal/gm"
+	ghmock "github.com/cli/cli/v2/internal/gm/mock"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/internal/run"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -1001,9 +1001,9 @@ func Test_createRun(t *testing.T) {
 			name: "interactive create from scratch with host override",
 			opts: &CreateOptions{
 				Interactive: true,
-				Config: func() (gh.Config, error) {
+				Config: func() (gm.Config, error) {
 					cfg := &ghmock.ConfigMock{
-						AuthenticationFunc: func() gh.AuthConfig {
+						AuthenticationFunc: func() gm.AuthConfig {
 							authCfg := &config.AuthConfig{}
 							authCfg.SetHosts([]string{"example.com"})
 							authCfg.SetDefaultHost("example.com", "GH_HOST")
@@ -1096,7 +1096,7 @@ func Test_createRun(t *testing.T) {
 		}
 
 		if tt.opts.Config == nil {
-			tt.opts.Config = func() (gh.Config, error) {
+			tt.opts.Config = func() (gm.Config, error) {
 				return config.NewMockConfig(), nil
 			}
 		}

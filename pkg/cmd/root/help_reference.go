@@ -41,7 +41,7 @@ func longPager(io *iostreams.IOStreams) func(*cobra.Command, []string) {
 }
 
 func stringifyReference(cmd *cobra.Command) string {
-	buf := bytes.NewBufferString("# gh reference\n\n")
+	buf := bytes.NewBufferString("# gm reference\n\n")
 	for _, c := range cmd.Commands() {
 		if c.Hidden {
 			continue

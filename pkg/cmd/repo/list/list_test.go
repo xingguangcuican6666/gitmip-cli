@@ -15,7 +15,7 @@ import (
 
 	"github.com/cli/cli/v2/internal/config"
 	fd "github.com/cli/cli/v2/internal/featuredetection"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/httpmock"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -356,7 +356,7 @@ func runCommand(rt http.RoundTripper, isTTY bool, cli string) (*test.CmdOut, err
 		HttpClient: func() (*http.Client, error) {
 			return &http.Client{Transport: rt}, nil
 		},
-		Config: func() (gh.Config, error) {
+		Config: func() (gm.Config, error) {
 			return config.NewMockConfig(), nil
 		},
 	}
@@ -399,7 +399,7 @@ func TestRepoList_nontty(t *testing.T) {
 		HttpClient: func() (*http.Client, error) {
 			return &http.Client{Transport: httpReg}, nil
 		},
-		Config: func() (gh.Config, error) {
+		Config: func() (gm.Config, error) {
 			return config.NewMockConfig(), nil
 		},
 		Now: func() time.Time {
@@ -440,7 +440,7 @@ func TestRepoList_tty(t *testing.T) {
 		HttpClient: func() (*http.Client, error) {
 			return &http.Client{Transport: httpReg}, nil
 		},
-		Config: func() (gh.Config, error) {
+		Config: func() (gm.Config, error) {
 			return config.NewMockConfig(), nil
 		},
 		Now: func() time.Time {
@@ -510,7 +510,7 @@ func TestRepoList_noVisibilityField(t *testing.T) {
 		HttpClient: func() (*http.Client, error) {
 			return &http.Client{Transport: reg}, nil
 		},
-		Config: func() (gh.Config, error) {
+		Config: func() (gm.Config, error) {
 			return config.NewMockConfig(), nil
 		},
 		Now: func() time.Time {
@@ -548,7 +548,7 @@ func TestRepoList_invalidOwner(t *testing.T) {
 		HttpClient: func() (*http.Client, error) {
 			return &http.Client{Transport: reg}, nil
 		},
-		Config: func() (gh.Config, error) {
+		Config: func() (gm.Config, error) {
 			return config.NewMockConfig(), nil
 		},
 		Now: func() time.Time {

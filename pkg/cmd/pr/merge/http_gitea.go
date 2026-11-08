@@ -27,7 +27,7 @@ import (
 // Gitea uses as its default, so a user who opens the editor sees the text that
 // would be committed rather than an empty buffer.
 //
-// Branch deletion is the other difference. gh deletes the remote branch itself
+// Branch deletion is the other difference. gm deletes the remote branch itself
 // after merging on GitHub; Gitea's merge endpoint takes
 // delete_branch_after_merge, which is what makes the deletion part of the same
 // request that is allowed to fail. Asking for it here and skipping the separate
@@ -37,7 +37,7 @@ import (
 //
 // number is the pull request index, which is how Gitea addresses one; the node
 // id in payload.pullRequestID is meaningless there. useAdmin maps onto Gitea's
-// force_merge, which bypasses branch protection and is what gh's --admin means.
+// force_merge, which bypasses branch protection and is what gm's --admin means.
 func mergePullRequestGitea(client *http.Client, payload mergePayload, number int, useAdmin, deleteBranch bool) error {
 	method, err := giteaMergeMethod(payload.method)
 	if err != nil {
@@ -58,9 +58,9 @@ func mergePullRequestGitea(client *http.Client, payload mergePayload, number int
 	return api.MergePullRequestGitea(apiClient, payload.repo, number, in, useAdmin)
 }
 
-// giteaMergeMethod maps gh's merge method onto Gitea's `do` enum. Gitea offers
-// two strategies gh has no flag for (rebase-merge and fast-forward-only), and
-// every strategy gh can ask for has a counterpart, so the mapping is total in the
+// giteaMergeMethod maps gm's merge method onto Gitea's `do` enum. Gitea offers
+// two strategies gm has no flag for (rebase-merge and fast-forward-only), and
+// every strategy gm can ask for has a counterpart, so the mapping is total in the
 // direction that matters.
 func giteaMergeMethod(method PullRequestMergeMethod) (api.PullRequestMergeMethodGitea, error) {
 	switch method {

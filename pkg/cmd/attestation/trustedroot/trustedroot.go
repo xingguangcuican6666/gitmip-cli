@@ -39,7 +39,7 @@ func NewTrustedRootCmd(f *cmdutil.Factory, runF func(*Options) error) *cobra.Com
 		Long: heredoc.Docf(`
 			Output contents for a trusted_root.jsonl file, likely for offline verification.
 
-			When using %[1]sgh attestation verify%[1]s, if your machine is on the internet,
+			When using %[1]sgm attestation verify%[1]s, if your machine is on the internet,
 			this will happen automatically. But to do offline verification, you need to
 			supply a trusted root file with %[1]s--custom-trusted-root%[1]s; this command
 			will help you fetch a %[1]strusted_root.jsonl%[1]s file for that purpose.
@@ -56,7 +56,7 @@ func NewTrustedRootCmd(f *cmdutil.Factory, runF func(*Options) error) *cobra.Com
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Get a trusted_root.jsonl for both Sigstore Public Good and GitHub's instance
-			$ gh attestation trusted-root
+			$ gm attestation trusted-root
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if opts.Hostname == "" {

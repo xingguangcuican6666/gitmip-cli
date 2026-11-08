@@ -99,13 +99,13 @@ func (r *ResolvedRemotes) BaseRepo(io *iostreams.IOStreams) (ghrepo.Interface, e
 	cs := io.ColorScheme()
 
 	fmt.Fprintf(io.ErrOut,
-		"%s No default remote repository has been set. To learn more about the default repository, run: gh repo set-default --help\n",
+		"%s No default remote repository has been set. To learn more about the default repository, run: gm repo set-default --help\n",
 		cs.FailureIcon())
 
 	fmt.Fprintln(io.Out)
 
 	return nil, errors.New(
-		"please run `gh repo set-default` to select a default remote repository.")
+		"please run `gm repo set-default` to select a default remote repository.")
 }
 
 func (r *ResolvedRemotes) HeadRepos() ([]*api.Repository, error) {

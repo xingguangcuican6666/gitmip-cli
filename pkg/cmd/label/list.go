@@ -43,10 +43,10 @@ func newCmdList(f *cmdutil.Factory, runF func(*listOptions) error) *cobra.Comman
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Sort labels by name
-			$ gh label list --sort name
+			$ gm label list --sort name
 
 			# Find labels with "bug" in the name or description
-			$ gh label list --search bug
+			$ gm label list --search bug
 		`),
 		Args:    cobra.NoArgs,
 		Aliases: []string{"ls"},

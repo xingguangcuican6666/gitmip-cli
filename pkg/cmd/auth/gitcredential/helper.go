@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/spf13/cobra"
@@ -16,7 +16,7 @@ import (
 const tokenUser = "x-access-token"
 
 type config interface {
-	ActiveTokenWithRefresh(string) (gh.Credential, gh.RefreshStatus, error)
+	ActiveTokenWithRefresh(string) (gm.Credential, gm.RefreshStatus, error)
 	ActiveUser(string) (string, error)
 }
 
@@ -69,7 +69,7 @@ func helperRun(opts *CredentialOptions) error {
 	}
 
 	if opts.Operation != "get" {
-		return fmt.Errorf("gh auth git-credential: %q operation not supported", opts.Operation)
+		return fmt.Errorf("gm auth git-credential: %q operation not supported", opts.Operation)
 	}
 
 	wants := map[string]string{}
@@ -128,8 +128,8 @@ func helperRun(opts *CredentialOptions) error {
 
 	// A rejected refresh token can only be recovered by re-authenticating. Notify the user on
 	// stderr, which git surfaces, and hand git no credential rather than one that is already dead.
-	if refreshStatus == gh.RefreshStatusExpired {
-		fmt.Fprintf(opts.IO.ErrOut, "the token for %s has expired; please run 'gh auth login' to re-authenticate\n", lookupHost)
+	if refreshStatus == gm.RefreshStatusExpired {
+		fmt.Fprintf(opts.IO.ErrOut, "the token for %s has expired; please run 'gm auth login' to re-authenticate\n", lookupHost)
 		return cmdutil.SilentError
 	}
 
@@ -152,19 +152,19 @@ func helperRun(opts *CredentialOptions) error {
 		return cmdutil.SilentError
 	}
 
-	// For an expiring, refreshable token we want to stop a caching helper chained in front of gh
+	// For an expiring, refreshable token we want to stop a caching helper chained in front of gm
 	// from persisting it, since a cached copy goes stale as soon as the token is refreshed or
-	// replaced out of band (for example by gh auth refresh or gh auth login). git offers exactly
+	// replaced out of band (for example by gm auth refresh or gm auth login). git offers exactly
 	// one mechanism for this: under the authtype capability (git 2.46 and newer) a helper may mark a
 	// credential ephemeral, and caching helpers such as git-credential-cache then refuse to store
 	// it. See https://git-scm.com/docs/git-credential/2.46.0#IOFMT for the ephemeral attribute. We
 	// deliberately do not use password_expiry_utc instead: it only makes a cache drop a
 	// naturally expired token, does nothing for out-of-band replacement, and advertising a
 	// far-future expiry would make a cache trust a stale token even longer than its own TTL. When a
-	// token is rejected git also sends erase to every helper and re-consults gh on the next call, so
+	// token is rejected git also sends erase to every helper and re-consults gm on the next call, so
 	// staleness self-heals regardless.
 	//
-	// Whether a caching helper sits in front of gh is the user's own git configuration; gh only
+	// Whether a caching helper sits in front of gm is the user's own git configuration; gm only
 	// configures itself as the credential helper for its hosts, so this is an uncommon setup.
 	if authtypeCapability && cred.IsRefreshable() {
 		// Express the credential through the opaque credential field so we can also mark it
@@ -183,8 +183,8 @@ func helperRun(opts *CredentialOptions) error {
 
 	if cred.IsRefreshable() {
 		// Older git does not offer the authtype capability, so we cannot mark the token ephemeral.
-		// Warn in case a caching helper is chained in front of gh and would serve a stale token.
-		fmt.Fprint(opts.IO.ErrOut, "WARNING: gh: this git version cannot mark the expiring token as non-cacheable; upgrade to git 2.46 or newer, or avoid a credential caching helper, to prevent a stale token being reused\n")
+		// Warn in case a caching helper is chained in front of gm and would serve a stale token.
+		fmt.Fprint(opts.IO.ErrOut, "WARNING: gm: this git version cannot mark the expiring token as non-cacheable; upgrade to git 2.46 or newer, or avoid a credential caching helper, to prevent a stale token being reused\n")
 	}
 
 	fmt.Fprint(opts.IO.Out, "protocol=https\n")

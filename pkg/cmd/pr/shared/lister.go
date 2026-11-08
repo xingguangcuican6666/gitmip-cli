@@ -188,7 +188,7 @@ func (m *mockLister) ExpectFields(fields []string) {
 // listGitea lists pull requests on a Gitea host.
 //
 // Gitea filters by state and by base branch and takes one state per request, so
-// the states gh offers are mapped onto the ones Gitea has. "merged" is not one of
+// the states gm offers are mapped onto the ones Gitea has. "merged" is not one of
 // them: Gitea reports a merged pull request as closed with merged set, which the
 // list mapping derives, so a merged state filter is applied after the fetch.
 //
@@ -246,14 +246,14 @@ func listGitea(httpClient *http.Client, opts ListOptions) (*api.PullRequestAndTo
 	return res, nil
 }
 
-// giteaListState maps gh's state onto Gitea's, or "" when it is not one gh offers.
+// giteaListState maps gm's state onto Gitea's, or "" when it is not one gm offers.
 func giteaListState(state string) string {
 	switch state {
 	case "open":
 		return "open"
 	case "closed":
 		// Gitea reports a merged pull request as closed, so asking for closed
-		// returns merged ones too. That matches what the caller asked for: gh
+		// returns merged ones too. That matches what the caller asked for: gm
 		// treats merged as a kind of closed unless it is asked for alone.
 		return "closed"
 	case "merged", "all":

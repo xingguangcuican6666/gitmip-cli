@@ -38,10 +38,10 @@ To illustrate how GitHub CLI works in its typical mode of operation, let's build
 and talk through which code gets run in order.
 
 1. `go run script/build.go` - Makes sure all external Go dependencies are fetched, then compiles the
-   `cmd/gh/main.go` file into a `bin/gh` binary.
-2. `bin/gh issue list --limit 5` - Runs the newly built `bin/gh` binary (note: on Windows you must use
+   `cmd/gm/main.go` file into a `bin/gm` binary.
+2. `bin/gm issue list --limit 5` - Runs the newly built `bin/gm` binary (note: on Windows you must use
    backslashes like `bin\gh`) and passes the following arguments to the process: `["issue", "list", "--limit", "5"]`.
-3. `func main()` inside `cmd/gh/main.go` is the first Go function that runs. The arguments passed to the
+3. `func main()` inside `cmd/gm/main.go` is the first Go function that runs. The arguments passed to the
    process are available through `os.Args`.
 4. The `main` package initializes the "root" command with `root.NewCmdRoot()` and dispatches execution to it
    with `rootCmd.ExecuteC()`.
@@ -54,7 +54,7 @@ and talk through which code gets run in order.
 8. `func listRun()` is called, which is responsible for implementing the logic of the `gh issue list` command.
 9. The command collects information from sources like the GitHub API then writes the final output to
    standard output and standard error [streams](../pkg/iostreams/iostreams.go) available at `opts.IO`.
-10. The program execution is now back at `func main()` of `cmd/gh/main.go`. If there were any Go errors as a
+10. The program execution is now back at `func main()` of `cmd/gm/main.go`. If there were any Go errors as a
     result of processing the command, the function will abort the process with a non-zero exit status.
     Otherwise, the process ends with status 0 indicating success.
 

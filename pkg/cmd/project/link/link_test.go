@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmd/project/shared/queries"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -279,7 +279,7 @@ func TestRunLink_Repo(t *testing.T) {
 		httpClient: func() (*http.Client, error) {
 			return http.DefaultClient, nil
 		},
-		config: func() (gh.Config, error) {
+		config: func() (gm.Config, error) {
 			return config.NewMockConfig(), nil
 		},
 		io: ios,
@@ -391,7 +391,7 @@ func TestRunLink_Team(t *testing.T) {
 		httpClient: func() (*http.Client, error) {
 			return http.DefaultClient, nil
 		},
-		config: func() (gh.Config, error) {
+		config: func() (gm.Config, error) {
 			return config.NewMockConfig(), nil
 		},
 		io: ios,

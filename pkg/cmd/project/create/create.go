@@ -38,7 +38,7 @@ func NewCmdCreate(f *cmdutil.Factory, runF func(config createConfig) error) *cob
 		Use:   "create",
 		Example: heredoc.Doc(`
 			# Create a new project owned by login monalisa
-			$ gh project create --owner monalisa --title "a new project"
+			$ gm project create --owner monalisa --title "a new project"
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := client.New(f)

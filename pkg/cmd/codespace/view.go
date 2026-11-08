@@ -30,16 +30,16 @@ func newViewCmd(app *App) *cobra.Command {
 		Short: "View details about a codespace",
 		Example: heredoc.Doc(`
 			# Select a codespace from a list of all codespaces you own
-			$ gh cs view
+			$ gm cs view
 
 			# View the details of a specific codespace
-			$ gh cs view -c codespace-name-12345
+			$ gm cs view -c codespace-name-12345
 
 			# View the list of all available fields for a codespace
-			$ gh cs view --json
+			$ gm cs view --json
 
 			# View specific fields for a codespace
-			$ gh cs view --json displayName,machineDisplayName,state
+			$ gm cs view --json displayName,machineDisplayName,state
 		`),
 		Args: noArgsConstraint,
 		RunE: func(cmd *cobra.Command, args []string) error {

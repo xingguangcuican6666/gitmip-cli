@@ -171,7 +171,7 @@ func TestNewCmdList(t *testing.T) {
 				gotOpts = opts
 				return nil
 			})
-			// gh issue adds -R and its hook, which replaces f.BaseRepo before RunE.
+			// gm issue adds -R and its hook, which replaces f.BaseRepo before RunE.
 			cmdutil.EnableRepoOverride(cmd, f)
 
 			argv, err := shlex.Split(tt.args)
@@ -454,7 +454,7 @@ func TestListRun(t *testing.T) {
 			wantStdout: "3\tStaging OAuth runbook\tlink\t\n",
 		},
 		{
-			name: "a stored type gh doesn't know is listed as stored",
+			name: "a stored type gm doesn't know is listed as stored",
 			opts: ListOptions{IssueNumber: 142},
 			tty:  true,
 			artifacts: map[string][]client.Artifact{"": {

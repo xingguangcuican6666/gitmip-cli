@@ -31,7 +31,7 @@ import (
 // Commits, files and reviews are separate endpoints rather than parts of the
 // pull request response, so they are fetched only when a caller asks.
 
-// giteaPullRequest is the subset of Gitea's PullRequest schema gh maps.
+// giteaPullRequest is the subset of Gitea's PullRequest schema gm maps.
 type giteaPullRequest struct {
 	ID       int64  `json:"id"`
 	Number   int64  `json:"number"`
@@ -184,7 +184,7 @@ func mapGiteaPullRequest(raw giteaPullRequest, hostname string) *PullRequest {
 		}
 	}
 
-	// HeadLabel is what `gh pr checkout` and the cross-repository display use,
+	// HeadLabel is what `gm pr checkout` and the cross-repository display use,
 	// and it needs the head owner and repository populated even when the pull
 	// request is not cross-repository.
 	if raw.Head.Repo != nil {
@@ -219,7 +219,7 @@ func mapGiteaPullRequest(raw giteaPullRequest, hostname string) *PullRequest {
 // where Gitea has two.
 //
 // A merged pull request is closed in Gitea and reports merged alongside it, so
-// MERGED is derived rather than read. Without it `gh pr list --state merged`
+// MERGED is derived rather than read. Without it `gm pr list --state merged`
 // would filter on a state nothing ever carries and report no results.
 func giteaPullRequestState(raw giteaPullRequest) string {
 	if raw.Merged {
@@ -228,11 +228,11 @@ func giteaPullRequestState(raw giteaPullRequest) string {
 	return strings.ToUpper(raw.State)
 }
 
-// giteaMergeable translates Gitea's boolean into gh's three-way value.
+// giteaMergeable translates Gitea's boolean into gm's three-way value.
 //
 // Gitea has no "not computed yet" state, so a pull request is either mergeable
 // or conflicting and there is nothing to report as UNKNOWN. Leaving it UNKNOWN on
-// a false would make `gh pr merge` refuse a pull request Gitea has already
+// a false would make `gm pr merge` refuse a pull request Gitea has already
 // declared unmergeable without saying why.
 func giteaMergeable(raw giteaPullRequest) PullRequestMergeable {
 	if raw.Merged {

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/spf13/cobra"
@@ -14,7 +14,7 @@ import (
 
 type TokenOptions struct {
 	IO     *iostreams.IOStreams
-	Config func() (gh.Config, error)
+	Config func() (gm.Config, error)
 
 	Hostname      string
 	Username      string
@@ -30,7 +30,7 @@ func NewCmdToken(f *cmdutil.Factory, runF func(*TokenOptions) error) *cobra.Comm
 
 	cmd := &cobra.Command{
 		Use:   "token",
-		Short: "Print the authentication token gh uses for a hostname and account",
+		Short: "Print the authentication token gm uses for a hostname and account",
 		Long: heredoc.Docf(`
 			This command outputs the authentication token for an account on a given GitHub host.
 
@@ -74,8 +74,8 @@ func tokenRun(opts *TokenOptions) error {
 	}
 
 	var val string
-	var cred gh.Credential
-	var refreshStatus gh.RefreshStatus
+	var cred gm.Credential
+	var refreshStatus gm.RefreshStatus
 	switch {
 	// No flags: return the active token, refreshing it when necessary, from wherever it is stored.
 	case !opts.SecureStorage && !opts.NoRefresh:
@@ -87,8 +87,8 @@ func tokenRun(opts *TokenOptions) error {
 		cred = getTokenReadOnly(authCfg, hostname, opts.Username)
 		val = cred.Token
 
-	// --secure-storage: compatibility mode for go-gh, which cannot read gh's storage directly. A refreshable token
-	// is returned regardless of where it is stored, because gh owns its lifecycle and a go-gh based caller cannot
+	// --secure-storage: compatibility mode for go-gh, which cannot read gm's storage directly. A refreshable token
+	// is returned regardless of where it is stored, because gm owns its lifecycle and a go-gh based caller cannot
 	// obtain it any other way. Otherwise this reproduces the original behaviour of the auth token command under
 	// --secure-storage: read the token straight from the keyring and consult no environment variable or config
 	// entry at all.
@@ -97,7 +97,7 @@ func tokenRun(opts *TokenOptions) error {
 		// and ActiveTokenWithRefresh cannot be used upfront: with no username it resolves the active token, which an
 		// environment variable such as GH_TOKEN can shadow, defeating --secure-storage.
 		user := resolveUsername(authCfg, hostname, opts.Username)
-		var c gh.Credential
+		var c gm.Credential
 		if user != "" {
 			c, refreshStatus = getTokenWithRefresh(authCfg, hostname, user)
 		}
@@ -119,11 +119,11 @@ func tokenRun(opts *TokenOptions) error {
 		// return it when it genuinely came from the keyring. ActiveToken cannot be used upfront because an
 		// environment variable such as GH_TOKEN can shadow the active token.
 		user := resolveUsername(authCfg, hostname, opts.Username)
-		var c gh.Credential
+		var c gm.Credential
 		if user != "" {
 			c = getTokenReadOnly(authCfg, hostname, user)
 		}
-		if c.Source == gh.TokenSourceKeyring {
+		if c.Source == gm.TokenSourceKeyring {
 			cred = c
 			val = c.Token
 		} else {
@@ -135,12 +135,12 @@ func tokenRun(opts *TokenOptions) error {
 
 	// A rejected refresh token can only be recovered by re-authenticating, so surface that as an error rather than
 	// handing back the stale token, which would fail on the next API call anyway.
-	if refreshStatus == gh.RefreshStatusExpired {
+	if refreshStatus == gm.RefreshStatusExpired {
 		errMsg := fmt.Sprintf("the token for %s has expired", hostname)
 		if opts.Username != "" {
 			errMsg += fmt.Sprintf(" for account %s", opts.Username)
 		}
-		errMsg += "; please run 'gh auth login' to re-authenticate"
+		errMsg += "; please run 'gm auth login' to re-authenticate"
 		return errors.New(errMsg)
 	}
 
@@ -153,7 +153,7 @@ func tokenRun(opts *TokenOptions) error {
 	}
 
 	// The token is written to stdout as a script contract, so this caution goes to stderr only, and before the token
-	// so it stays visible even when stdout is redirected. A refreshable token is short-lived: gh may rotate it at any
+	// so it stays visible even when stdout is redirected. A refreshable token is short-lived: gm may rotate it at any
 	// time, so a value captured now can stop working before its nominal expiry.
 	if cred.IsRefreshable() {
 		if cred.ExpiresAt != nil {
@@ -168,7 +168,7 @@ func tokenRun(opts *TokenOptions) error {
 	return nil
 }
 
-func resolveUsername(authCfg gh.AuthConfig, hostname, username string) string {
+func resolveUsername(authCfg gm.AuthConfig, hostname, username string) string {
 	if username != "" {
 		return username
 	}
@@ -179,7 +179,7 @@ func resolveUsername(authCfg gh.AuthConfig, hostname, username string) string {
 // getTokenReadOnly resolves the stored active token for the hostname and optional username without contacting the
 // token endpoint. It still surfaces a refreshable credential's stored access token, so an expiring token is
 // returned, just not refreshed.
-func getTokenReadOnly(authCfg gh.AuthConfig, hostname, username string) gh.Credential {
+func getTokenReadOnly(authCfg gm.AuthConfig, hostname, username string) gm.Credential {
 	if username == "" {
 		return authCfg.ActiveToken(hostname)
 	}
@@ -190,7 +190,7 @@ func getTokenReadOnly(authCfg gh.AuthConfig, hostname, username string) gh.Crede
 // getTokenWithRefresh resolves the active token for the hostname and optional username and refreshes it when
 // necessary. Refresh is best effort: a failed refresh still yields the last stored token, and an empty result is
 // left for the caller to handle.
-func getTokenWithRefresh(authCfg gh.AuthConfig, hostname, username string) (gh.Credential, gh.RefreshStatus) {
+func getTokenWithRefresh(authCfg gm.AuthConfig, hostname, username string) (gm.Credential, gm.RefreshStatus) {
 	if username == "" {
 		cred, status, _ := authCfg.ActiveTokenWithRefresh(hostname)
 		return cred, status
@@ -201,7 +201,7 @@ func getTokenWithRefresh(authCfg gh.AuthConfig, hostname, username string) (gh.C
 
 // getNonRefreshableTokenFromKeyring reads the token straight from secure storage for the hostname and optional
 // username, consulting no environment variable or config entry.
-func getNonRefreshableTokenFromKeyring(authCfg gh.AuthConfig, hostname, username string) string {
+func getNonRefreshableTokenFromKeyring(authCfg gm.AuthConfig, hostname, username string) string {
 	if username == "" {
 		token, _ := authCfg.TokenFromKeyring(hostname)
 		return token

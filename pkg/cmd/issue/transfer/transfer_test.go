@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/httpmock"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -26,7 +26,7 @@ func runCommand(rt http.RoundTripper, cli string) (*test.CmdOut, error) {
 		HttpClient: func() (*http.Client, error) {
 			return &http.Client{Transport: rt}, nil
 		},
-		Config: func() (gh.Config, error) {
+		Config: func() (gm.Config, error) {
 			return config.NewMockConfig(), nil
 		},
 		BaseRepo: func() (ghrepo.Interface, error) {

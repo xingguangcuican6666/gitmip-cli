@@ -47,7 +47,7 @@ func TestPullRequestGraphQL(t *testing.T) {
 			// headRepository shares a Go type with the selection above, which
 			// carries two more fields. They are omitted from JSON when empty,
 			// so adding either name here would put them back into the output
-			// of `gh pr view --json headRepository`.
+			// of `gm pr view --json headRepository`.
 			name:   "headRepository",
 			fields: []string{"headRepository"},
 			want:   "headRepository{id,name,nameWithOwner}",

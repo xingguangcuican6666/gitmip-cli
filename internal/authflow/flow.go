@@ -10,8 +10,8 @@ import (
 	"github.com/atotto/clipboard"
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/browser"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghinstance"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/cli/oauth"
 
@@ -30,12 +30,12 @@ var (
 type AuthResult struct {
 	Token       string
 	Username    string
-	Refreshable *gh.Credential
+	Refreshable *gm.Credential
 }
 
 // AuthFlow initiates an OAuth device or web application flow to acquire a
 // token. The provided HTTP client should be a plain client that does not set
-// auth or other headers. When requestRefreshToken is true, gh asks the server
+// auth or other headers. When requestRefreshToken is true, gm asks the server
 // for an expiring, refreshable credential; the server may still issue a
 // non-expiring token, in which case AuthResult.Refreshable is nil.
 func AuthFlow(httpClient *http.Client, oauthHost string, IO *iostreams.IOStreams, notice string, additionalScopes []string, isInteractive bool, b browser.Browser, isCopyToClipboard bool, requestRefreshToken bool) (*AuthResult, error) {
@@ -106,7 +106,7 @@ func AuthFlow(httpClient *http.Client, oauthHost string, IO *iostreams.IOStreams
 
 	// Anchor any expiring token's lifetime to the instant before the flow begins. DetectFlow blocks through the
 	// user's browser interaction and the server issues the token at the end, so this instant is at or before issuance
-	// and never overestimates the expiry. Use UTC so the derived absolute expiry matches the canonical UTC form gh
+	// and never overestimates the expiry. Use UTC so the derived absolute expiry matches the canonical UTC form gm
 	// stores and displays.
 	requestedAt := timeNow().UTC()
 	token, err := flow.DetectFlow()
@@ -136,8 +136,8 @@ type cfg struct {
 	token string
 }
 
-func (c cfg) ActiveTokenWithRefresh(hostname string) (gh.Credential, gh.RefreshStatus, error) {
-	return gh.Credential{Token: c.token}, gh.RefreshStatusInapplicable, nil
+func (c cfg) ActiveTokenWithRefresh(hostname string) (gm.Credential, gm.RefreshStatus, error) {
+	return gm.Credential{Token: c.token}, gm.RefreshStatusInapplicable, nil
 }
 
 // HostForAPIHost never resolves, because the token here is supplied directly by

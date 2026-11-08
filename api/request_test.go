@@ -374,7 +374,7 @@ func TestRequestHeadersAgainstRealTransport(t *testing.T) {
 
 	// Headers the caller did not override must still be supplied by the transport.
 	assert.Equal(t, "token MYTOKEN", gotReq.Header.Get("Authorization"))
-	assert.Equal(t, "GitHub CLI v1.2.3", gotReq.Header.Get("User-Agent"))
+	assert.Equal(t, "gitmip-cli v1.2.3", gotReq.Header.Get("User-Agent"))
 }
 
 func TestGraphQLWithHeader(t *testing.T) {
@@ -419,7 +419,7 @@ func TestDoRequestPreservesCheckRedirect(t *testing.T) {
 		require.NoError(t, err)
 
 		// The redirect is not followed, so the 3xx is the final response and, being outside
-		// the 2xx range, is reported as an error. Call sites such as gh repo delete rely on
+		// the 2xx range, is reported as an error. Call sites such as gm repo delete rely on
 		// seeing that status to explain that a repo was renamed or transferred.
 		_, err = NewClientFromHTTP(newClient(&called)).DoRequest(req)
 		require.Error(t, err)

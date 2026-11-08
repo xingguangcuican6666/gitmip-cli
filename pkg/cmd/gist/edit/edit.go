@@ -14,7 +14,7 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/pkg/cmd/gist/shared"
@@ -29,7 +29,7 @@ var editNextOptions = []string{"Edit another file", "Submit", "Cancel"}
 type EditOptions struct {
 	IO         *iostreams.IOStreams
 	HttpClient func() (*http.Client, error)
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 	Prompter   prompter.Prompter
 
 	Edit func(string, string, string, *iostreams.IOStreams) (string, error)
@@ -62,25 +62,25 @@ func NewCmdEdit(f *cmdutil.Factory, runF func(*EditOptions) error) *cobra.Comman
 		Short: "Edit one of your gists",
 		Example: heredoc.Doc(`
 			# Select a gist to edit interactively
-			$ gh gist edit
+			$ gm gist edit
 
 			# Edit a gist file in the default editor
-			$ gh gist edit 1234567890abcdef1234567890abcdef
+			$ gm gist edit 1234567890abcdef1234567890abcdef
 
 			# Edit a specific file in the gist
-			$ gh gist edit 1234567890abcdef1234567890abcdef --filename hello.py
+			$ gm gist edit 1234567890abcdef1234567890abcdef --filename hello.py
 
 			# Replace a gist file with content from a local file
-			$ gh gist edit 1234567890abcdef1234567890abcdef --filename hello.py hello.py
+			$ gm gist edit 1234567890abcdef1234567890abcdef --filename hello.py hello.py
 
 			# Add a new file to the gist
-			$ gh gist edit 1234567890abcdef1234567890abcdef --add newfile.py
+			$ gm gist edit 1234567890abcdef1234567890abcdef --add newfile.py
 
 			# Change the description of the gist
-			$ gh gist edit 1234567890abcdef1234567890abcdef --desc "new description"
+			$ gm gist edit 1234567890abcdef1234567890abcdef --desc "new description"
 
 			# Remove a file from the gist
-			$ gh gist edit 1234567890abcdef1234567890abcdef --remove hello.py
+			$ gm gist edit 1234567890abcdef1234567890abcdef --remove hello.py
 		`),
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 2 {

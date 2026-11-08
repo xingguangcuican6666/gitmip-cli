@@ -46,16 +46,16 @@ func NewCmdAccessibility(f *cmdutil.Factory) *cobra.Command {
 		},
 		Example: heredoc.Doc(`
 			# Open the GitHub Accessibility site in your browser
-			$ gh accessibility --web
+			$ gm accessibility --web
 
 			# Display color using customizable, 4-bit accessible colors
-			$ gh config set accessible_colors enabled
+			$ gm config set accessible_colors enabled
 
 			# Use input prompts without redrawing the screen
-			$ gh config set accessible_prompter enabled
+			$ gm config set accessible_prompter enabled
 
 			# Disable motion-based spinners for progress indicators in favor of text
-			$ gh config set spinner disabled
+			$ gm config set spinner disabled
 		`),
 	}
 
@@ -97,14 +97,14 @@ func longDescription(io *iostreams.IOStreams) string {
 		   GitHub Primer design system.
 
 		   To enable this experience, use one of the following methods:
-		   - Run %[1]sgh config set accessible_colors enabled%[1]s
+		   - Run %[1]sgm config set accessible_colors enabled%[1]s
 		   - Set %[1]sGH_ACCESSIBLE_COLORS=enabled%[1]s environment variable
 
 		2. The GitHub CLI will display issue and pull request labels' custom RGB colors
 		   in terminals with true color support.
 
 		   To enable this experience, use one of the following methods:
-		   - Run %[1]sgh config set color_labels enabled%[1]s
+		   - Run %[1]sgm config set color_labels enabled%[1]s
 		   - Set %[1]sGH_COLOR_LABELS=enabled%[1]s environment variable
 
 		%[4]s
@@ -117,7 +117,7 @@ func longDescription(io *iostreams.IOStreams) string {
 		non-interactive prompts for user input.
 
 		To enable this experience, use one of the following methods:
-		- Run %[1]sgh config set accessible_prompter enabled%[1]s
+		- Run %[1]sgm config set accessible_prompter enabled%[1]s
 		- Set %[1]sGH_ACCESSIBLE_PROMPTER=enabled%[1]s environment variable
 
 		%[5]s
@@ -130,7 +130,7 @@ func longDescription(io *iostreams.IOStreams) string {
 		of text-based progress indicators.
 
 		To enable this experience, use one of the following methods:
-		- Run %[1]sgh config set spinner disabled%[1]s
+		- Run %[1]sgm config set spinner disabled%[1]s
 		- Set %[1]sGH_SPINNER_DISABLED=yes%[1]s environment variable
 
 		%[6]s

@@ -244,7 +244,7 @@ func TestShortcutURL(t *testing.T) {
 		wantErrIs error
 	}{
 		{
-			name:    "a shortcut as gh writes it",
+			name:    "a shortcut as gm writes it",
 			content: "[InternetShortcut]\r\nURL=" + runbook + "\r\n",
 			want:    runbook,
 		},
@@ -266,7 +266,7 @@ func TestShortcutURL(t *testing.T) {
 		},
 		{
 			name:    "comments and blank lines are ignored",
-			content: "; saved by gh\n\n[InternetShortcut]\n; the runbook\nURL=" + runbook + "\n",
+			content: "; saved by gm\n\n[InternetShortcut]\n; the runbook\nURL=" + runbook + "\n",
 			want:    runbook,
 		},
 		{

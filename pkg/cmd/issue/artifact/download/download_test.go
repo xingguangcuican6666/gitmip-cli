@@ -303,7 +303,7 @@ func TestNewCmdDownload(t *testing.T) {
 				gotOpts = opts
 				return nil
 			})
-			// gh issue adds -R and its hook, which replaces f.BaseRepo before RunE.
+			// gm issue adds -R and its hook, which replaces f.BaseRepo before RunE.
 			cmdutil.EnableRepoOverride(cmd, f)
 
 			argv, err := shlex.Split(tt.args)
@@ -372,7 +372,7 @@ func TestDownloadRun(t *testing.T) {
 	}
 
 	// The spec's issues 142, 145, 161 and 166, plus three with what the
-	// fixtures can't hold: names older artifacts may have (150), a type gh
+	// fixtures can't hold: names older artifacts may have (150), a type gm
 	// doesn't know and links whose bodies need care (151), and names that
 	// already end in an extension, on HTML documents and a Markdown document
 	// (152).
@@ -1167,11 +1167,11 @@ func TestDownloadRun(t *testing.T) {
 			wantFiles: map[string]string{},
 		},
 		{
-			name:      "--output - refuses a type gh doesn't know",
+			name:      "--output - refuses a type gm doesn't know",
 			opts:      DownloadOptions{IssueNumber: 151, ArtifactNumbers: []int{7}, Output: "-"},
 			tty:       true,
 			wantCalls: []string{"IsPullRequest monalisa/monas-cafe#151", "Get monalisa/monas-cafe#151 artifact 7"},
-			wantErr:   `artifact 7 has type "bad-type", which this version of gh doesn't support; upgrade gh`,
+			wantErr:   `artifact 7 has type "bad-type", which this version of gm doesn't support; upgrade gm`,
 			wantFiles: map[string]string{},
 		},
 		{
@@ -1236,7 +1236,7 @@ func TestDownloadRun(t *testing.T) {
 			},
 		},
 		{
-			name: "a type gh doesn't know and a link that isn't an http(s) URL fail, and the rest are written",
+			name: "a type gm doesn't know and a link that isn't an http(s) URL fail, and the rest are written",
 			opts: DownloadOptions{IssueNumber: 151},
 			tty:  true,
 			wantCalls: []string{
@@ -1245,7 +1245,7 @@ func TestDownloadRun(t *testing.T) {
 			},
 			wantStdout: "✓ 1-Opening-hours.md\n" +
 				"✓ 9-Espresso-machine-manual.url\n",
-			wantStderr: `X Failed to download artifact 7: artifact 7 has type "bad-type", which this version of gh doesn't support; upgrade gh` + "\n" +
+			wantStderr: `X Failed to download artifact 7: artifact 7 has type "bad-type", which this version of gm doesn't support; upgrade gm` + "\n" +
 				"X Failed to write 8-Supplier-portal.url: artifact 8 doesn't link to an http(s) URL\n",
 			wantErrIs: cmdutil.SilentError,
 			wantFiles: map[string]string{
@@ -1351,7 +1351,7 @@ func TestDownloadRun(t *testing.T) {
 			opts:      DownloadOptions{IssueNumber: 151},
 			wantCalls: []string{"IsPullRequest monalisa/monas-cafe#151", "List monalisa/monas-cafe#151"},
 			wantStdout: "written\t1\t1-Opening-hours.md\t\t\n" +
-				"failed\t7\t\t\tartifact 7 has type \"bad-type\", which this version of gh doesn't support; upgrade gh\n" +
+				"failed\t7\t\t\tartifact 7 has type \"bad-type\", which this version of gm doesn't support; upgrade gm\n" +
 				"failed\t8\t8-Supplier-portal.url\t\tartifact 8 doesn't link to an http(s) URL\n" +
 				"written\t9\t9-Espresso-machine-manual.url\t\t\n",
 			wantErrIs: cmdutil.SilentError,
@@ -1377,7 +1377,7 @@ func TestDownloadRun(t *testing.T) {
 				"Get monalisa/monas-cafe#151 artifact 7",
 				"Get monalisa/monas-cafe#151 artifact 8",
 			},
-			wantStderr: `X Failed to download artifact 7: artifact 7 has type "bad-type", which this version of gh doesn't support; upgrade gh` + "\n" +
+			wantStderr: `X Failed to download artifact 7: artifact 7 has type "bad-type", which this version of gm doesn't support; upgrade gm` + "\n" +
 				"X Failed to write " + p("artifacts/8-Supplier-portal.url") + ": artifact 8 doesn't link to an http(s) URL\n",
 			wantErrIs: cmdutil.SilentError,
 			wantFiles: map[string]string{},

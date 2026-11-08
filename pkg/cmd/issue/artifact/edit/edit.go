@@ -9,8 +9,8 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/internal/attachments"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/internal/text"
 	"github.com/cli/cli/v2/pkg/cmd/issue/artifact/client"
 	"github.com/cli/cli/v2/pkg/cmd/issue/artifact/shared"
@@ -19,7 +19,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// EditOptions holds the flags and dependencies of gh issue artifact edit.
+// EditOptions holds the flags and dependencies of gm issue artifact edit.
 type EditOptions struct {
 	IO         *iostreams.IOStreams
 	HttpClient func() (*http.Client, error)
@@ -46,7 +46,7 @@ type EditOptions struct {
 	Assets      []attachments.UserAsset
 }
 
-// NewCmdEdit creates the gh issue artifact edit command.
+// NewCmdEdit creates the gm issue artifact edit command.
 func NewCmdEdit(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder, runF func(*EditOptions) error) *cobra.Command {
 	opts := &EditOptions{
 		IO:         f.IOStreams,
@@ -66,23 +66,23 @@ func NewCmdEdit(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder, ru
 			With only %[1]s--attach%[1]s, the attachments are appended to the current content.
 
 			With %[1]s--restore-version%[1]s, an earlier version's name and content are saved as a
-			new version. %[1]sgh issue artifact view%[1]s shows the edit history.
+			new version. %[1]sgm issue artifact view%[1]s shows the edit history.
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Rename an artifact
-			$ gh issue artifact edit 142 2 --name 'OAuth callback plan v2'
+			$ gm issue artifact edit 142 2 --name 'OAuth callback plan v2'
 
 			# Replace a document's content with a file
-			$ gh issue artifact edit 142 2 --body-file 2-OAuth-callback-plan.md
+			$ gm issue artifact edit 142 2 --body-file 2-OAuth-callback-plan.md
 
 			# Point a link at a new URL
-			$ gh issue artifact edit 142 3 --body https://github.com/monalisa/monas-cafe/wiki/OAuth-runbook-v2
+			$ gm issue artifact edit 142 3 --body https://github.com/monalisa/monas-cafe/wiki/OAuth-runbook-v2
 
 			# Append an image to a document
-			$ gh issue artifact edit 142 2 --attach ./signin-flow.png
+			$ gm issue artifact edit 142 2 --attach ./signin-flow.png
 
 			# Restore an earlier version
-			$ gh issue artifact edit 142 2 --restore-version 5
+			$ gm issue artifact edit 142 2 --restore-version 5
 		`),
 		Args: cmdutil.RangeArgs(1, 2, shared.MissingArtifactMessage),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -92,7 +92,7 @@ func NewCmdEdit(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder, ru
 				return cmdutil.FlagErrorWrap(err)
 			}
 
-			// An empty --body-file names no file, as in gh issue edit.
+			// An empty --body-file names no file, as in gm issue edit.
 			editing := opts.Name != nil || opts.Body != nil || opts.BodyFile != "" || opts.AttachFlag.Changed()
 			restoring := cmd.Flags().Changed("restore-version")
 			if restoring && editing {

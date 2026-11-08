@@ -12,8 +12,8 @@ import (
 
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/attachments"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/internal/telemetry"
 	"github.com/cli/cli/v2/pkg/cmd/issue/artifact/client"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -405,7 +405,7 @@ func TestNewCmdEdit(t *testing.T) {
 				gotOpts = opts
 				return nil
 			})
-			// gh issue adds -R and its hook, which replaces f.BaseRepo before RunE.
+			// gm issue adds -R and its hook, which replaces f.BaseRepo before RunE.
 			cmdutil.EnableRepoOverride(cmd, f)
 
 			argv, err := shlex.Split(tt.args)
@@ -854,7 +854,7 @@ func TestEditRun(t *testing.T) {
 			wantErr: "`--attach` can't be used with HTML artifacts",
 		},
 		{
-			name:     "a type gh doesn't know is refused before anything is saved",
+			name:     "a type gm doesn't know is refused before anything is saved",
 			opts:     EditOptions{Name: new("OAuth callback plan v2")},
 			artifact: badType,
 			tty:      true,
@@ -862,10 +862,10 @@ func TestEditRun(t *testing.T) {
 				"IsPullRequest monalisa/monas-cafe#142",
 				"Get monalisa/monas-cafe#142 2",
 			},
-			wantErr: `artifact 2 has type "bad-type", which this version of gh doesn't support; upgrade gh`,
+			wantErr: `artifact 2 has type "bad-type", which this version of gm doesn't support; upgrade gm`,
 		},
 		{
-			name:     "with --attach, a type gh doesn't know is refused before anything uploads",
+			name:     "with --attach, a type gm doesn't know is refused before anything uploads",
 			attach:   []string{"signin-flow.png"},
 			artifact: badType,
 			tty:      true,
@@ -874,7 +874,7 @@ func TestEditRun(t *testing.T) {
 				"Get monalisa/monas-cafe#142 2",
 			},
 			wantOps: &attachments.UploadResult{},
-			wantErr: `artifact 2 has type "bad-type", which this version of gh doesn't support; upgrade gh`,
+			wantErr: `artifact 2 has type "bad-type", which this version of gm doesn't support; upgrade gm`,
 		},
 		{
 			name:      "a missing file fails before any request",
@@ -1562,7 +1562,7 @@ func TestEditRun(t *testing.T) {
 			wantErr: "version 99 not found for artifact 2",
 		},
 		{
-			name:     "with --restore-version, a type gh doesn't know is refused before anything is saved",
+			name:     "with --restore-version, a type gm doesn't know is refused before anything is saved",
 			opts:     EditOptions{RestoreVersion: 5},
 			artifact: badType,
 			versions: planVersions,
@@ -1571,7 +1571,7 @@ func TestEditRun(t *testing.T) {
 				"IsPullRequest monalisa/monas-cafe#142",
 				"Get monalisa/monas-cafe#142 2",
 			},
-			wantErr: `artifact 2 has type "bad-type", which this version of gh doesn't support; upgrade gh`,
+			wantErr: `artifact 2 has type "bad-type", which this version of gm doesn't support; upgrade gm`,
 		},
 		{
 			name:      "a failed restore is the artifact's failure line",
@@ -1707,7 +1707,7 @@ func TestEditRun(t *testing.T) {
 
 			recorder := &telemetry.InvocationRecorderSpy{}
 			if len(tt.attach) > 0 {
-				opts.AttachEvent = attachments.BeginTelemetry(recorder, "gh test", len(tt.attach))
+				opts.AttachEvent = attachments.BeginTelemetry(recorder, "gm test", len(tt.attach))
 			}
 			if opts.IssueNumber == 0 {
 				opts.IssueNumber = 142

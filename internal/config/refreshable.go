@@ -12,7 +12,7 @@ import (
 
 	"github.com/cli/cli/v2/internal/debug"
 	"github.com/cli/cli/v2/internal/flock"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/keyring"
 	ghConfig "github.com/cli/go-gh/v2/pkg/config"
 )
@@ -45,7 +45,7 @@ const refreshLockFile = "refresh.lock"
 
 // refreshLockTimeout bounds how long withFreshConfigForRefresh waits for the cross-process lock before giving up and
 // proceeding without it. It is long enough to outlast a normal concurrent refresh yet short enough that a stuck or
-// unsupported lock cannot wedge gh indefinitely.
+// unsupported lock cannot wedge gm indefinitely.
 const refreshLockTimeout = 60 * time.Second
 
 // flockRefreshLock acquires the cross-process refresh lock with flock, creating the lock file's directory first. It is
@@ -62,7 +62,7 @@ func flockRefreshLock(ctx context.Context, path string) (unlock func(), err erro
 // withFreshConfigForRefresh runs fn, a credential-store read-modify-write (a token refresh, or a logout that must not
 // race one), while holding both an in-process mutex and a cross-process advisory lock, and reloads the configuration
 // from disk before running fn so it observes any credential another process persisted. The mutex serializes goroutines
-// sharing this AuthConfig; the file lock serializes separate gh processes. Together they prevent concurrent refreshes
+// sharing this AuthConfig; the file lock serializes separate gm processes. Together they prevent concurrent refreshes
 // from each spending a rotating refresh token based on stale state, and ensure logout cannot be overwritten by a
 // refresh that finishes after it. fn runs with both locks held and should perform the credential read and write as one
 // unit.
@@ -97,7 +97,7 @@ func (c *AuthConfig) withFreshConfigForRefresh(fn func(lockHeld bool) error) err
 	// Put the lock in the state directory, not the config directory. The config directory can be read-only: under nix
 	// home-manager and similar setups, managed config files are symlinked into the immutable nix store, so creating a
 	// lock file there always fails. The state directory is XDG's location for writable runtime state, home-manager
-	// leaves it writable, and gh already writes state there (state.yml, telemetry), so it is the safer bet.
+	// leaves it writable, and gm already writes state there (state.yml, telemetry), so it is the safer bet.
 	if u, err := acquire(ctx, filepath.Join(ghConfig.StateDir(), refreshLockFile)); err == nil {
 		unlock = u
 		lockHeld = true
@@ -113,7 +113,7 @@ func (c *AuthConfig) withFreshConfigForRefresh(fn func(lockHeld bool) error) err
 
 // reload re-reads the config from disk into the shared config, using the reloadConfig seam when set and the real
 // ghConfig.Reload otherwise. The production fallback passes fallbackConfig so a config file deleted between reads is
-// restored to gh's defaults, matching NewConfig.
+// restored to gm's defaults, matching NewConfig.
 func (c *AuthConfig) reload() error {
 	if c.reloadConfig != nil {
 		return c.reloadConfig()
@@ -125,8 +125,8 @@ func (c *AuthConfig) reload() error {
 // mirrors Login: secure storage is preferred and the insecure configuration is used as a fallback, reported via the
 // returned bool. Any non-expiring credential for the user is removed so it cannot outrank the refreshable record. It
 // runs under the cross-process refresh lock and reloads the configuration first, so it cannot interleave with a
-// concurrent configuration read-modify-write in another gh process.
-func (c *AuthConfig) LoginRefreshable(hostname, username string, credential gh.Credential, gitProtocol string, secureStorage bool) (bool, error) {
+// concurrent configuration read-modify-write in another gm process.
+func (c *AuthConfig) LoginRefreshable(hostname, username string, credential gm.Credential, gitProtocol string, secureStorage bool) (bool, error) {
 	var insecureStorageUsed bool
 	err := c.withFreshConfigForRefresh(func(lockHeld bool) error {
 		var err error
@@ -136,7 +136,7 @@ func (c *AuthConfig) LoginRefreshable(hostname, username string, credential gh.C
 	return insecureStorageUsed, err
 }
 
-func (c *AuthConfig) loginRefreshable(hostname, username string, credential gh.Credential, gitProtocol string, secureStorage bool) (bool, error) {
+func (c *AuthConfig) loginRefreshable(hostname, username string, credential gm.Credential, gitProtocol string, secureStorage bool) (bool, error) {
 	if hostname == "" || username == "" {
 		return false, errors.New("hostname and username are required")
 	}
@@ -214,7 +214,7 @@ func (c *AuthConfig) purgeNonExpiringForRefreshableLogin(hostname, username stri
 // refreshableForUser returns the refreshable credential stored for the user along with whether it came from secure
 // storage. It prefers the secure keyring and falls back to the insecure configuration record, returning
 // errRefreshableNotFound when neither exists.
-func (c *AuthConfig) refreshableForUser(hostname, username string) (gh.Credential, bool, error) {
+func (c *AuthConfig) refreshableForUser(hostname, username string) (gm.Credential, bool, error) {
 	// Consult the secure keyring first, matching TokenForUser. The two storage forms are mutually exclusive, so this
 	// never changes which credential is returned in practice, but keeping the precedence identical avoids confusing
 	// bugs if a misconfiguration ever left records in both places. Preferring the keyring also means the refresh
@@ -224,7 +224,7 @@ func (c *AuthConfig) refreshableForUser(hostname, username string) (gh.Credentia
 		return credential, true, nil
 	}
 	if !errors.Is(err, errRefreshableNotFound) {
-		return gh.Credential{}, true, err
+		return gm.Credential{}, true, err
 	}
 
 	// The keyring holds no record, so fall back to the insecure configuration.
@@ -233,36 +233,36 @@ func (c *AuthConfig) refreshableForUser(hostname, username string) (gh.Credentia
 		// A missing config file yields an empty config, so c.cfg.Get returns a KeyNotFoundError rather than a real
 		// read failure. Treat that as "no record anywhere" and report it as not found.
 		if isKeyNotFound(err) {
-			return gh.Credential{}, false, errRefreshableNotFound
+			return gm.Credential{}, false, errRefreshableNotFound
 		}
-		return gh.Credential{}, false, err
+		return gm.Credential{}, false, err
 	}
 	credential, err = c.refreshableFromConfig(path)
 	return credential, false, err
 }
 
-func (c *AuthConfig) refreshableFromConfig(path []string) (gh.Credential, error) {
+func (c *AuthConfig) refreshableFromConfig(path []string) (gm.Credential, error) {
 	var record refreshableTokenRecord
 	var err error
 	if record.AccessToken, err = c.cfg.Get(append(path, "access_token")); err != nil {
-		return gh.Credential{}, err
+		return gm.Credential{}, err
 	}
 	if record.RefreshToken, err = c.cfg.Get(append(path, "refresh_token")); err != nil {
-		return gh.Credential{}, err
+		return gm.Credential{}, err
 	}
 	if record.ExpiresIn, err = c.optionalSeconds(append(path, "expires_in")); err != nil {
-		return gh.Credential{}, err
+		return gm.Credential{}, err
 	}
 	if record.ExpiresAt, err = c.optionalTimestamp(append(path, "expires_at")); err != nil {
-		return gh.Credential{}, err
+		return gm.Credential{}, err
 	}
 	if record.RefreshTokenExpiresIn, err = c.optionalSeconds(append(path, "refresh_token_expires_in")); err != nil {
-		return gh.Credential{}, err
+		return gm.Credential{}, err
 	}
 	if record.RefreshTokenExpiresAt, err = c.optionalTimestamp(append(path, "refresh_token_expires_at")); err != nil {
-		return gh.Credential{}, err
+		return gm.Credential{}, err
 	}
-	credential := record.credential(gh.TokenSourceRefreshableOAuthToken)
+	credential := record.credential(gm.TokenSourceRefreshableOAuthToken)
 	return credential, validateRefreshableCredential(credential)
 }
 
@@ -298,23 +298,23 @@ func (c *AuthConfig) optionalTimestamp(path []string) (*time.Time, error) {
 	return &timestamp, nil
 }
 
-func refreshableFromKeyring(hostname, username string) (gh.Credential, error) {
+func refreshableFromKeyring(hostname, username string) (gm.Credential, error) {
 	data, err := keyring.Get(refreshableServiceName(hostname), username)
 	if err != nil {
 		// A missing record and an unavailable keyring are both reported as not found
 		// so resolution can fall back to a non-expiring credential, matching how non-expiring
 		// keyring reads are treated during activation.
-		return gh.Credential{}, errRefreshableNotFound
+		return gm.Credential{}, errRefreshableNotFound
 	}
 	var record refreshableTokenRecord
 	if err := json.Unmarshal([]byte(data), &record); err != nil {
-		return gh.Credential{}, errors.New("invalid refreshable keyring credentials")
+		return gm.Credential{}, errors.New("invalid refreshable keyring credentials")
 	}
-	credential := record.credential(gh.TokenSourceKeyring)
+	credential := record.credential(gm.TokenSourceKeyring)
 	return credential, validateRefreshableCredential(credential)
 }
 
-func (c *AuthConfig) setRefreshableInKeyring(hostname, username string, credential gh.Credential) error {
+func (c *AuthConfig) setRefreshableInKeyring(hostname, username string, credential gm.Credential) error {
 	data, err := json.Marshal(normalizeToUTC(recordFromCredential(credential)))
 	if err != nil {
 		return errors.New("could not encode refreshable credentials")
@@ -322,7 +322,7 @@ func (c *AuthConfig) setRefreshableInKeyring(hostname, username string, credenti
 	return keyring.Set(refreshableServiceName(hostname), username, string(data))
 }
 
-func (c *AuthConfig) setRefreshableInConfig(hostname, username string, credential gh.Credential) {
+func (c *AuthConfig) setRefreshableInConfig(hostname, username string, credential gm.Credential) {
 	path := refreshablePath(hostname, username)
 	// Clear the mapping first so an omitted field does not retain a stale value.
 	_ = c.cfg.Remove(path)
@@ -343,14 +343,14 @@ func (c *AuthConfig) setRefreshableInConfig(hostname, username string, credentia
 	}
 }
 
-// refreshExpiryLeeway is how far ahead of an access token's expiry gh proactively refreshes it, so a token
+// refreshExpiryLeeway is how far ahead of an access token's expiry gm proactively refreshes it, so a token
 // on the verge of expiring is renewed before it can fail an in-flight request.
 const refreshExpiryLeeway = 10 * time.Minute
 
 // accessTokenNeedsRefresh reports whether the credential's access token has expired or falls within refreshExpiryLeeway
-// of expiring as of now. A credential with no recorded expiry is treated as needing a refresh, since gh cannot prove
+// of expiring as of now. A credential with no recorded expiry is treated as needing a refresh, since gm cannot prove
 // the token is still valid. A debug lifetime override is anchored at the token's original issuance.
-func accessTokenNeedsRefresh(credential gh.Credential, now time.Time) bool {
+func accessTokenNeedsRefresh(credential gm.Credential, now time.Time) bool {
 	if credential.ExpiresAt == nil {
 		return true
 	}
@@ -365,7 +365,7 @@ func accessTokenNeedsRefresh(credential gh.Credential, now time.Time) bool {
 // simulateRefreshTokenExpired simulates refresh token expiry when a debug lifetime override is set.
 // The override is anchored at issuance, computed from the stored expiry and lifetime.
 // Without an override it always returns false; real expiry is detected from the server's rejection.
-func simulateRefreshTokenExpired(credential gh.Credential, now time.Time) bool {
+func simulateRefreshTokenExpired(credential gm.Credential, now time.Time) bool {
 	if lifetime, ok := debug.Config().RefreshTokenExpiresIn.Value(); ok && credential.RefreshTokenExpiresAt != nil {
 		issuedAt := credential.RefreshTokenExpiresAt.Add(-time.Duration(credential.RefreshTokenExpiresIn) * time.Second)
 		expiresAt := issuedAt.Add(lifetime)
@@ -374,10 +374,10 @@ func simulateRefreshTokenExpired(credential gh.Credential, now time.Time) bool {
 	return false
 }
 
-// credentialFromRefreshable projects a renewed RefreshableCredential onto the universal gh.Credential shape, tagging it
+// credentialFromRefreshable projects a renewed RefreshableCredential onto the universal gm.Credential shape, tagging it
 // with the given source. Timestamps are cloned so the result never aliases the input's *time.Time values.
-func credentialFromRefreshable(renewed gh.RefreshableCredential, source string) gh.Credential {
-	return gh.Credential{
+func credentialFromRefreshable(renewed gm.RefreshableCredential, source string) gm.Credential {
+	return gm.Credential{
 		Source:                source,
 		Token:                 renewed.AccessToken,
 		RefreshToken:          renewed.RefreshToken,
@@ -394,58 +394,58 @@ func credentialFromRefreshable(renewed gh.RefreshableCredential, source string) 
 // RefreshStatusInapplicable when no refresher is configured, RefreshStatusExpired when the server rejected the refresh
 // token (in which case the user's stored credential is removed so re-authentication is required), RefreshStatusFailed
 // when the exchange or persistence fails for a transient reason, and RefreshStatusDone when a renewed credential was
-// stored. The re-read, token exchange, and write run as one unit under the cross-process refresh lock so concurrent gh
+// stored. The re-read, token exchange, and write run as one unit under the cross-process refresh lock so concurrent gm
 // processes cannot each spend the rotating refresh token.
-func (c *AuthConfig) refreshCredentialForUser(hostname, username string, credential gh.Credential) (gh.Credential, gh.RefreshStatus, error) {
+func (c *AuthConfig) refreshCredentialForUser(hostname, username string, credential gm.Credential) (gm.Credential, gm.RefreshStatus, error) {
 	if !accessTokenNeedsRefresh(credential, timeNow()) {
-		return credential, gh.RefreshStatusUnnecessary, nil
+		return credential, gm.RefreshStatusUnnecessary, nil
 	}
 	if c.refresher == nil {
-		return credential, gh.RefreshStatusInapplicable, nil
+		return credential, gm.RefreshStatusInapplicable, nil
 	}
 
 	result := credential
-	status := gh.RefreshStatusFailed
+	status := gm.RefreshStatusFailed
 	err := c.withFreshConfigForRefresh(func(lockHeld bool) error {
-		// Re-read under the lock: another gh process may have refreshed the credential while we waited for it.
+		// Re-read under the lock: another gm process may have refreshed the credential while we waited for it.
 		current, secure, err := c.refreshableForUser(hostname, username)
 		if err != nil {
 			return err
 		}
 		if !accessTokenNeedsRefresh(current, timeNow()) {
 			result = current
-			status = gh.RefreshStatusUnnecessary
+			status = gm.RefreshStatusUnnecessary
 			return nil
 		}
 		if simulateRefreshTokenExpired(current, timeNow()) {
 			// Simulate server rejection under the debug override, mirroring the ErrRefreshTokenInvalid
 			// handling below, including gating destructive cleanup on lockHeld.
-			result = gh.Credential{}
-			status = gh.RefreshStatusExpired
+			result = gm.Credential{}
+			status = gm.RefreshStatusExpired
 			if lockHeld {
 				_ = c.removeCredentialForUser(hostname, username)
 			}
-			return gh.ErrRefreshTokenInvalid
+			return gm.ErrRefreshTokenInvalid
 		}
 		renewed, err := c.refresher.Refresh(current.RefreshToken, hostname)
 		if err != nil {
 			result = current
 			// A refresh token the server rejects can never succeed on retry, so classify it distinctly from a
 			// transient failure to let callers advise re-authentication instead of a pointless retry.
-			if errors.Is(err, gh.ErrRefreshTokenInvalid) {
-				status = gh.RefreshStatusExpired
+			if errors.Is(err, gm.ErrRefreshTokenInvalid) {
+				status = gm.RefreshStatusExpired
 				// The credential is now useless: we only reach a refresh because the access token is expiring or
 				// already expired, and the refresh token that could renew it has just been rejected, so no future
 				// call can revive it. Remove this user's stored credential so subsequent *WithRefresh callers
 				// resolve no refresh token and stop re-sending a request the server will always reject, which could
-				// otherwise hammer the token endpoint on every gh invocation.
+				// otherwise hammer the token endpoint on every gm invocation.
 				//
 				// We deliberately wipe only this user's records and leave the active-user pointer and the rest of
 				// the host configuration alone, rather than reusing Logout. On a multi-user host Logout would
 				// silently switch the active account to a different user as a side effect of a token refresh, so a
 				// subsequent request would be sent as someone else entirely. That is a surprising and potentially
 				// dangerous behaviour. Leaving a dangling active user with no token is a deliberately broken state:
-				// gh treats it as unauthenticated and the user must run 'gh auth login' again before using gh.
+				// gm treats it as unauthenticated and the user must run 'gm auth login' again before using gm.
 				//
 				// The removal only runs when the cross-process lock was held. Without the lock a rejection is
 				// ambiguous: a peer may have already spent this same single-use refresh token and be about to
@@ -454,7 +454,7 @@ func (c *AuthConfig) refreshCredentialForUser(hostname, username string, credent
 				// untouched and let the peer's write stand, while still reporting the rejection so the caller can
 				// advise re-authentication. Removal is best effort even when attempted: a failure does not change
 				// the reported status, and we return an empty credential because the stored one is being discarded.
-				result = gh.Credential{}
+				result = gm.Credential{}
 				if lockHeld {
 					_ = c.removeCredentialForUser(hostname, username)
 				}
@@ -478,10 +478,10 @@ func (c *AuthConfig) refreshCredentialForUser(hostname, username string, credent
 			// We deliberately do not expose the underlying storage error for now; the caller only needs to know the
 			// refresh could not be completed.
 			result = current
-			return fmt.Errorf("failed to persist refreshed credential; the user needs to re-authenticate via 'gh auth login': %w", err)
+			return fmt.Errorf("failed to persist refreshed credential; the user needs to re-authenticate via 'gm auth login': %w", err)
 		}
 		result = newCredential
-		status = gh.RefreshStatusDone
+		status = gm.RefreshStatusDone
 		return nil
 	})
 	return result, status, err
@@ -504,7 +504,7 @@ func (c *AuthConfig) removeCredentialForUser(hostname, username string) error {
 // persistRefreshedCredential writes a renewed refreshable credential back to the storage form it already lived in.
 // Refreshable credentials are resolved per-user via the active user key, so there is no host-level active copy to keep
 // in sync.
-func (c *AuthConfig) persistRefreshedCredential(hostname, username string, credential gh.Credential, secure bool) error {
+func (c *AuthConfig) persistRefreshedCredential(hostname, username string, credential gm.Credential, secure bool) error {
 	if secure {
 		if err := c.setRefreshableInKeyring(hostname, username, credential); err != nil {
 			return err
@@ -518,7 +518,7 @@ func (c *AuthConfig) persistRefreshedCredential(hostname, username string, crede
 
 // refreshableTokenRecord is the on-disk and keyring JSON shape of a refreshable credential. It exists solely so the
 // storage helpers can marshal and unmarshal the persisted fields; it never crosses an AuthConfig method boundary,
-// where gh.Credential is the currency instead. Its json tags also match the OAuth token endpoint field names.
+// where gm.Credential is the currency instead. Its json tags also match the OAuth token endpoint field names.
 type refreshableTokenRecord struct {
 	AccessToken           string     `json:"access_token"`
 	RefreshToken          string     `json:"refresh_token"`
@@ -528,11 +528,11 @@ type refreshableTokenRecord struct {
 	RefreshTokenExpiresAt *time.Time `json:"refresh_token_expires_at,omitempty"`
 }
 
-// credential projects the stored record onto the universal gh.Credential shape, tagging it with the given source
+// credential projects the stored record onto the universal gm.Credential shape, tagging it with the given source
 // (the access token becomes Token). Refresh metadata is carried verbatim, cloning the timestamps so the result never
 // aliases the record's *time.Time values.
-func (r refreshableTokenRecord) credential(source string) gh.Credential {
-	return gh.Credential{
+func (r refreshableTokenRecord) credential(source string) gm.Credential {
+	return gm.Credential{
 		Source:                source,
 		Token:                 r.AccessToken,
 		RefreshToken:          r.RefreshToken,
@@ -543,10 +543,10 @@ func (r refreshableTokenRecord) credential(source string) gh.Credential {
 	}
 }
 
-// recordFromCredential projects a gh.Credential onto the persisted record shape, dropping the runtime-only Source and
+// recordFromCredential projects a gm.Credential onto the persisted record shape, dropping the runtime-only Source and
 // carrying the access token as AccessToken. It clones the timestamps so the record never aliases the credential's
 // *time.Time values.
-func recordFromCredential(credential gh.Credential) refreshableTokenRecord {
+func recordFromCredential(credential gm.Credential) refreshableTokenRecord {
 	return refreshableTokenRecord{
 		AccessToken:           credential.Token,
 		RefreshToken:          credential.RefreshToken,
@@ -558,7 +558,7 @@ func recordFromCredential(credential gh.Credential) refreshableTokenRecord {
 }
 
 // cloneTime returns a pointer to a copy of t, or nil when t is nil, so callers moving timestamps between the record
-// and gh.Credential never share the underlying *time.Time.
+// and gm.Credential never share the underlying *time.Time.
 func cloneTime(t *time.Time) *time.Time {
 	if t == nil {
 		return nil
@@ -580,7 +580,7 @@ func normalizeToUTC(record refreshableTokenRecord) refreshableTokenRecord {
 	return record
 }
 
-func validateRefreshableCredential(credential gh.Credential) error {
+func validateRefreshableCredential(credential gm.Credential) error {
 	if credential.Token == "" {
 		return errors.New("access token is empty")
 	}
@@ -601,6 +601,9 @@ func refreshablePath(hostname, username string) []string {
 func refreshableServiceName(hostname string) string {
 	// The "refreshable" marker is prefixed with an underscore, which is not a valid hostname character under the LDH
 	// rule, so the segment can never collide with the plain token service of a host literally named "refreshable".
+	// The prefix stays "gh:" for the same storage-compatibility reason as
+	// keyringServiceName: refreshable credentials already saved under it must
+	// remain readable after the CLI was renamed.
 	return "gh:_refreshable:" + hostname
 }
 

@@ -115,7 +115,7 @@ func rootHelpFunc(f *cmdutil.Factory, command *cobra.Command, _ []string) {
 }
 
 // WriteHelp renders the full help text for command to w. This is the same
-// output produced by `gh <command> --help`, exposed separately so that callers
+// output produced by `gm <command> --help`, exposed separately so that callers
 // such as error reporting can render help to a stream of their choosing rather
 // than always writing to stdout.
 //
@@ -136,7 +136,7 @@ func WriteHelp(w io.Writer, cs *iostreams.ColorScheme, command *cobra.Command) {
 	}
 	if longText != "" && command.LocalFlags().Lookup("jq") != nil {
 		longText = strings.TrimRight(longText, "\n") +
-			"\n\nFor more information about output formatting flags, see `gh help formatting`."
+			"\n\nFor more information about output formatting flags, see `gm help formatting`."
 	}
 
 	helpEntries := []helpEntry{}
@@ -150,7 +150,7 @@ func WriteHelp(w io.Writer, cs *iostreams.ColorScheme, command *cobra.Command) {
 	}
 
 	// Statically calculated padding for non-extension commands,
-	// longest is `gh accessibility` with 13 characters + 1 space.
+	// longest is `gm accessibility` with 13 characters + 1 space.
 	//
 	// Should consider novel way to calculate this in the future [AF]
 	namePadding := 14
@@ -203,10 +203,10 @@ func WriteHelp(w io.Writer, cs *iostreams.ColorScheme, command *cobra.Command) {
 		helpEntries = append(helpEntries, helpEntry{"ENVIRONMENT VARIABLES", command.Annotations["help:environment"]})
 	}
 	helpEntries = append(helpEntries, helpEntry{"LEARN MORE", heredoc.Docf(`
-		Use %[1]sgh <command> <subcommand> --help%[1]s for more information about a command.
+		Use %[1]sgm <command> <subcommand> --help%[1]s for more information about a command.
 		Read the manual at https://cli.github.com/manual
-		Learn about exit codes using %[1]sgh help exit-codes%[1]s
-		Learn about accessibility experiences using %[1]sgh help accessibility%[1]s
+		Learn about exit codes using %[1]sgm help exit-codes%[1]s
+		Learn about accessibility experiences using %[1]sgm help accessibility%[1]s
 	`, "`")})
 
 	for _, e := range helpEntries {
@@ -225,7 +225,7 @@ func WriteHelp(w io.Writer, cs *iostreams.ColorScheme, command *cobra.Command) {
 func authHelp() string {
 	if os.Getenv("GITHUB_ACTIONS") == "true" {
 		return heredoc.Doc(`
-			gh: To use GitHub CLI in a GitHub Actions workflow, set the GH_TOKEN environment variable. Example:
+			gm: To use GitHub CLI in a GitHub Actions workflow, set the GH_TOKEN environment variable. Example:
 			  env:
 			    GH_TOKEN: ${{ github.token }}
 		`)
@@ -233,12 +233,12 @@ func authHelp() string {
 
 	if os.Getenv("CI") != "" {
 		return heredoc.Doc(`
-			gh: To use GitHub CLI in automation, set the GH_TOKEN environment variable.
+			gm: To use GitHub CLI in automation, set the GH_TOKEN environment variable.
 		`)
 	}
 
 	return heredoc.Doc(`
-		To get started with GitHub CLI, please run:  gh auth login
+		To get started with GitHub CLI, please run:  gm auth login
 		Alternatively, populate the GH_TOKEN environment variable with a GitHub API authentication token.
 	`)
 }
@@ -350,7 +350,7 @@ func BuildAliasList(cmd *cobra.Command, aliases []string) []string {
 
 // aliasExpansionAnnotation records the command line a user-defined alias
 // expands to, so that help rendering can resolve the alias to its target.
-const aliasExpansionAnnotation = "gh:alias-expansion"
+const aliasExpansionAnnotation = "gm:alias-expansion"
 
 // resolveAliasTarget returns the command a user-defined alias expands to, or
 // command unchanged when it is not an alias or the target cannot be resolved.

@@ -143,10 +143,10 @@ func NewCmdEdit(f *cmdutil.Factory, runF func(options *EditOptions) error) *cobr
 		Args: cobra.MaximumNArgs(1),
 		Example: heredoc.Doc(`
 			# Enable issues and wiki
-			$ gh repo edit --enable-issues --enable-wiki
+			$ gm repo edit --enable-issues --enable-wiki
 
 			# Disable projects
-			$ gh repo edit --enable-projects=false
+			$ gm repo edit --enable-projects=false
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 0 {

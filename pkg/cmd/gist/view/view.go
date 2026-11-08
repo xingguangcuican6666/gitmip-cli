@@ -7,8 +7,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghinstance"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/internal/text"
@@ -25,7 +25,7 @@ type browser interface {
 
 type ViewOptions struct {
 	IO         *iostreams.IOStreams
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 	HttpClient func() (*http.Client, error)
 	Browser    browser
 	Prompter   prompter.Prompter

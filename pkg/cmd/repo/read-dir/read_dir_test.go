@@ -454,7 +454,7 @@ func Test_readDirRun(t *testing.T) {
 					httpmock.StringResponse(`{"data":{"repository":{"object":{"__typename":"Blob"}}}}`),
 				)
 			},
-			wantErrMsg: "\"README.md\" is a file, not a directory; use `gh repo read-file` instead",
+			wantErrMsg: "\"README.md\" is a file, not a directory; use `gm repo read-file` instead",
 		},
 		{
 			name: "path points to a submodule",

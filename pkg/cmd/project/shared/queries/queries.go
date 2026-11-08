@@ -123,7 +123,7 @@ type Project struct {
 	Public           bool
 	Closed           bool
 	// The Template field is commented out due to https://github.com/cli/cli/issues/8103.
-	// We released gh v2.34.0 without realizing the Template field does not exist
+	// We released gm v2.34.0 without realizing the Template field does not exist
 	// on GHES 3.8 and older. This broke all project commands for users targeting GHES 3.8
 	// and older. In order to fix this we will no longer query the Template field until
 	// GHES 3.8 gets deprecated on 2024-03-07. This solution was simpler and quicker
@@ -1714,7 +1714,7 @@ func handleError(err error) error {
 			// TODO: this duplicates parts of generateScopesSuggestion
 			return fmt.Errorf(
 				"error: your authentication token is missing required scopes %v\n"+
-					"To request it, run:  gh auth refresh -s %s",
+					"To request it, run:  gm auth refresh -s %s",
 				s,
 				strings.Join(s, ","))
 		}

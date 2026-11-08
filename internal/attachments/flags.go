@@ -100,7 +100,7 @@ func assetFromArg(arg string) (UserAsset, error) {
 // SplitFileArg splits an argument of the form <file>#<text>, the way --attach
 // reads '<file>#<image alt text>'. An existing path wins over the delimiter,
 // since `#` is legal in filenames. path is arg itself when there was no `#` to
-// split at. gh issue artifact create uses it for <file>#<name>, so `#` means
+// split at. gm issue artifact create uses it for <file>#<name>, so `#` means
 // the same there as in --attach.
 func SplitFileArg(arg string) (path, text string) {
 	if _, err := os.Stat(arg); err == nil {

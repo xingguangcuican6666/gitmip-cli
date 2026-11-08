@@ -8,7 +8,7 @@ import (
 	"github.com/cli/cli/v2/internal/ghrepo"
 )
 
-// Gitea has no GraphQL API, so the metadata gh resolves names against before
+// Gitea has no GraphQL API, so the metadata gm resolves names against before
 // creating or editing an issue is fetched here over REST.
 //
 // What exists differs from GitHub's.
@@ -22,7 +22,7 @@ import (
 // parameter names differ from GitHub's.
 //
 // Projects: Gitea has repository and organization projects, but no board-per-
-// issue relationship in the shape gh's project titles assume, and no v1/v2
+// issue relationship in the shape gm's project titles assume, and no v1/v2
 // distinction. The project fetches report nothing rather than inventing one.
 //
 // Teams and reviewers: Gitea has no pull request reviewer concept on an issue and

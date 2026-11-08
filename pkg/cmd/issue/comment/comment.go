@@ -3,8 +3,8 @@ package comment
 import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/internal/attachments"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/pkg/cmd/issue/shared"
 	issueShared "github.com/cli/cli/v2/pkg/cmd/issue/shared"
 	prShared "github.com/cli/cli/v2/pkg/cmd/pr/shared"
@@ -49,13 +49,13 @@ func NewCmdComment(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder,
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Add a comment to an issue
-			$ gh issue comment 12 --body "Hi from GitHub CLI"
+			$ gm issue comment 12 --body "Hi from GitHub CLI"
 
 			# Attach a screenshot, with alt text after "#"
-			$ gh issue comment 12 --attach './login.png#The login error state'
+			$ gm issue comment 12 --attach './login.png#The login error state'
 
 			# Attach multiple files by repeating the flag
-			$ gh issue comment 12 --attach ./before.png --attach ./after.png
+			$ gm issue comment 12 --attach ./before.png --attach ./after.png
 		`),
 		Args: cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {

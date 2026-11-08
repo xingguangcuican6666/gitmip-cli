@@ -10,8 +10,8 @@ import (
 	"github.com/cli/cli/v2/api"
 	ghContext "github.com/cli/cli/v2/context"
 	"github.com/cli/cli/v2/git"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/spf13/cobra"
@@ -27,7 +27,7 @@ type RenameOptions struct {
 	GitClient       *git.Client
 	IO              *iostreams.IOStreams
 	Prompter        iprompter
-	Config          func() (gh.Config, error)
+	Config          func() (gm.Config, error)
 	BaseRepo        func() (ghrepo.Interface, error)
 	Remotes         func() (ghContext.Remotes, error)
 	DoConfirm       bool
@@ -66,10 +66,10 @@ func NewCmdRename(f *cmdutil.Factory, runf func(*RenameOptions) error) *cobra.Co
 			`, "`"),
 		Example: heredoc.Doc(`
 			# Rename the current repository (foo/bar -> foo/baz)
-			$ gh repo rename baz
+			$ gm repo rename baz
 
 			# Rename the specified repository (qux/quux -> qux/baz)
-			$ gh repo rename -R qux/quux baz
+			$ gm repo rename -R qux/quux baz
 		`),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

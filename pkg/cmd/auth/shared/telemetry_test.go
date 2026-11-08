@@ -3,7 +3,7 @@ package shared
 import (
 	"testing"
 
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/internal/telemetry"
 	"github.com/cli/cli/v2/pkg/cmd/auth/shared/gitcredentials"
 	"github.com/stretchr/testify/assert"
@@ -106,7 +106,7 @@ func TestHelperCategory(t *testing.T) {
 		helper gitcredentials.Helper
 		want   string
 	}{
-		{name: "ours", helper: gitcredentials.Helper{Cmd: "!/path/to/gh auth git-credential"}, want: "ours"},
+		{name: "ours", helper: gitcredentials.Helper{Cmd: "!/path/to/gm auth git-credential"}, want: "ours"},
 		{name: "other", helper: gitcredentials.Helper{Cmd: "osxkeychain"}, want: "other"},
 		{name: "none", helper: gitcredentials.Helper{}, want: "none"},
 	}

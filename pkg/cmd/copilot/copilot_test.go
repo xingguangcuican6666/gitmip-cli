@@ -15,7 +15,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/internal/telemetry"
@@ -94,7 +94,7 @@ func TestNewCmdCopilot(t *testing.T) {
 			wantErrString: "cannot use --remove with args",
 		},
 		{
-			name:          "with --help, shows gh help",
+			name:          "with --help, shows gm help",
 			args:          "--help",
 			wantErrString: "",
 			wantHelp:      true,
@@ -739,7 +739,7 @@ func TestRunCopilot(t *testing.T) {
 				return execErr
 			},
 			wantErr:          execErr,
-			wantErrSubstring: "try running `copilot` directly without `gh`.",
+			wantErrSubstring: "try running `copilot` directly without `gm`.",
 		},
 	}
 

@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	ghConfig "github.com/cli/go-gh/v2/pkg/config"
 )
 
@@ -61,7 +61,7 @@ func TestGetOrDefaultApplicationDefaults(t *testing.T) {
 			// Then there is an entry with the default value, and source set as default
 			entry := optionalEntry.Expect(fmt.Sprintf("expected there to be a value for %s", tt.key))
 			require.Equal(t, tt.expectedDefault, entry.Value)
-			require.Equal(t, gh.ConfigDefaultProvided, entry.Source)
+			require.Equal(t, gm.ConfigDefaultProvided, entry.Source)
 		})
 	}
 }
@@ -99,7 +99,7 @@ func TestGetOrDefaultExistingTopLevelKey(t *testing.T) {
 	// Then it returns a Some variant containing the correct value and a source of user
 	entry := optionalEntry.Expect("expected there to be a value")
 	require.Equal(t, "top-level-value", entry.Value)
-	require.Equal(t, gh.ConfigUserProvided, entry.Source)
+	require.Equal(t, gm.ConfigUserProvided, entry.Source)
 }
 
 func TestGetOrDefaultExistingHostSpecificKey(t *testing.T) {
@@ -113,7 +113,7 @@ func TestGetOrDefaultExistingHostSpecificKey(t *testing.T) {
 	// Then it returns a Some variant containing the correct value and a source of user
 	entry := optionalEntry.Expect("expected there to be a value")
 	require.Equal(t, "host-specific-value", entry.Value)
-	require.Equal(t, gh.ConfigUserProvided, entry.Source)
+	require.Equal(t, gm.ConfigUserProvided, entry.Source)
 }
 
 func TestGetOrDefaultHostnameSpecificKeyFallsBackToTopLevel(t *testing.T) {
@@ -128,7 +128,7 @@ func TestGetOrDefaultHostnameSpecificKeyFallsBackToTopLevel(t *testing.T) {
 	// to the top level config, with a source of user
 	entry := optionalEntry.Expect("expected there to be a value")
 	require.Equal(t, "value", entry.Value)
-	require.Equal(t, gh.ConfigUserProvided, entry.Source)
+	require.Equal(t, gm.ConfigUserProvided, entry.Source)
 }
 
 func TestFallbackConfig(t *testing.T) {
@@ -193,7 +193,7 @@ func TestTelemetry(t *testing.T) {
 		entry := c.Telemetry()
 
 		require.Equal(t, "enabled", entry.Value)
-		require.Equal(t, gh.ConfigDefaultProvided, entry.Source)
+		require.Equal(t, gm.ConfigDefaultProvided, entry.Source)
 	})
 
 	t.Run("returns user configured value", func(t *testing.T) {
@@ -203,7 +203,7 @@ func TestTelemetry(t *testing.T) {
 		entry := c.Telemetry()
 
 		require.Equal(t, "disabled", entry.Value)
-		require.Equal(t, gh.ConfigUserProvided, entry.Source)
+		require.Equal(t, gm.ConfigUserProvided, entry.Source)
 	})
 
 	t.Run("returns log when configured", func(t *testing.T) {
@@ -213,7 +213,7 @@ func TestTelemetry(t *testing.T) {
 		entry := c.Telemetry()
 
 		require.Equal(t, "log", entry.Value)
-		require.Equal(t, gh.ConfigUserProvided, entry.Source)
+		require.Equal(t, gm.ConfigUserProvided, entry.Source)
 	})
 }
 
@@ -224,7 +224,7 @@ func TestClipboard(t *testing.T) {
 		entry := c.Clipboard()
 
 		require.Equal(t, "enabled", entry.Value)
-		require.Equal(t, gh.ConfigDefaultProvided, entry.Source)
+		require.Equal(t, gm.ConfigDefaultProvided, entry.Source)
 	})
 
 	t.Run("returns user configured value", func(t *testing.T) {
@@ -234,6 +234,6 @@ func TestClipboard(t *testing.T) {
 		entry := c.Clipboard()
 
 		require.Equal(t, "disabled", entry.Value)
-		require.Equal(t, gh.ConfigUserProvided, entry.Source)
+		require.Equal(t, gm.ConfigUserProvided, entry.Source)
 	})
 }

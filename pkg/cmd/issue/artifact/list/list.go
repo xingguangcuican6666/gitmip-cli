@@ -18,7 +18,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// ListOptions holds the flags and dependencies of gh issue artifact list.
+// ListOptions holds the flags and dependencies of gm issue artifact list.
 type ListOptions struct {
 	IO       *iostreams.IOStreams
 	BaseRepo func() (ghrepo.Interface, error)
@@ -32,7 +32,7 @@ type ListOptions struct {
 	Type  string
 }
 
-// NewCmdList creates the gh issue artifact list command.
+// NewCmdList creates the gm issue artifact list command.
 func NewCmdList(f *cmdutil.Factory, runF func(*ListOptions) error) *cobra.Command {
 	opts := &ListOptions{
 		IO:  f.IOStreams,
@@ -48,13 +48,13 @@ func NewCmdList(f *cmdutil.Factory, runF func(*ListOptions) error) *cobra.Comman
 		`, "`"),
 		Example: heredoc.Doc(`
 			# List the artifacts on issue 142
-			$ gh issue artifact list 142
+			$ gm issue artifact list 142
 
 			# List only links
-			$ gh issue artifact list 142 --type link
+			$ gm issue artifact list 142 --type link
 
 			# Print artifact numbers and names as JSON
-			$ gh issue artifact list 142 --json number,name
+			$ gm issue artifact list 142 --json number,name
 		`),
 		Aliases: []string{"ls"},
 		Args:    cobra.ExactArgs(1),
@@ -131,7 +131,7 @@ func listRun(opts *ListOptions) error {
 }
 
 // listArtifacts lists the artifacts of one type, or of every type when
-// artifactType is empty. gh treats generic and plan artifacts alike as
+// artifactType is empty. gm treats generic and plan artifacts alike as
 // Markdown documents, so either type lists both: each type is listed up to
 // the limit, then the two are merged in number order and cut to the limit.
 // Any other type is listed alone.

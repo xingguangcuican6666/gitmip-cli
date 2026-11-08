@@ -262,7 +262,7 @@ func TestSearchIssues_rejectsPullRequestQualifiers(t *testing.T) {
 				30,
 			)
 
-			assert.EqualError(t, err, "cannot use pull request search qualifiers with `gh issue list`; use `gh pr list` instead")
+			assert.EqualError(t, err, "cannot use pull request search qualifiers with `gm issue list`; use `gm pr list` instead")
 			assert.Len(t, reg.Requests, 0)
 		})
 	}

@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
-	ghmock "github.com/cli/cli/v2/internal/gh/mock"
+	"github.com/cli/cli/v2/internal/gm"
+	ghmock "github.com/cli/cli/v2/internal/gm/mock"
 	"github.com/cli/cli/v2/internal/keyring"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -67,7 +67,7 @@ func TestNewCmdToken(t *testing.T) {
 			ios, _, _, _ := iostreams.Test()
 			f := &cmdutil.Factory{
 				IOStreams: ios,
-				Config: func() (gh.Config, error) {
+				Config: func() (gm.Config, error) {
 					cfg := config.NewMockConfig()
 					return cfg, nil
 				},
@@ -108,7 +108,7 @@ func TestTokenRun(t *testing.T) {
 		name               string
 		opts               TokenOptions
 		env                map[string]string
-		cfgStubs           func(*testing.T, gh.Config)
+		cfgStubs           func(*testing.T, gm.Config)
 		wantStdout         string
 		wantErr            bool
 		wantErrMsg         string
@@ -118,7 +118,7 @@ func TestTokenRun(t *testing.T) {
 		{
 			name: "token",
 			opts: TokenOptions{},
-			cfgStubs: func(t *testing.T, cfg gh.Config) {
+			cfgStubs: func(t *testing.T, cfg gm.Config) {
 				login(t, cfg, "github.com", "test-user", "gho_ABCDEFG", "https", false)
 			},
 			wantStdout:      "gho_ABCDEFG\n",
@@ -129,7 +129,7 @@ func TestTokenRun(t *testing.T) {
 			opts: TokenOptions{
 				Hostname: "github.mycompany.com",
 			},
-			cfgStubs: func(t *testing.T, cfg gh.Config) {
+			cfgStubs: func(t *testing.T, cfg gm.Config) {
 				login(t, cfg, "github.com", "test-user", "gho_ABCDEFG", "https", false)
 				login(t, cfg, "github.mycompany.com", "test-user", "gho_1234567", "https", false)
 			},
@@ -153,7 +153,7 @@ func TestTokenRun(t *testing.T) {
 		{
 			name: "uses default host when one is not provided",
 			opts: TokenOptions{},
-			cfgStubs: func(t *testing.T, cfg gh.Config) {
+			cfgStubs: func(t *testing.T, cfg gm.Config) {
 				login(t, cfg, "github.com", "test-user", "gho_ABCDEFG", "https", false)
 				login(t, cfg, "github.mycompany.com", "test-user", "gho_1234567", "https", false)
 			},
@@ -166,7 +166,7 @@ func TestTokenRun(t *testing.T) {
 				Hostname: "github.com",
 				Username: "test-user",
 			},
-			cfgStubs: func(t *testing.T, cfg gh.Config) {
+			cfgStubs: func(t *testing.T, cfg gm.Config) {
 				login(t, cfg, "github.com", "test-user", "gho_ABCDEFG", "https", false)
 				login(t, cfg, "github.com", "test-user-2", "gho_1234567", "https", false)
 			},
@@ -175,7 +175,7 @@ func TestTokenRun(t *testing.T) {
 		{
 			name: "returns a refreshable token's stored access token",
 			opts: TokenOptions{},
-			cfgStubs: func(t *testing.T, cfg gh.Config) {
+			cfgStubs: func(t *testing.T, cfg gm.Config) {
 				loginRefreshable(t, cfg, "github.com", "test-user", "gho_REFRESHABLE", "ghr_TOKEN", false)
 			},
 			wantStdout:         "gho_REFRESHABLE\n",
@@ -184,7 +184,7 @@ func TestTokenRun(t *testing.T) {
 		{
 			name: "no-refresh returns the stored token without refreshing",
 			opts: TokenOptions{NoRefresh: true},
-			cfgStubs: func(t *testing.T, cfg gh.Config) {
+			cfgStubs: func(t *testing.T, cfg gm.Config) {
 				login(t, cfg, "github.com", "test-user", "gho_ABCDEFG", "https", false)
 			},
 			wantStdout:      "gho_ABCDEFG\n",
@@ -193,7 +193,7 @@ func TestTokenRun(t *testing.T) {
 		{
 			name: "no-refresh returns a refreshable token's stored access token",
 			opts: TokenOptions{NoRefresh: true},
-			cfgStubs: func(t *testing.T, cfg gh.Config) {
+			cfgStubs: func(t *testing.T, cfg gm.Config) {
 				loginRefreshable(t, cfg, "github.com", "test-user", "gho_REFRESHABLE", "ghr_TOKEN", false)
 			},
 			wantStdout:         "gho_REFRESHABLE\n",
@@ -229,7 +229,7 @@ func TestTokenRun(t *testing.T) {
 				tt.cfgStubs(t, cfg)
 			}
 
-			tt.opts.Config = func() (gh.Config, error) {
+			tt.opts.Config = func() (gm.Config, error) {
 				return cfg, nil
 			}
 
@@ -256,7 +256,7 @@ func TestTokenRunSecureStorage(t *testing.T) {
 		name               string
 		opts               TokenOptions
 		env                map[string]string
-		cfgStubs           func(*testing.T, gh.Config)
+		cfgStubs           func(*testing.T, gm.Config)
 		wantStdout         string
 		wantErr            bool
 		wantErrMsg         string
@@ -267,7 +267,7 @@ func TestTokenRunSecureStorage(t *testing.T) {
 		{
 			name: "state 3: plain token in keyring is returned",
 			opts: TokenOptions{},
-			cfgStubs: func(t *testing.T, cfg gh.Config) {
+			cfgStubs: func(t *testing.T, cfg gm.Config) {
 				login(t, cfg, "github.com", "test-user", "gho_ABCDEFG", "https", true)
 			},
 			wantStdout:      "gho_ABCDEFG\n",
@@ -278,7 +278,7 @@ func TestTokenRunSecureStorage(t *testing.T) {
 			opts: TokenOptions{
 				Hostname: "mycompany.com",
 			},
-			cfgStubs: func(t *testing.T, cfg gh.Config) {
+			cfgStubs: func(t *testing.T, cfg gm.Config) {
 				login(t, cfg, "mycompany.com", "test-user", "gho_1234567", "https", true)
 			},
 			wantStdout: "gho_1234567\n",
@@ -289,7 +289,7 @@ func TestTokenRunSecureStorage(t *testing.T) {
 				Hostname: "github.com",
 				Username: "test-user",
 			},
-			cfgStubs: func(t *testing.T, cfg gh.Config) {
+			cfgStubs: func(t *testing.T, cfg gm.Config) {
 				login(t, cfg, "github.com", "test-user", "gho_ABCDEFG", "https", true)
 				login(t, cfg, "github.com", "test-user-2", "gho_1234567", "https", true)
 			},
@@ -298,7 +298,7 @@ func TestTokenRunSecureStorage(t *testing.T) {
 		{
 			name: "state 3: plain token in config is suppressed",
 			opts: TokenOptions{},
-			cfgStubs: func(t *testing.T, cfg gh.Config) {
+			cfgStubs: func(t *testing.T, cfg gm.Config) {
 				login(t, cfg, "github.com", "test-user", "gho_ABCDEFG", "https", false)
 			},
 			wantErr:    true,
@@ -314,7 +314,7 @@ func TestTokenRunSecureStorage(t *testing.T) {
 		{
 			name: "state 3: refreshable token in config is returned despite secure-storage",
 			opts: TokenOptions{},
-			cfgStubs: func(t *testing.T, cfg gh.Config) {
+			cfgStubs: func(t *testing.T, cfg gm.Config) {
 				loginRefreshable(t, cfg, "github.com", "test-user", "gho_REFRESHABLE", "ghr_TOKEN", false)
 			},
 			wantStdout: "gho_REFRESHABLE\n",
@@ -322,7 +322,7 @@ func TestTokenRunSecureStorage(t *testing.T) {
 		{
 			name: "state 3: refreshable token in keyring is returned",
 			opts: TokenOptions{},
-			cfgStubs: func(t *testing.T, cfg gh.Config) {
+			cfgStubs: func(t *testing.T, cfg gm.Config) {
 				loginRefreshable(t, cfg, "github.com", "test-user", "gho_REFRESHABLE", "ghr_TOKEN", true)
 			},
 			wantStdout:         "gho_REFRESHABLE\n",
@@ -332,7 +332,7 @@ func TestTokenRunSecureStorage(t *testing.T) {
 			name: "state 3: refreshable token in keyring is returned despite environment token",
 			opts: TokenOptions{},
 			env:  map[string]string{"GH_TOKEN": "gho_ENVTOKEN"},
-			cfgStubs: func(t *testing.T, cfg gh.Config) {
+			cfgStubs: func(t *testing.T, cfg gm.Config) {
 				loginRefreshable(t, cfg, "github.com", "test-user", "gho_REFRESHABLE", "ghr_TOKEN", true)
 			},
 			wantStdout: "gho_REFRESHABLE\n",
@@ -341,7 +341,7 @@ func TestTokenRunSecureStorage(t *testing.T) {
 			name: "state 3: plain token in keyring is returned despite environment token",
 			opts: TokenOptions{},
 			env:  map[string]string{"GH_TOKEN": "gho_ENVTOKEN"},
-			cfgStubs: func(t *testing.T, cfg gh.Config) {
+			cfgStubs: func(t *testing.T, cfg gm.Config) {
 				login(t, cfg, "github.com", "test-user", "gho_ABCDEFG", "https", true)
 			},
 			wantStdout: "gho_ABCDEFG\n",
@@ -367,7 +367,7 @@ func TestTokenRunSecureStorage(t *testing.T) {
 			// per-user slot. See the deleted per-user slot below.
 			name: "state 3: legacy unkeyed keyring token is returned when --user is omitted",
 			opts: TokenOptions{},
-			cfgStubs: func(t *testing.T, cfg gh.Config) {
+			cfgStubs: func(t *testing.T, cfg gm.Config) {
 				setupLegacyUnkeyedKeyringState(t, cfg)
 			},
 			wantStdout: "gho_LEGACY\n",
@@ -377,7 +377,7 @@ func TestTokenRunSecureStorage(t *testing.T) {
 		{
 			name: "state 4: plain token in keyring is returned",
 			opts: TokenOptions{NoRefresh: true},
-			cfgStubs: func(t *testing.T, cfg gh.Config) {
+			cfgStubs: func(t *testing.T, cfg gm.Config) {
 				login(t, cfg, "github.com", "test-user", "gho_ABCDEFG", "https", true)
 			},
 			wantStdout: "gho_ABCDEFG\n",
@@ -385,7 +385,7 @@ func TestTokenRunSecureStorage(t *testing.T) {
 		{
 			name: "state 4: plain token in config is suppressed",
 			opts: TokenOptions{NoRefresh: true},
-			cfgStubs: func(t *testing.T, cfg gh.Config) {
+			cfgStubs: func(t *testing.T, cfg gm.Config) {
 				login(t, cfg, "github.com", "test-user", "gho_ABCDEFG", "https", false)
 			},
 			wantErr:    true,
@@ -401,7 +401,7 @@ func TestTokenRunSecureStorage(t *testing.T) {
 		{
 			name: "state 4: refreshable token in config is suppressed",
 			opts: TokenOptions{NoRefresh: true},
-			cfgStubs: func(t *testing.T, cfg gh.Config) {
+			cfgStubs: func(t *testing.T, cfg gm.Config) {
 				loginRefreshable(t, cfg, "github.com", "test-user", "gho_REFRESHABLE", "ghr_TOKEN", false)
 			},
 			wantErr:    true,
@@ -410,7 +410,7 @@ func TestTokenRunSecureStorage(t *testing.T) {
 		{
 			name: "state 4: refreshable token in keyring is returned",
 			opts: TokenOptions{NoRefresh: true},
-			cfgStubs: func(t *testing.T, cfg gh.Config) {
+			cfgStubs: func(t *testing.T, cfg gm.Config) {
 				loginRefreshable(t, cfg, "github.com", "test-user", "gho_REFRESHABLE", "ghr_TOKEN", true)
 			},
 			wantStdout:         "gho_REFRESHABLE\n",
@@ -420,7 +420,7 @@ func TestTokenRunSecureStorage(t *testing.T) {
 			name: "state 4: refreshable token in keyring is returned despite environment token",
 			opts: TokenOptions{NoRefresh: true},
 			env:  map[string]string{"GH_TOKEN": "gho_ENVTOKEN"},
-			cfgStubs: func(t *testing.T, cfg gh.Config) {
+			cfgStubs: func(t *testing.T, cfg gm.Config) {
 				loginRefreshable(t, cfg, "github.com", "test-user", "gho_REFRESHABLE", "ghr_TOKEN", true)
 			},
 			wantStdout: "gho_REFRESHABLE\n",
@@ -429,7 +429,7 @@ func TestTokenRunSecureStorage(t *testing.T) {
 			name: "state 4: plain token in keyring is returned despite environment token",
 			opts: TokenOptions{NoRefresh: true},
 			env:  map[string]string{"GH_TOKEN": "gho_ENVTOKEN"},
-			cfgStubs: func(t *testing.T, cfg gh.Config) {
+			cfgStubs: func(t *testing.T, cfg gm.Config) {
 				login(t, cfg, "github.com", "test-user", "gho_ABCDEFG", "https", true)
 			},
 			wantStdout: "gho_ABCDEFG\n",
@@ -439,7 +439,7 @@ func TestTokenRunSecureStorage(t *testing.T) {
 			// value, so an omitted --user reads the legacy unkeyed slot rather than the active user's per-user slot.
 			name: "state 4: legacy unkeyed keyring token is returned when --user is omitted",
 			opts: TokenOptions{NoRefresh: true},
-			cfgStubs: func(t *testing.T, cfg gh.Config) {
+			cfgStubs: func(t *testing.T, cfg gm.Config) {
 				setupLegacyUnkeyedKeyringState(t, cfg)
 			},
 			wantStdout: "gho_LEGACY\n",
@@ -463,7 +463,7 @@ func TestTokenRunSecureStorage(t *testing.T) {
 				tt.cfgStubs(t, cfg)
 			}
 
-			tt.opts.Config = func() (gh.Config, error) {
+			tt.opts.Config = func() (gm.Config, error) {
 				return cfg, nil
 			}
 
@@ -485,7 +485,7 @@ func TestTokenRunSecureStorage(t *testing.T) {
 	}
 }
 
-func login(t *testing.T, c gh.Config, hostname, username, token, gitProtocol string, secureStorage bool) {
+func login(t *testing.T, c gm.Config, hostname, username, token, gitProtocol string, secureStorage bool) {
 	t.Helper()
 	_, err := c.Authentication().Login(hostname, username, token, gitProtocol, secureStorage)
 	require.NoError(t, err)
@@ -495,22 +495,22 @@ func login(t *testing.T, c gh.Config, hostname, username, token, gitProtocol str
 // for github.com, but the only keyring token lives in the legacy unkeyed slot rather than a per-user slot. It logs in
 // to record the active user, deletes the per-user keyring slot that login writes, and sets the unkeyed slot. The
 // keyring service name mirrors config.keyringServiceName, which is unexported.
-func setupLegacyUnkeyedKeyringState(t *testing.T, c gh.Config) {
+func setupLegacyUnkeyedKeyringState(t *testing.T, c gm.Config) {
 	t.Helper()
 	login(t, c, "github.com", "test-user", "gho_PERUSER", "https", true)
 	require.NoError(t, keyring.Delete("gh:github.com", "test-user"))
 	require.NoError(t, keyring.Set("gh:github.com", "", "gho_LEGACY"))
 }
 
-func loginRefreshable(t *testing.T, c gh.Config, hostname, username, accessToken, refreshToken string, secureStorage bool) {
+func loginRefreshable(t *testing.T, c gm.Config, hostname, username, accessToken, refreshToken string, secureStorage bool) {
 	t.Helper()
 	loginRefreshableWithExpiry(t, c, hostname, username, accessToken, refreshToken, secureStorage, nil)
 }
 
-func loginRefreshableWithExpiry(t *testing.T, c gh.Config, hostname, username, accessToken, refreshToken string, secureStorage bool, expiresAt *time.Time) {
+func loginRefreshableWithExpiry(t *testing.T, c gm.Config, hostname, username, accessToken, refreshToken string, secureStorage bool, expiresAt *time.Time) {
 	t.Helper()
 	authCfg := c.Authentication().(*config.AuthConfig)
-	_, err := authCfg.LoginRefreshable(hostname, username, gh.Credential{
+	_, err := authCfg.LoginRefreshable(hostname, username, gm.Credential{
 		Token:        accessToken,
 		RefreshToken: refreshToken,
 		ExpiresAt:    expiresAt,
@@ -518,7 +518,7 @@ func loginRefreshableWithExpiry(t *testing.T, c gh.Config, hostname, username, a
 	require.NoError(t, err)
 }
 
-func setRefresher(t *testing.T, c gh.Config, r gh.TokenRefresher) {
+func setRefresher(t *testing.T, c gm.Config, r gm.TokenRefresher) {
 	t.Helper()
 	c.Authentication().(*config.AuthConfig).SetTokenRefresher(r)
 }
@@ -526,9 +526,9 @@ func setRefresher(t *testing.T, c gh.Config, r gh.TokenRefresher) {
 // renewingRefresher returns a mock that renews to a fresh, long lived credential and records its calls.
 func renewingRefresher(accessToken, refreshToken string) *ghmock.TokenRefresherMock {
 	return &ghmock.TokenRefresherMock{
-		RefreshFunc: func(_ string, _ string) (gh.RefreshableCredential, error) {
+		RefreshFunc: func(_ string, _ string) (gm.RefreshableCredential, error) {
 			future := time.Now().Add(time.Hour)
-			return gh.RefreshableCredential{
+			return gm.RefreshableCredential{
 				AccessToken:  accessToken,
 				RefreshToken: refreshToken,
 				ExpiresAt:    &future,
@@ -540,18 +540,18 @@ func renewingRefresher(accessToken, refreshToken string) *ghmock.TokenRefresherM
 // failingRefresher returns a mock that always fails to refresh and records its calls.
 func failingRefresher() *ghmock.TokenRefresherMock {
 	return &ghmock.TokenRefresherMock{
-		RefreshFunc: func(_ string, _ string) (gh.RefreshableCredential, error) {
-			return gh.RefreshableCredential{}, errors.New("token endpoint unreachable")
+		RefreshFunc: func(_ string, _ string) (gm.RefreshableCredential, error) {
+			return gm.RefreshableCredential{}, errors.New("token endpoint unreachable")
 		},
 	}
 }
 
 // expiredRefresher returns a mock whose refresh token is rejected by the server, recorded via
-// gh.ErrRefreshTokenInvalid, and records its calls.
+// gm.ErrRefreshTokenInvalid, and records its calls.
 func expiredRefresher() *ghmock.TokenRefresherMock {
 	return &ghmock.TokenRefresherMock{
-		RefreshFunc: func(_ string, _ string) (gh.RefreshableCredential, error) {
-			return gh.RefreshableCredential{}, fmt.Errorf("server rejected token: %w", gh.ErrRefreshTokenInvalid)
+		RefreshFunc: func(_ string, _ string) (gm.RefreshableCredential, error) {
+			return gm.RefreshableCredential{}, fmt.Errorf("server rejected token: %w", gm.ErrRefreshTokenInvalid)
 		},
 	}
 }
@@ -566,7 +566,7 @@ func TestTokenRunRefresh(t *testing.T) {
 		name               string
 		secureStorage      bool
 		noRefresh          bool
-		setup              func(*testing.T, gh.Config)
+		setup              func(*testing.T, gm.Config)
 		refresher          *ghmock.TokenRefresherMock
 		wantStdout         string
 		wantErrMsg         string
@@ -577,7 +577,7 @@ func TestTokenRunRefresh(t *testing.T) {
 	}{
 		{
 			name: "state 1: expiring refreshable in config is refreshed",
-			setup: func(t *testing.T, cfg gh.Config) {
+			setup: func(t *testing.T, cfg gm.Config) {
 				loginRefreshableWithExpiry(t, cfg, "github.com", "test-user", "gho_OLD", "ghr_OLD", false, &past)
 			},
 			refresher:          renewingRefresher("gho_NEW", "ghr_NEW"),
@@ -588,7 +588,7 @@ func TestTokenRunRefresh(t *testing.T) {
 		},
 		{
 			name: "state 1: expiring refreshable in keyring is refreshed",
-			setup: func(t *testing.T, cfg gh.Config) {
+			setup: func(t *testing.T, cfg gm.Config) {
 				loginRefreshableWithExpiry(t, cfg, "github.com", "test-user", "gho_OLD", "ghr_OLD", true, &past)
 			},
 			refresher:      renewingRefresher("gho_NEW", "ghr_NEW"),
@@ -598,7 +598,7 @@ func TestTokenRunRefresh(t *testing.T) {
 		},
 		{
 			name: "state 1: unexpired refreshable is not refreshed",
-			setup: func(t *testing.T, cfg gh.Config) {
+			setup: func(t *testing.T, cfg gm.Config) {
 				loginRefreshableWithExpiry(t, cfg, "github.com", "test-user", "gho_OLD", "ghr_OLD", false, &future)
 			},
 			refresher:          renewingRefresher("gho_NEW", "ghr_NEW"),
@@ -608,7 +608,7 @@ func TestTokenRunRefresh(t *testing.T) {
 		},
 		{
 			name: "state 1: failed refresh falls back to the stored token",
-			setup: func(t *testing.T, cfg gh.Config) {
+			setup: func(t *testing.T, cfg gm.Config) {
 				loginRefreshableWithExpiry(t, cfg, "github.com", "test-user", "gho_OLD", "ghr_OLD", false, &past)
 			},
 			refresher:      failingRefresher(),
@@ -618,18 +618,18 @@ func TestTokenRunRefresh(t *testing.T) {
 		},
 		{
 			name: "state 1: no refresher leaves the stored token untouched",
-			setup: func(t *testing.T, cfg gh.Config) {
+			setup: func(t *testing.T, cfg gm.Config) {
 				loginRefreshableWithExpiry(t, cfg, "github.com", "test-user", "gho_OLD", "ghr_OLD", false, &past)
 			},
 			wantStdout: "gho_OLD\n",
 		},
 		{
 			name: "state 1: rejected refresh token errors and asks the user to re-authenticate",
-			setup: func(t *testing.T, cfg gh.Config) {
+			setup: func(t *testing.T, cfg gm.Config) {
 				loginRefreshableWithExpiry(t, cfg, "github.com", "test-user", "gho_OLD", "ghr_OLD", false, &past)
 			},
 			refresher:      expiredRefresher(),
-			wantErrMsg:     "the token for github.com has expired; please run 'gh auth login' to re-authenticate",
+			wantErrMsg:     "the token for github.com has expired; please run 'gm auth login' to re-authenticate",
 			wantRefresh:    1,
 			wantRefreshTok: "ghr_OLD",
 		},
@@ -637,7 +637,7 @@ func TestTokenRunRefresh(t *testing.T) {
 		{
 			name:      "state 2: no-refresh returns the stored expiring token without refreshing",
 			noRefresh: true,
-			setup: func(t *testing.T, cfg gh.Config) {
+			setup: func(t *testing.T, cfg gm.Config) {
 				loginRefreshableWithExpiry(t, cfg, "github.com", "test-user", "gho_OLD", "ghr_OLD", false, &past)
 			},
 			refresher:   renewingRefresher("gho_NEW", "ghr_NEW"),
@@ -648,7 +648,7 @@ func TestTokenRunRefresh(t *testing.T) {
 		{
 			name:          "state 3: expiring refreshable in config is refreshed despite secure-storage",
 			secureStorage: true,
-			setup: func(t *testing.T, cfg gh.Config) {
+			setup: func(t *testing.T, cfg gm.Config) {
 				loginRefreshableWithExpiry(t, cfg, "github.com", "test-user", "gho_OLD", "ghr_OLD", false, &past)
 			},
 			refresher:      renewingRefresher("gho_NEW", "ghr_NEW"),
@@ -659,7 +659,7 @@ func TestTokenRunRefresh(t *testing.T) {
 		{
 			name:          "state 3: expiring refreshable in keyring is refreshed",
 			secureStorage: true,
-			setup: func(t *testing.T, cfg gh.Config) {
+			setup: func(t *testing.T, cfg gm.Config) {
 				loginRefreshableWithExpiry(t, cfg, "github.com", "test-user", "gho_OLD", "ghr_OLD", true, &past)
 			},
 			refresher:      renewingRefresher("gho_NEW", "ghr_NEW"),
@@ -670,7 +670,7 @@ func TestTokenRunRefresh(t *testing.T) {
 		{
 			name:          "state 3: failed refresh falls back to the stored refreshable token",
 			secureStorage: true,
-			setup: func(t *testing.T, cfg gh.Config) {
+			setup: func(t *testing.T, cfg gm.Config) {
 				loginRefreshableWithExpiry(t, cfg, "github.com", "test-user", "gho_OLD", "ghr_OLD", false, &past)
 			},
 			refresher:      failingRefresher(),
@@ -681,7 +681,7 @@ func TestTokenRunRefresh(t *testing.T) {
 		{
 			name:          "state 3: plain keyring token is not refreshed",
 			secureStorage: true,
-			setup: func(t *testing.T, cfg gh.Config) {
+			setup: func(t *testing.T, cfg gm.Config) {
 				login(t, cfg, "github.com", "test-user", "gho_PLAIN", "https", true)
 			},
 			refresher:       renewingRefresher("gho_NEW", "ghr_NEW"),
@@ -692,18 +692,18 @@ func TestTokenRunRefresh(t *testing.T) {
 		{
 			name:          "state 3: rejected refresh token errors even under secure-storage",
 			secureStorage: true,
-			setup: func(t *testing.T, cfg gh.Config) {
+			setup: func(t *testing.T, cfg gm.Config) {
 				loginRefreshableWithExpiry(t, cfg, "github.com", "test-user", "gho_OLD", "ghr_OLD", true, &past)
 			},
 			refresher:      expiredRefresher(),
-			wantErrMsg:     "the token for github.com has expired; please run 'gh auth login' to re-authenticate",
+			wantErrMsg:     "the token for github.com has expired; please run 'gm auth login' to re-authenticate",
 			wantRefresh:    1,
 			wantRefreshTok: "ghr_OLD",
 		},
 		{
 			name:          "state 3: plain config token is suppressed and not refreshed",
 			secureStorage: true,
-			setup: func(t *testing.T, cfg gh.Config) {
+			setup: func(t *testing.T, cfg gm.Config) {
 				login(t, cfg, "github.com", "test-user", "gho_PLAIN", "https", false)
 			},
 			refresher:   renewingRefresher("gho_NEW", "ghr_NEW"),
@@ -715,7 +715,7 @@ func TestTokenRunRefresh(t *testing.T) {
 			name:          "state 4: no-refresh returns the stored keyring token without refreshing",
 			secureStorage: true,
 			noRefresh:     true,
-			setup: func(t *testing.T, cfg gh.Config) {
+			setup: func(t *testing.T, cfg gm.Config) {
 				loginRefreshableWithExpiry(t, cfg, "github.com", "test-user", "gho_OLD", "ghr_OLD", true, &past)
 			},
 			refresher:   renewingRefresher("gho_NEW", "ghr_NEW"),
@@ -726,7 +726,7 @@ func TestTokenRunRefresh(t *testing.T) {
 			name:          "state 4: no-refresh suppresses a config token and does not refresh",
 			secureStorage: true,
 			noRefresh:     true,
-			setup: func(t *testing.T, cfg gh.Config) {
+			setup: func(t *testing.T, cfg gm.Config) {
 				loginRefreshableWithExpiry(t, cfg, "github.com", "test-user", "gho_OLD", "ghr_OLD", false, &past)
 			},
 			refresher:   renewingRefresher("gho_NEW", "ghr_NEW"),
@@ -752,7 +752,7 @@ func TestTokenRunRefresh(t *testing.T) {
 				setRefresher(t, cfg, tt.refresher)
 			}
 
-			opts.Config = func() (gh.Config, error) {
+			opts.Config = func() (gm.Config, error) {
 				return cfg, nil
 			}
 

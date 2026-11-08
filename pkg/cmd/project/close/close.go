@@ -41,10 +41,10 @@ func NewCmdClose(f *cmdutil.Factory, runF func(config closeConfig) error) *cobra
 		Use:   "close [<number>]",
 		Example: heredoc.Doc(`
 			# Close project "1" owned by monalisa
-			$ gh project close 1 --owner monalisa
+			$ gm project close 1 --owner monalisa
 
 			# Reopen closed project "1" owned by github
-			$ gh project close 1 --owner github --undo
+			$ gm project close 1 --owner github --undo
 		`),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

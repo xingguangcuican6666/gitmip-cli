@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-// The artifact types gh knows. The API stores a type with each artifact, and
-// gh treats generic and plan artifacts alike as Markdown documents. An
+// The artifact types gm knows. The API stores a type with each artifact, and
+// gm treats generic and plan artifacts alike as Markdown documents. An
 // embedded_html artifact is an HTML document, whose body is raw HTML.
 const (
 	TypeGeneric      = "generic"
@@ -16,7 +16,7 @@ const (
 )
 
 // ArtifactFields lists the --json fields of an artifact. They are the fields
-// the API returns, named the way gh release names REST fields: camelCased,
+// the API returns, named the way gm release names REST fields: camelCased,
 // with the web URL, html_url, as url.
 var ArtifactFields = []string{
 	"body",

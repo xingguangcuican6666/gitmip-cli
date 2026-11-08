@@ -3,7 +3,7 @@ package telemetry
 import (
 	"maps"
 
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 )
 
 var (

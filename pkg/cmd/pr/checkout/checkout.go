@@ -11,8 +11,8 @@ import (
 	"github.com/cli/cli/v2/api"
 	cliContext "github.com/cli/cli/v2/context"
 	"github.com/cli/cli/v2/git"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/text"
 	"github.com/cli/cli/v2/pkg/cmd/pr/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -23,7 +23,7 @@ import (
 type CheckoutOptions struct {
 	HttpClient func() (*http.Client, error)
 	GitClient  *git.Client
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 	IO         *iostreams.IOStreams
 	Remotes    func() (cliContext.Remotes, error)
 	Branch     func() (string, error)
@@ -52,13 +52,13 @@ func NewCmdCheckout(f *cmdutil.Factory, runF func(*CheckoutOptions) error) *cobr
 		Short: "Check out a pull request in git",
 		Example: heredoc.Doc(`
 			# Interactively select a PR from the 10 most recent to check out
-			$ gh pr checkout
+			$ gm pr checkout
 
 			# Checkout a specific PR
-			$ gh pr checkout 32
-			$ gh pr checkout https://github.com/OWNER/REPO/pull/32
-			$ gh pr checkout feature
-			$ gh pr checkout 32 --branch feature --worktree /path/to/wt-feature
+			$ gm pr checkout 32
+			$ gm pr checkout https://github.com/OWNER/REPO/pull/32
+			$ gm pr checkout feature
+			$ gm pr checkout 32 --branch feature --worktree /path/to/wt-feature
 		`),
 		Args:    cobra.MaximumNArgs(1),
 		Aliases: []string{"co"},

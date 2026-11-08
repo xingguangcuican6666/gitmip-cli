@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/httpmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,11 +16,11 @@ import (
 // stubAuthConfig is a test double for the transport's token source. It returns a fixed credential and never
 // simulates a refresh.
 type stubAuthConfig struct {
-	cred gh.Credential
+	cred gm.Credential
 }
 
-func (s stubAuthConfig) ActiveTokenWithRefresh(string) (gh.Credential, gh.RefreshStatus, error) {
-	return s.cred, gh.RefreshStatusUnnecessary, nil
+func (s stubAuthConfig) ActiveTokenWithRefresh(string) (gm.Credential, gm.RefreshStatus, error) {
+	return s.cred, gm.RefreshStatusUnnecessary, nil
 }
 
 func TestGetJobRequiresRepoAndJobID(t *testing.T) {

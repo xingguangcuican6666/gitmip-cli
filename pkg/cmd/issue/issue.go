@@ -2,7 +2,7 @@ package issue
 
 import (
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	cmdArtifact "github.com/cli/cli/v2/pkg/cmd/issue/artifact"
 	cmdClose "github.com/cli/cli/v2/pkg/cmd/issue/close"
 	cmdComment "github.com/cli/cli/v2/pkg/cmd/issue/comment"
@@ -28,9 +28,9 @@ func NewCmdIssue(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder) *
 		Short: "Manage issues",
 		Long:  `Work with GitHub issues.`,
 		Example: heredoc.Doc(`
-			$ gh issue list
-			$ gh issue create --label bug
-			$ gh issue view 123 --web
+			$ gm issue list
+			$ gm issue create --label bug
+			$ gm issue view 123 --web
 		`),
 		Annotations: map[string]string{
 			"help:arguments": heredoc.Doc(`

@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/httpmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -572,7 +572,7 @@ func Test_ProjectNamesToPaths(t *testing.T) {
 		} } } }
 		`))
 
-		projectPaths, err := ProjectTitlesToPaths(client, repo, []string{"Triage", "Roadmap", "TriageV2", "RoadmapV2", "MonalisaV2"}, gh.ProjectsV1Supported)
+		projectPaths, err := ProjectTitlesToPaths(client, repo, []string{"Triage", "Roadmap", "TriageV2", "RoadmapV2", "MonalisaV2"}, gm.ProjectsV1Supported)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -630,7 +630,7 @@ func Test_ProjectNamesToPaths(t *testing.T) {
 		} } } }
 		`))
 
-		projectPaths, err := ProjectTitlesToPaths(client, repo, []string{"TriageV2", "RoadmapV2", "MonalisaV2"}, gh.ProjectsV1Unsupported)
+		projectPaths, err := ProjectTitlesToPaths(client, repo, []string{"TriageV2", "RoadmapV2", "MonalisaV2"}, gm.ProjectsV1Unsupported)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -673,7 +673,7 @@ func Test_ProjectNamesToPaths(t *testing.T) {
 		} } } }
 		`))
 
-		_, err := ProjectTitlesToPaths(client, repo, []string{"TriageV2"}, gh.ProjectsV1Unsupported)
+		_, err := ProjectTitlesToPaths(client, repo, []string{"TriageV2"}, gm.ProjectsV1Unsupported)
 		require.Equal(t, err, fmt.Errorf("'TriageV2' not found"))
 	})
 }

@@ -4,79 +4,79 @@
 package ghmock
 
 import (
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	o "github.com/cli/cli/v2/pkg/option"
 	"sync"
 )
 
-// Ensure, that ConfigMock does implement gh.Config.
+// Ensure, that ConfigMock does implement gm.Config.
 // If this is not the case, regenerate this file with moq.
-var _ gh.Config = &ConfigMock{}
+var _ gm.Config = &ConfigMock{}
 
-// ConfigMock is a mock implementation of gh.Config.
+// ConfigMock is a mock implementation of gm.Config.
 //
 //	func TestSomethingThatUsesConfig(t *testing.T) {
 //
-//		// make and configure a mocked gh.Config
+//		// make and configure a mocked gm.Config
 //		mockedConfig := &ConfigMock{
-//			AccessibleColorsFunc: func(hostname string) gh.ConfigEntry {
+//			AccessibleColorsFunc: func(hostname string) gm.ConfigEntry {
 //				panic("mock out the AccessibleColors method")
 //			},
-//			AccessiblePrompterFunc: func(hostname string) gh.ConfigEntry {
+//			AccessiblePrompterFunc: func(hostname string) gm.ConfigEntry {
 //				panic("mock out the AccessiblePrompter method")
 //			},
-//			AliasesFunc: func() gh.AliasConfig {
+//			AliasesFunc: func() gm.AliasConfig {
 //				panic("mock out the Aliases method")
 //			},
-//			AuthenticationFunc: func() gh.AuthConfig {
+//			AuthenticationFunc: func() gm.AuthConfig {
 //				panic("mock out the Authentication method")
 //			},
-//			BrowserFunc: func(hostname string) gh.ConfigEntry {
+//			BrowserFunc: func(hostname string) gm.ConfigEntry {
 //				panic("mock out the Browser method")
 //			},
 //			CacheDirFunc: func() string {
 //				panic("mock out the CacheDir method")
 //			},
-//			ClipboardFunc: func() gh.ConfigEntry {
+//			ClipboardFunc: func() gm.ConfigEntry {
 //				panic("mock out the Clipboard method")
 //			},
-//			ColorLabelsFunc: func(hostname string) gh.ConfigEntry {
+//			ColorLabelsFunc: func(hostname string) gm.ConfigEntry {
 //				panic("mock out the ColorLabels method")
 //			},
-//			EditorFunc: func(hostname string) gh.ConfigEntry {
+//			EditorFunc: func(hostname string) gm.ConfigEntry {
 //				panic("mock out the Editor method")
 //			},
-//			GetOrDefaultFunc: func(hostname string, key string) o.Option[gh.ConfigEntry] {
+//			GetOrDefaultFunc: func(hostname string, key string) o.Option[gm.ConfigEntry] {
 //				panic("mock out the GetOrDefault method")
 //			},
-//			GitProtocolFunc: func(hostname string) gh.ConfigEntry {
+//			GitProtocolFunc: func(hostname string) gm.ConfigEntry {
 //				panic("mock out the GitProtocol method")
 //			},
-//			HTTPUnixSocketFunc: func(hostname string) gh.ConfigEntry {
+//			HTTPUnixSocketFunc: func(hostname string) gm.ConfigEntry {
 //				panic("mock out the HTTPUnixSocket method")
 //			},
-//			MigrateFunc: func(migration gh.Migration) error {
+//			MigrateFunc: func(migration gm.Migration) error {
 //				panic("mock out the Migrate method")
 //			},
-//			PagerFunc: func(hostname string) gh.ConfigEntry {
+//			PagerFunc: func(hostname string) gm.ConfigEntry {
 //				panic("mock out the Pager method")
 //			},
-//			PreferEditorPromptFunc: func(hostname string) gh.ConfigEntry {
+//			PreferEditorPromptFunc: func(hostname string) gm.ConfigEntry {
 //				panic("mock out the PreferEditorPrompt method")
 //			},
-//			ExpiringCredentialsFunc: func(hostname string) gh.ConfigEntry {
+//			ExpiringCredentialsFunc: func(hostname string) gm.ConfigEntry {
 //				panic("mock out the ExpiringCredentials method")
 //			},
-//			PromptFunc: func(hostname string) gh.ConfigEntry {
+//			PromptFunc: func(hostname string) gm.ConfigEntry {
 //				panic("mock out the Prompt method")
 //			},
 //			SetFunc: func(hostname string, key string, value string)  {
 //				panic("mock out the Set method")
 //			},
-//			SpinnerFunc: func(hostname string) gh.ConfigEntry {
+//			SpinnerFunc: func(hostname string) gm.ConfigEntry {
 //				panic("mock out the Spinner method")
 //			},
-//			TelemetryFunc: func() gh.ConfigEntry {
+//			TelemetryFunc: func() gm.ConfigEntry {
 //				panic("mock out the Telemetry method")
 //			},
 //			VersionFunc: func() o.Option[string] {
@@ -87,70 +87,70 @@ var _ gh.Config = &ConfigMock{}
 //			},
 //		}
 //
-//		// use mockedConfig in code that requires gh.Config
+//		// use mockedConfig in code that requires gm.Config
 //		// and then make assertions.
 //
 //	}
 type ConfigMock struct {
 	// AccessibleColorsFunc mocks the AccessibleColors method.
-	AccessibleColorsFunc func(hostname string) gh.ConfigEntry
+	AccessibleColorsFunc func(hostname string) gm.ConfigEntry
 
 	// AccessiblePrompterFunc mocks the AccessiblePrompter method.
-	AccessiblePrompterFunc func(hostname string) gh.ConfigEntry
+	AccessiblePrompterFunc func(hostname string) gm.ConfigEntry
 
 	// AliasesFunc mocks the Aliases method.
-	AliasesFunc func() gh.AliasConfig
+	AliasesFunc func() gm.AliasConfig
 
 	// AuthenticationFunc mocks the Authentication method.
-	AuthenticationFunc func() gh.AuthConfig
+	AuthenticationFunc func() gm.AuthConfig
 
 	// BrowserFunc mocks the Browser method.
-	BrowserFunc func(hostname string) gh.ConfigEntry
+	BrowserFunc func(hostname string) gm.ConfigEntry
 
 	// CacheDirFunc mocks the CacheDir method.
 	CacheDirFunc func() string
 
 	// ClipboardFunc mocks the Clipboard method.
-	ClipboardFunc func() gh.ConfigEntry
+	ClipboardFunc func() gm.ConfigEntry
 
 	// ColorLabelsFunc mocks the ColorLabels method.
-	ColorLabelsFunc func(hostname string) gh.ConfigEntry
+	ColorLabelsFunc func(hostname string) gm.ConfigEntry
 
 	// EditorFunc mocks the Editor method.
-	EditorFunc func(hostname string) gh.ConfigEntry
+	EditorFunc func(hostname string) gm.ConfigEntry
 
 	// GetOrDefaultFunc mocks the GetOrDefault method.
-	GetOrDefaultFunc func(hostname string, key string) o.Option[gh.ConfigEntry]
+	GetOrDefaultFunc func(hostname string, key string) o.Option[gm.ConfigEntry]
 
 	// GitProtocolFunc mocks the GitProtocol method.
-	GitProtocolFunc func(hostname string) gh.ConfigEntry
+	GitProtocolFunc func(hostname string) gm.ConfigEntry
 
 	// HTTPUnixSocketFunc mocks the HTTPUnixSocket method.
-	HTTPUnixSocketFunc func(hostname string) gh.ConfigEntry
+	HTTPUnixSocketFunc func(hostname string) gm.ConfigEntry
 
 	// MigrateFunc mocks the Migrate method.
-	MigrateFunc func(migration gh.Migration) error
+	MigrateFunc func(migration gm.Migration) error
 
 	// PagerFunc mocks the Pager method.
-	PagerFunc func(hostname string) gh.ConfigEntry
+	PagerFunc func(hostname string) gm.ConfigEntry
 
 	// PreferEditorPromptFunc mocks the PreferEditorPrompt method.
-	PreferEditorPromptFunc func(hostname string) gh.ConfigEntry
+	PreferEditorPromptFunc func(hostname string) gm.ConfigEntry
 
 	// ExpiringCredentialsFunc mocks the ExpiringCredentials method.
-	ExpiringCredentialsFunc func(hostname string) gh.ConfigEntry
+	ExpiringCredentialsFunc func(hostname string) gm.ConfigEntry
 
 	// PromptFunc mocks the Prompt method.
-	PromptFunc func(hostname string) gh.ConfigEntry
+	PromptFunc func(hostname string) gm.ConfigEntry
 
 	// SetFunc mocks the Set method.
 	SetFunc func(hostname string, key string, value string)
 
 	// SpinnerFunc mocks the Spinner method.
-	SpinnerFunc func(hostname string) gh.ConfigEntry
+	SpinnerFunc func(hostname string) gm.ConfigEntry
 
 	// TelemetryFunc mocks the Telemetry method.
-	TelemetryFunc func() gh.ConfigEntry
+	TelemetryFunc func() gm.ConfigEntry
 
 	// VersionFunc mocks the Version method.
 	VersionFunc func() o.Option[string]
@@ -217,7 +217,7 @@ type ConfigMock struct {
 		// Migrate holds details about calls to the Migrate method.
 		Migrate []struct {
 			// Migration is the migration argument value.
-			Migration gh.Migration
+			Migration gm.Migration
 		}
 		// Pager holds details about calls to the Pager method.
 		Pager []struct {
@@ -288,7 +288,7 @@ type ConfigMock struct {
 }
 
 // AccessibleColors calls AccessibleColorsFunc.
-func (mock *ConfigMock) AccessibleColors(hostname string) gh.ConfigEntry {
+func (mock *ConfigMock) AccessibleColors(hostname string) gm.ConfigEntry {
 	if mock.AccessibleColorsFunc == nil {
 		panic("ConfigMock.AccessibleColorsFunc: method is nil but Config.AccessibleColors was just called")
 	}
@@ -320,7 +320,7 @@ func (mock *ConfigMock) AccessibleColorsCalls() []struct {
 }
 
 // AccessiblePrompter calls AccessiblePrompterFunc.
-func (mock *ConfigMock) AccessiblePrompter(hostname string) gh.ConfigEntry {
+func (mock *ConfigMock) AccessiblePrompter(hostname string) gm.ConfigEntry {
 	if mock.AccessiblePrompterFunc == nil {
 		panic("ConfigMock.AccessiblePrompterFunc: method is nil but Config.AccessiblePrompter was just called")
 	}
@@ -352,7 +352,7 @@ func (mock *ConfigMock) AccessiblePrompterCalls() []struct {
 }
 
 // Aliases calls AliasesFunc.
-func (mock *ConfigMock) Aliases() gh.AliasConfig {
+func (mock *ConfigMock) Aliases() gm.AliasConfig {
 	if mock.AliasesFunc == nil {
 		panic("ConfigMock.AliasesFunc: method is nil but Config.Aliases was just called")
 	}
@@ -379,7 +379,7 @@ func (mock *ConfigMock) AliasesCalls() []struct {
 }
 
 // Authentication calls AuthenticationFunc.
-func (mock *ConfigMock) Authentication() gh.AuthConfig {
+func (mock *ConfigMock) Authentication() gm.AuthConfig {
 	if mock.AuthenticationFunc == nil {
 		panic("ConfigMock.AuthenticationFunc: method is nil but Config.Authentication was just called")
 	}
@@ -406,7 +406,7 @@ func (mock *ConfigMock) AuthenticationCalls() []struct {
 }
 
 // Browser calls BrowserFunc.
-func (mock *ConfigMock) Browser(hostname string) gh.ConfigEntry {
+func (mock *ConfigMock) Browser(hostname string) gm.ConfigEntry {
 	if mock.BrowserFunc == nil {
 		panic("ConfigMock.BrowserFunc: method is nil but Config.Browser was just called")
 	}
@@ -465,7 +465,7 @@ func (mock *ConfigMock) CacheDirCalls() []struct {
 }
 
 // Clipboard calls ClipboardFunc.
-func (mock *ConfigMock) Clipboard() gh.ConfigEntry {
+func (mock *ConfigMock) Clipboard() gm.ConfigEntry {
 	if mock.ClipboardFunc == nil {
 		panic("ConfigMock.ClipboardFunc: method is nil but Config.Clipboard was just called")
 	}
@@ -492,7 +492,7 @@ func (mock *ConfigMock) ClipboardCalls() []struct {
 }
 
 // ColorLabels calls ColorLabelsFunc.
-func (mock *ConfigMock) ColorLabels(hostname string) gh.ConfigEntry {
+func (mock *ConfigMock) ColorLabels(hostname string) gm.ConfigEntry {
 	if mock.ColorLabelsFunc == nil {
 		panic("ConfigMock.ColorLabelsFunc: method is nil but Config.ColorLabels was just called")
 	}
@@ -524,7 +524,7 @@ func (mock *ConfigMock) ColorLabelsCalls() []struct {
 }
 
 // Editor calls EditorFunc.
-func (mock *ConfigMock) Editor(hostname string) gh.ConfigEntry {
+func (mock *ConfigMock) Editor(hostname string) gm.ConfigEntry {
 	if mock.EditorFunc == nil {
 		panic("ConfigMock.EditorFunc: method is nil but Config.Editor was just called")
 	}
@@ -556,7 +556,7 @@ func (mock *ConfigMock) EditorCalls() []struct {
 }
 
 // GetOrDefault calls GetOrDefaultFunc.
-func (mock *ConfigMock) GetOrDefault(hostname string, key string) o.Option[gh.ConfigEntry] {
+func (mock *ConfigMock) GetOrDefault(hostname string, key string) o.Option[gm.ConfigEntry] {
 	if mock.GetOrDefaultFunc == nil {
 		panic("ConfigMock.GetOrDefaultFunc: method is nil but Config.GetOrDefault was just called")
 	}
@@ -592,7 +592,7 @@ func (mock *ConfigMock) GetOrDefaultCalls() []struct {
 }
 
 // GitProtocol calls GitProtocolFunc.
-func (mock *ConfigMock) GitProtocol(hostname string) gh.ConfigEntry {
+func (mock *ConfigMock) GitProtocol(hostname string) gm.ConfigEntry {
 	if mock.GitProtocolFunc == nil {
 		panic("ConfigMock.GitProtocolFunc: method is nil but Config.GitProtocol was just called")
 	}
@@ -624,7 +624,7 @@ func (mock *ConfigMock) GitProtocolCalls() []struct {
 }
 
 // HTTPUnixSocket calls HTTPUnixSocketFunc.
-func (mock *ConfigMock) HTTPUnixSocket(hostname string) gh.ConfigEntry {
+func (mock *ConfigMock) HTTPUnixSocket(hostname string) gm.ConfigEntry {
 	if mock.HTTPUnixSocketFunc == nil {
 		panic("ConfigMock.HTTPUnixSocketFunc: method is nil but Config.HTTPUnixSocket was just called")
 	}
@@ -656,12 +656,12 @@ func (mock *ConfigMock) HTTPUnixSocketCalls() []struct {
 }
 
 // Migrate calls MigrateFunc.
-func (mock *ConfigMock) Migrate(migration gh.Migration) error {
+func (mock *ConfigMock) Migrate(migration gm.Migration) error {
 	if mock.MigrateFunc == nil {
 		panic("ConfigMock.MigrateFunc: method is nil but Config.Migrate was just called")
 	}
 	callInfo := struct {
-		Migration gh.Migration
+		Migration gm.Migration
 	}{
 		Migration: migration,
 	}
@@ -676,10 +676,10 @@ func (mock *ConfigMock) Migrate(migration gh.Migration) error {
 //
 //	len(mockedConfig.MigrateCalls())
 func (mock *ConfigMock) MigrateCalls() []struct {
-	Migration gh.Migration
+	Migration gm.Migration
 } {
 	var calls []struct {
-		Migration gh.Migration
+		Migration gm.Migration
 	}
 	mock.lockMigrate.RLock()
 	calls = mock.calls.Migrate
@@ -688,7 +688,7 @@ func (mock *ConfigMock) MigrateCalls() []struct {
 }
 
 // Pager calls PagerFunc.
-func (mock *ConfigMock) Pager(hostname string) gh.ConfigEntry {
+func (mock *ConfigMock) Pager(hostname string) gm.ConfigEntry {
 	if mock.PagerFunc == nil {
 		panic("ConfigMock.PagerFunc: method is nil but Config.Pager was just called")
 	}
@@ -720,7 +720,7 @@ func (mock *ConfigMock) PagerCalls() []struct {
 }
 
 // PreferEditorPrompt calls PreferEditorPromptFunc.
-func (mock *ConfigMock) PreferEditorPrompt(hostname string) gh.ConfigEntry {
+func (mock *ConfigMock) PreferEditorPrompt(hostname string) gm.ConfigEntry {
 	if mock.PreferEditorPromptFunc == nil {
 		panic("ConfigMock.PreferEditorPromptFunc: method is nil but Config.PreferEditorPrompt was just called")
 	}
@@ -768,7 +768,7 @@ func (mock *ConfigMock) ExpiringCredentialsCalls() []struct {
 }
 
 // ExpiringCredentials calls ExpiringCredentialsFunc.
-func (mock *ConfigMock) ExpiringCredentials(hostname string) gh.ConfigEntry {
+func (mock *ConfigMock) ExpiringCredentials(hostname string) gm.ConfigEntry {
 	if mock.ExpiringCredentialsFunc == nil {
 		panic("ConfigMock.ExpiringCredentialsFunc: method is nil but Config.ExpiringCredentials was just called")
 	}
@@ -784,7 +784,7 @@ func (mock *ConfigMock) ExpiringCredentials(hostname string) gh.ConfigEntry {
 }
 
 // Prompt calls PromptFunc.
-func (mock *ConfigMock) Prompt(hostname string) gh.ConfigEntry {
+func (mock *ConfigMock) Prompt(hostname string) gm.ConfigEntry {
 	if mock.PromptFunc == nil {
 		panic("ConfigMock.PromptFunc: method is nil but Config.Prompt was just called")
 	}
@@ -856,7 +856,7 @@ func (mock *ConfigMock) SetCalls() []struct {
 }
 
 // Spinner calls SpinnerFunc.
-func (mock *ConfigMock) Spinner(hostname string) gh.ConfigEntry {
+func (mock *ConfigMock) Spinner(hostname string) gm.ConfigEntry {
 	if mock.SpinnerFunc == nil {
 		panic("ConfigMock.SpinnerFunc: method is nil but Config.Spinner was just called")
 	}
@@ -888,7 +888,7 @@ func (mock *ConfigMock) SpinnerCalls() []struct {
 }
 
 // Telemetry calls TelemetryFunc.
-func (mock *ConfigMock) Telemetry() gh.ConfigEntry {
+func (mock *ConfigMock) Telemetry() gm.ConfigEntry {
 	if mock.TelemetryFunc == nil {
 		panic("ConfigMock.TelemetryFunc: method is nil but Config.Telemetry was just called")
 	}

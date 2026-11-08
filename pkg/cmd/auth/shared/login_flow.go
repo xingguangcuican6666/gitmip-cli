@@ -14,8 +14,8 @@ import (
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/authflow"
 	"github.com/cli/cli/v2/internal/browser"
-	"github.com/cli/cli/v2/internal/gh"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
+	"github.com/cli/cli/v2/internal/gm"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmd/ssh-key/add"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -24,11 +24,11 @@ import (
 	ghauth "github.com/cli/go-gh/v2/pkg/auth"
 )
 
-const defaultSSHKeyTitle = "GitHub CLI"
+const defaultSSHKeyTitle = "gitmip-cli"
 
 type iconfig interface {
 	Login(string, string, string, string, bool) (bool, error)
-	LoginRefreshable(string, string, gh.Credential, string, bool) (bool, error)
+	LoginRefreshable(string, string, gm.Credential, string, bool) (bool, error)
 	UsersForHost(string) []string
 }
 
@@ -64,17 +64,17 @@ type LoginOptions struct {
 }
 
 // ShouldCopyToClipboard resolves an explicit flag value before falling back to configuration.
-func ShouldCopyToClipboard(cfg gh.Config, flagValue *bool) bool {
+func ShouldCopyToClipboard(cfg gm.Config, flagValue *bool) bool {
 	if flagValue != nil {
 		return *flagValue
 	}
 	return cfg.Clipboard().Value == "enabled"
 }
 
-// ShouldUseExpiring resolves whether to prefer expiring credentials that gh refreshes automatically. An explicit
+// ShouldUseExpiring resolves whether to prefer expiring credentials that gm refreshes automatically. An explicit
 // --expiring flag value wins; when the flag is unset it falls back to the expiring_credentials config setting
 // for the host.
-func ShouldUseExpiring(cfg gh.Config, flagValue *bool, hostname string) bool {
+func ShouldUseExpiring(cfg gm.Config, flagValue *bool, hostname string) bool {
 	if flagValue != nil {
 		return *flagValue
 	}
@@ -209,7 +209,7 @@ func Login(opts *LoginOptions) error {
 
 	var authToken string
 	var username string
-	var refreshableCredential *gh.Credential
+	var refreshableCredential *gm.Credential
 
 	if authMode == 0 {
 		authFlow := opts.AuthFlow
@@ -264,7 +264,7 @@ func Login(opts *LoginOptions) error {
 	userWasAlreadyLoggedIn := slices.Contains(usersForHost, username)
 
 	if gitProtocol != "" {
-		fmt.Fprintf(opts.IO.ErrOut, "- gh config set -h %s git_protocol %s\n", hostname, gitProtocol)
+		fmt.Fprintf(opts.IO.ErrOut, "- gm config set -h %s git_protocol %s\n", hostname, gitProtocol)
 		fmt.Fprintf(opts.IO.ErrOut, "%s Configured git protocol\n", cs.SuccessIcon())
 	}
 
@@ -310,7 +310,7 @@ func Login(opts *LoginOptions) error {
 	}
 
 	// Record the final helper state for every sign-in. For non-interactive and SSH flows no setup runs, so this equals
-	// the before value (gh observed the helper and changed nothing); for interactive HTTPS it reflects any setup. It is
+	// the before value (gm observed the helper and changed nothing); for interactive HTTPS it reflects any setup. It is
 	// derived from the flow's decisions rather than re-reading git configuration.
 	authEvent.RecordHelperAfter(opts.CredentialFlow.ResultingHelperCategory())
 

@@ -48,7 +48,7 @@ func addJqFlag(f *pflag.FlagSet, shorthand string) {
 	f.StringP("jq", shorthand, "", "Filter JSON output using a jq `expression`")
 }
 func addTemplateFlag(f *pflag.FlagSet, shorthand string) {
-	f.StringP("template", shorthand, "", "Format JSON output using a Go template; see \"gh help formatting\"")
+	f.StringP("template", shorthand, "", "Format JSON output using a Go template; see \"gm help formatting\"")
 }
 
 func setupJsonFlags(cmd *cobra.Command, exportTarget *Exporter, fields []string) {
@@ -148,7 +148,7 @@ func AddFormatFlags(cmd *cobra.Command, exportTarget *Exporter) {
 	StringEnumFlag(cmd, &format, "format", "", "", []string{"json"}, "Output format")
 	f := cmd.Flags()
 	f.StringP("jq", "q", "", "Filter JSON output using a jq `expression`")
-	f.StringP("template", "t", "", "Format JSON output using a Go template; see \"gh help formatting\"")
+	f.StringP("template", "t", "", "Format JSON output using a Go template; see \"gm help formatting\"")
 
 	oldPreRun := cmd.PreRunE
 	cmd.PreRunE = func(c *cobra.Command, args []string) error {

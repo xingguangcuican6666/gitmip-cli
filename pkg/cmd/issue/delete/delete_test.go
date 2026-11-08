@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/pkg/cmd/issue/argparsetest"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -37,7 +37,7 @@ func runCommand(rt http.RoundTripper, pm *prompter.MockPrompter, isTTY bool, cli
 		HttpClient: func() (*http.Client, error) {
 			return &http.Client{Transport: rt}, nil
 		},
-		Config: func() (gh.Config, error) {
+		Config: func() (gm.Config, error) {
 			return config.NewMockConfig(), nil
 		},
 		BaseRepo: func() (ghrepo.Interface, error) {

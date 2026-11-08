@@ -679,7 +679,7 @@ func truncateLines(content string, width int) string {
 }
 
 func (m *browseModel) headerView() string {
-	header := m.colors.Bold(fmt.Sprintf("browsing %d gh extensions", len(m.entries)))
+	header := m.colors.Bold(fmt.Sprintf("browsing %d gm extensions", len(m.entries)))
 	if m.width <= 0 {
 		return header
 	}

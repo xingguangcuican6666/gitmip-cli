@@ -13,7 +13,7 @@ import (
 	"github.com/cli/cli/v2/internal/safeurl"
 )
 
-// Gitea has no GraphQL API, so the four sections `gh status` prints come from
+// Gitea has no GraphQL API, so the four sections `gm status` prints come from
 // three different endpoints of its own.
 //
 // GitHub answers the whole page in one aliased query with two searches inside it.
@@ -29,7 +29,7 @@ import (
 //   - Repository activity comes from /users/{login}/activities/feeds, whose rows
 //     describe what happened with an op_type word rather than GitHub's event type
 //     plus payload.
-//   - The cross-repository search has no owner filter that gh can use for the
+//   - The cross-repository search has no owner filter that gm can use for the
 //     --org and --exclude flags, so both are applied locally.
 
 // giteaStatusIssue is the part of Gitea's Issue that the status sections read.
@@ -88,7 +88,7 @@ type giteaFeedRow struct {
 
 // ErrGiteaStatusUnauthenticated explains why an anonymous run cannot answer: every
 // section here is about the caller.
-var ErrGiteaStatusUnauthenticated = errors.New("gh status shows work assigned to you, so it needs an authenticated session")
+var ErrGiteaStatusUnauthenticated = errors.New("gm status shows work assigned to you, so it needs an authenticated session")
 
 // loadSearchResultsGitea fills the assigned and review-requested lists.
 func (s *StatusGetter) loadSearchResultsGitea() error {
@@ -276,7 +276,7 @@ func giteaSubjectNumber(htmlURL string) int {
 
 // loadEventsGitea fills the repository activity section from the activity feed.
 //
-// Gitea's feed names what happened with an op_type word. The rows gh shows are
+// Gitea's feed names what happened with an op_type word. The rows gm shows are
 // the ones that create something or comment on something; the rest are dropped.
 func (s *StatusGetter) loadEventsGitea() error {
 	login, err := s.CurrentUsername()
@@ -351,7 +351,7 @@ func giteaContentText(content string) string {
 	return content
 }
 
-// giteaFeedReason translates a feed operation into the reason gh prints.
+// giteaFeedReason translates a feed operation into the reason gm prints.
 func giteaFeedReason(row giteaFeedRow) (reason, preview string) {
 	title := giteaContentText(row.Content)
 	switch row.OpType {

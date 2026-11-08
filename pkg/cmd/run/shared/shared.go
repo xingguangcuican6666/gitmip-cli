@@ -674,22 +674,22 @@ type giteaTasksPayload struct {
 	WorkflowRuns []giteaTask `json:"workflow_runs"`
 }
 
-// giteaRunFromTask maps a task row onto the Run gh works with.
+// giteaRunFromTask maps a task row onto the Run gm works with.
 //
 // The id needs care: the task row's id is the task's own identifier, while every
 // per-run endpoint (GET a run, its jobs, its logs) is addressed by the run id,
 // which the row carries in its web URL (.../actions/runs/<run id>). Reading the
-// run id from the URL is what keeps `gh run view <id>` and the jobs fetch working
+// run id from the URL is what keeps `gm run view <id>` and the jobs fetch working
 // for ids the task list handed out; falling back to the task id only happens when
 // the URL does not contain one, and those commands then answer 404 rather than
 // silently addressing a different resource.
 //
 // Two other fields cannot be filled honestly. Run.WorkflowID is a number on GitHub
 // and the task row carries a file name, so it stays zero and the name goes where
-// gh caches the workflow name. Status and conclusion are one field on Gitea: the
+// gm caches the workflow name. Status and conclusion are one field on Gitea: the
 // row's status is a run status such as queued or in_progress while the run is
 // live, and a conclusion such as success or failure once it is done, so the
-// mapping decides which of the two gh fields it belongs in.
+// mapping decides which of the two gm fields it belongs in.
 func giteaRunFromTask(task giteaTask, hostname string) Run {
 	id := task.ID
 	if runID, ok := runIDFromWebURL(task.URL); ok {
@@ -711,7 +711,7 @@ func giteaRunFromTask(task giteaTask, hostname string) Run {
 	run.StartedAt = giteaRunTime(task.RunStartedAt)
 	run.Status, run.Conclusion = giteaRunState(task.Status)
 	// Gitea's task row carries the workflow's display name in name and its file
-	// name in workflow_id. gh shows the display name, which is what WorkflowName
+	// name in workflow_id. gm shows the display name, which is what WorkflowName
 	// is for, and keeps the file name so a --workflow filter naming either one
 	// still matches.
 	run.workflowName = task.Name
@@ -730,7 +730,7 @@ func runIDFromWebURL(webURL string) (int64, bool) {
 	return id, true
 }
 
-// giteaRunState splits Gitea's single status word into the two fields gh keeps.
+// giteaRunState splits Gitea's single status word into the two fields gm keeps.
 //
 // queued, waiting, requested, in_progress and pending are run statuses. Everything
 // else is a finished outcome, which Gitea spells with the same words GitHub uses

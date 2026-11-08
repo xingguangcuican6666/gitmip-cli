@@ -14,8 +14,8 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/internal/browser"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/extensions"
@@ -627,7 +627,7 @@ func TestNewCmdExtension(t *testing.T) {
 					assert.Equal(t, 1, len(calls))
 				}
 			},
-			wantStdout: "gh test\tcli/gh-test\t1\ngh test2\tcli/gh-test2\t1\n",
+			wantStdout: "gm test\tcli/gh-test\t1\ngm test2\tcli/gh-test2\t1\n",
 		},
 		{
 			name: "create extension interactive",
@@ -663,8 +663,8 @@ func TestNewCmdExtension(t *testing.T) {
 				gh-test is ready for development!
 
 				Next Steps
-				- run 'cd gh-test; gh extension install .; gh test' to see your new extension in action
-				- run 'gh repo create' to share your extension with others
+				- run 'cd gh-test; gm extension install .; gm test' to see your new extension in action
+				- run 'gm repo create' to share your extension with others
 
 				For more information on writing extensions:
 				https://docs.github.com/github-cli/github-cli/creating-github-cli-extensions
@@ -695,9 +695,9 @@ func TestNewCmdExtension(t *testing.T) {
 				gh-test is ready for development!
 
 				Next Steps
-				- run 'cd gh-test; gh extension install .; gh test' to see your new extension in action
-				- run 'go build && gh test' to see changes in your code as you develop
-				- run 'gh repo create' to share your extension with others
+				- run 'cd gh-test; gm extension install .; gm test' to see your new extension in action
+				- run 'go build && gm test' to see changes in your code as you develop
+				- run 'gm repo create' to share your extension with others
 
 				For more information on writing extensions:
 				https://docs.github.com/github-cli/github-cli/creating-github-cli-extensions
@@ -726,10 +726,10 @@ func TestNewCmdExtension(t *testing.T) {
 				gh-test is ready for development!
 
 				Next Steps
-				- run 'cd gh-test; gh extension install .' to install your extension locally
+				- run 'cd gh-test; gm extension install .' to install your extension locally
 				- fill in script/build.sh with your compilation script for automated builds
-				- compile a gh-test binary locally and run 'gh test' to see changes
-				- run 'gh repo create' to share your extension with others
+				- compile a gh-test binary locally and run 'gm test' to see changes
+				- run 'gm repo create' to share your extension with others
 
 				For more information on writing extensions:
 				https://docs.github.com/github-cli/github-cli/creating-github-cli-extensions
@@ -758,8 +758,8 @@ func TestNewCmdExtension(t *testing.T) {
 				gh-test is ready for development!
 
 				Next Steps
-				- run 'cd gh-test; gh extension install .; gh test' to see your new extension in action
-				- run 'gh repo create' to share your extension with others
+				- run 'cd gh-test; gm extension install .; gm test' to see your new extension in action
+				- run 'gm repo create' to share your extension with others
 
 				For more information on writing extensions:
 				https://docs.github.com/github-cli/github-cli/creating-github-cli-extensions
@@ -788,8 +788,8 @@ func TestNewCmdExtension(t *testing.T) {
 				gh-test is ready for development!
 
 				Next Steps
-				- run 'cd gh-test; gh extension install .; gh test' to see your new extension in action
-				- run 'gh repo create' to share your extension with others
+				- run 'cd gh-test; gm extension install .; gm test' to see your new extension in action
+				- run 'gm repo create' to share your extension with others
 
 				For more information on writing extensions:
 				https://docs.github.com/github-cli/github-cli/creating-github-cli-extensions
@@ -932,7 +932,7 @@ func TestNewCmdExtension(t *testing.T) {
 			}
 
 			f := cmdutil.Factory{
-				Config: func() (gh.Config, error) {
+				Config: func() (gm.Config, error) {
 					return config.NewMockConfig(), nil
 				},
 				IOStreams:        ios,

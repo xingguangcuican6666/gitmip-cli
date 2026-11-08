@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -154,7 +154,7 @@ type RepoMetadataFetcher interface {
 	RepoMetadataFetch(api.RepoMetadataInput) (*api.RepoMetadataResult, error)
 }
 
-func MetadataSurvey(p Prompt, io *iostreams.IOStreams, baseRepo ghrepo.Interface, fetcher RepoMetadataFetcher, state *IssueMetadataState, projectsV1Support gh.ProjectsV1Support, reviewerSearchFunc func(string) prompter.MultiSelectSearchResult, assigneeSearchFunc func(string) prompter.MultiSelectSearchResult) error {
+func MetadataSurvey(p Prompt, io *iostreams.IOStreams, baseRepo ghrepo.Interface, fetcher RepoMetadataFetcher, state *IssueMetadataState, projectsV1Support gm.ProjectsV1Support, reviewerSearchFunc func(string) prompter.MultiSelectSearchResult, assigneeSearchFunc func(string) prompter.MultiSelectSearchResult) error {
 	isChosen := func(m string) bool {
 		return slices.Contains(state.Metadata, m)
 	}
@@ -187,7 +187,7 @@ func MetadataSurvey(p Prompt, io *iostreams.IOStreams, baseRepo ghrepo.Interface
 		Assignees:          isChosen("Assignees") && !useAssigneeSearch,
 		ApiActorsSupported: state.ApiActorsSupported,
 		Labels:             isChosen("Labels"),
-		ProjectsV1:         isChosen("Projects") && projectsV1Support == gh.ProjectsV1Supported,
+		ProjectsV1:         isChosen("Projects") && projectsV1Support == gm.ProjectsV1Supported,
 		ProjectsV2:         isChosen("Projects"),
 		Milestones:         isChosen("Milestone"),
 	}
@@ -392,7 +392,7 @@ type Editor interface {
 
 type UserEditor struct {
 	IO     *iostreams.IOStreams
-	Config func() (gh.Config, error)
+	Config func() (gm.Config, error)
 }
 
 func (e *UserEditor) Edit(filename, initialValue string) (string, error) {

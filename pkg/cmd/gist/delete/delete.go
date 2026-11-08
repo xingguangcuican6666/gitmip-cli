@@ -8,7 +8,7 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/pkg/cmd/gist/shared"
@@ -19,7 +19,7 @@ import (
 
 type DeleteOptions struct {
 	IO         *iostreams.IOStreams
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 	HttpClient func() (*http.Client, error)
 	Prompter   prompter.Prompter
 
@@ -41,16 +41,16 @@ func NewCmdDelete(f *cmdutil.Factory, runF func(*DeleteOptions) error) *cobra.Co
 		Long: heredoc.Docf(`
 			Delete a GitHub gist.
 
-			To delete a gist interactively, use %[1]sgh gist delete%[1]s with no arguments.
+			To delete a gist interactively, use %[1]sgm gist delete%[1]s with no arguments.
 
 			To delete a gist non-interactively, supply the gist id or url.
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Delete a gist interactively
-			$ gh gist delete
+			$ gm gist delete
 
 			# Delete a gist non-interactively
-			$ gh gist delete 1234
+			$ gm gist delete 1234
 		`),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(c *cobra.Command, args []string) error {

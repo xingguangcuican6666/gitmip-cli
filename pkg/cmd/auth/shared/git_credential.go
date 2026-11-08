@@ -34,8 +34,8 @@ type GitCredentialFlow struct {
 	configuredOurs  bool
 }
 
-// Prompt offers to set up gh as the git credential helper for hostname. On an expiring login the user can cancel the
-// sign-in entirely, in which case the returned error is [ErrExpiringSetupCredHelperCancelled]. When gh is already the
+// Prompt offers to set up gm as the git credential helper for hostname. On an expiring login the user can cancel the
+// sign-in entirely, in which case the returned error is [ErrExpiringSetupCredHelperCancelled]. When gm is already the
 // configured helper no prompt is shown and a nil error is returned.
 func (flow *GitCredentialFlow) Prompt(hostname string, expiring bool) error {
 	flow.expiring = expiring
@@ -43,17 +43,17 @@ func (flow *GitCredentialFlow) Prompt(hostname string, expiring bool) error {
 	// First we'll fetch the credential helper that would be used for this host
 	var configuredHelperErr error
 	flow.helper, configuredHelperErr = flow.HelperConfig.ConfiguredHelper(hostname)
-	// If the helper is gh itself, then we don't need to ask the user if they want to update their git credentials
-	// because it will happen automatically by virtue of the fact that gh will return the active token.
+	// If the helper is gm itself, then we don't need to ask the user if they want to update their git credentials
+	// because it will happen automatically by virtue of the fact that gm will return the active token.
 	//
-	// Since gh is the helper, this token may be used for git operations, so we'll additionally request the workflow
+	// Since gm is the helper, this token may be used for git operations, so we'll additionally request the workflow
 	// scope to ensure that git push operations that include workflow changes succeed.
 	if flow.helper.IsOurs() {
 		flow.scopes = append(flow.scopes, "workflow")
 		return nil
 	}
 
-	// An expiring login needs gh as the credential helper so it can refresh the token, so we present a dedicated
+	// An expiring login needs gm as the credential helper so it can refresh the token, so we present a dedicated
 	// prompt that spells out the consequence of declining and offers to stop the sign-in entirely.
 	if expiring {
 		return flow.promptExpiring(hostname, configuredHelperErr)
@@ -90,21 +90,21 @@ func (flow *GitCredentialFlow) Prompt(hostname string, expiring bool) error {
 	return nil
 }
 
-// promptExpiring runs the credential-helper decision for an expiring login. gh must be the git credential helper to
+// promptExpiring runs the credential-helper decision for an expiring login. gm must be the git credential helper to
 // refresh an expiring token, so the consequence of declining is printed as a warning and the user is offered three
-// choices: configure gh, continue without it, or stop the sign-in. Cancelling returns
+// choices: configure gm, continue without it, or stop the sign-in. Cancelling returns
 // [ErrExpiringSetupCredHelperCancelled]. configuredHelperErr carries any error from detecting the existing helper so
 // that a missing git binary aborts before the auth flow runs.
 func (flow *GitCredentialFlow) promptExpiring(hostname string, configuredHelperErr error) error {
 	cs := flow.IO.ColorScheme()
 	fmt.Fprintf(flow.IO.ErrOut,
-		"%s You asked for an expiring token, which gh refreshes automatically. For that to work, gh must be your "+
+		"%s You asked for an expiring token, which gm refreshes automatically. For that to work, gm must be your "+
 			"Git credential helper for %s. Otherwise Git will not learn about refreshed tokens and your HTTPS Git "+
 			"operations will start to fail once the current token expires, within hours.\n",
 		cs.WarningIcon(), hostname)
 
 	options := []string{
-		"Set up gh as your Git credential helper (recommended)",
+		"Set up gm as your Git credential helper (recommended)",
 		"Continue without it (you manage Git credentials yourself)",
 		"Cancel",
 	}
@@ -115,7 +115,7 @@ func (flow *GitCredentialFlow) promptExpiring(hostname string, configuredHelperE
 	}
 
 	switch choice {
-	case 0: // Set up gh as the Git credential helper.
+	case 0: // Set up gm as the Git credential helper.
 		// Abort before the auth flow if git isn't installed, matching the non-expiring prompt above.
 		if _, ok := errors.AsType[*git.NotInstalled](configuredHelperErr); ok {
 			return configuredHelperErr
@@ -125,7 +125,7 @@ func (flow *GitCredentialFlow) promptExpiring(hostname string, configuredHelperE
 	case 2: // Cancel the sign-in.
 		return ErrExpiringSetupCredHelperCancelled
 	}
-	// case 1 (continue without gh): shouldSetup stays false, the user accepted that git will not be configured.
+	// case 1 (continue without gm): shouldSetup stays false, the user accepted that git will not be configured.
 
 	return nil
 }
@@ -178,14 +178,14 @@ func (flow *GitCredentialFlow) ShouldSetup() bool {
 
 // Setup configures git to use the newly obtained credential for the given hostname.
 //
-// If no credential helper is configured for the host, gh configures itself as the helper. Otherwise a non-gh helper
+// If no credential helper is configured for the host, gm configures itself as the helper. Otherwise a non-gh helper
 // is already configured and the behavior depends on how the login was started:
 //
-//   - For an expiring login the user already chose up-front (in Prompt) to make gh the helper, so gh is configured as
+//   - For an expiring login the user already chose up-front (in Prompt) to make gm the helper, so gm is configured as
 //     the helper without re-prompting and regardless of the token kind the server actually returned.
 //   - For a non-expiring credential the existing helper is updated with the new credential.
 //   - For a credential that unexpectedly came back refreshable, the external helper cannot refresh it and would keep
-//     serving it after it expires, so Setup offers to configure gh as the helper instead. If the user accepts, gh is
+//     serving it after it expires, so Setup offers to configure gm as the helper instead. If the user accepts, gm is
 //     configured as the helper. If the user declines, the existing credential is rejected and nothing is stored, and a
 //     non-empty warning is returned so the caller can advise the user. The warning is undecorated so the caller
 //     controls presentation.
@@ -202,7 +202,7 @@ func (flow *GitCredentialFlow) Setup(hostname, username, authToken string, refre
 	}
 
 	// For an expiring login the credential-helper decision was already made up-front in Prompt. Setup only runs when
-	// the user chose to configure gh, so honor that choice here without re-prompting and regardless of whether the
+	// the user chose to configure gm, so honor that choice here without re-prompting and regardless of whether the
 	// server actually issued a refreshable token.
 	if flow.expiring {
 		flow.configuredOurs = true
@@ -210,11 +210,11 @@ func (flow *GitCredentialFlow) Setup(hostname, username, authToken string, refre
 	}
 
 	// A non-gh helper is configured. It cannot refresh an expiring token and would keep serving the token after it
-	// expires, so storing a refreshable credential in it is a trap. Offer to make gh the helper instead, since gh can
+	// expires, so storing a refreshable credential in it is a trap. Offer to make gm the helper instead, since gm can
 	// refresh the token transparently.
 	if refreshable {
 		setupGh, err := flow.Prompter.Confirm(
-			fmt.Sprintf("The git credential helper configured for %s cannot refresh expiring tokens. Set up gh as the git credential helper instead?", hostname),
+			fmt.Sprintf("The git credential helper configured for %s cannot refresh expiring tokens. Set up gm as the git credential helper instead?", hostname),
 			true,
 		)
 		if err != nil {
@@ -231,7 +231,7 @@ func (flow *GitCredentialFlow) Setup(hostname, username, authToken string, refre
 			return "", err
 		}
 		return fmt.Sprintf(
-			"The configured git credential helper for %[1]s cannot refresh expiring tokens, so the new credential was not stored in it. Git operations may prompt for credentials or fail on the next attempt. Run 'gh auth setup-git --hostname %[1]s' to let gh manage git authentication.",
+			"The configured git credential helper for %[1]s cannot refresh expiring tokens, so the new credential was not stored in it. Git operations may prompt for credentials or fail on the next attempt. Run 'gm auth setup-git --hostname %[1]s' to let gm manage git authentication.",
 			hostname,
 		), nil
 	}

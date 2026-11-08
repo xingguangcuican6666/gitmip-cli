@@ -4,7 +4,7 @@ set -euo pipefail
 # Get the root directory of the repository
 rootDir="$(git rev-parse --show-toplevel)"
 
-ghBuildPath="$rootDir/bin/gh"
+ghBuildPath="$rootDir/bin/gm"
 
 sigstore02PackageFile="sigstore-2.2.0.tgz"
 sigstore02PackageURL="https://registry.npmjs.org/sigstore/-/$sigstore02PackageFile"

@@ -5,7 +5,7 @@ import (
 
 	"github.com/cli/cli/v2/internal/browser"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/telemetry"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/extensions"
@@ -71,7 +71,7 @@ func TestNewCmdRoot_ExtensionRegistration(t *testing.T) {
 
 			f := &cmdutil.Factory{
 				IOStreams: ios,
-				Config: func() (gh.Config, error) {
+				Config: func() (gm.Config, error) {
 					return config.NewMockConfig(), nil
 				},
 				Browser:          &browser.Stub{},

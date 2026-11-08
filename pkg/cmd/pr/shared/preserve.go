@@ -37,7 +37,7 @@ func PreserveInput(io *iostreams.IOStreams, state *IssueMetadataState, createErr
 			return
 		}
 
-		tmpfile, err := io.TempFile(os.TempDir(), "gh*.json")
+		tmpfile, err := io.TempFile(os.TempDir(), "gm*.json")
 		if err != nil {
 			fmt.Fprintf(out, "failed to save input to file: %s\n", err)
 			fmt.Fprintln(out, "would have saved:")
@@ -60,7 +60,7 @@ func PreserveInput(io *iostreams.IOStreams, state *IssueMetadataState, createErr
 			issueType = "issue"
 		}
 
-		fmt.Fprintf(out, "%s operation failed. To restore: gh %s create --recover %s\n", cs.FailureIcon(), issueType, tmpfile.Name())
+		fmt.Fprintf(out, "%s operation failed. To restore: gm %s create --recover %s\n", cs.FailureIcon(), issueType, tmpfile.Name())
 
 		// some whitespace before the actual error
 		fmt.Fprintln(out)

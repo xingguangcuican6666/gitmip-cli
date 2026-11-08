@@ -71,7 +71,7 @@ func TestArtifactExportData(t *testing.T) {
 			wantJSON: `{"name": "OAuth callback plan", "number": 2, "type": "generic"}`,
 		},
 		{
-			name:     "a stored type gh doesn't know",
+			name:     "a stored type gm doesn't know",
 			artifact: Artifact{Number: 7, Type: "bad-type", Name: "Unknown"},
 			fields:   []string{"number", "type"},
 			wantJSON: `{"number": 7, "type": "bad-type"}`,

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/oauth"
 	oauthapi "github.com/cli/oauth/api"
 	"github.com/stretchr/testify/require"
@@ -122,7 +122,7 @@ func TestTokenRefresherRefreshRejected(t *testing.T) {
 	require.Error(t, err)
 	// The gh sentinel lets a caller classify an unusable refresh token without importing the OAuth library, while the
 	// original library error is preserved in the chain.
-	require.ErrorIs(t, err, gh.ErrRefreshTokenInvalid)
+	require.ErrorIs(t, err, gm.ErrRefreshTokenInvalid)
 	require.ErrorIs(t, err, oauth.ErrRefreshTokenInvalid)
 }
 

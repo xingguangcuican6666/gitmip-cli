@@ -224,7 +224,7 @@ func TestDevelopRun(t *testing.T) {
 					httpmock.StringResponse(featureDisabledPayload),
 				)
 			},
-			wantErr: "the `gh issue develop` command is not currently available",
+			wantErr: "the `gm issue develop` command is not currently available",
 		},
 		{
 			name: "list branches for an issue",

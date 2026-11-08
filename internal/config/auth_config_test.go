@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/cli/cli/v2/internal/config/migration"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/keyring"
 	ghConfig "github.com/cli/go-gh/v2/pkg/config"
 	"github.com/stretchr/testify/require"
@@ -850,7 +850,7 @@ func TestActiveTokenPrefersPerUserConfigTokenOverUnkeyedKeyring(t *testing.T) {
 
 	// Then it returns the per-user config token, not the unkeyed keyring token older gh would have returned
 	require.Equal(t, "per-user-config", cred.Token)
-	require.Equal(t, gh.TokenSourceOAuthToken, cred.Source)
+	require.Equal(t, gm.TokenSourceOAuthToken, cred.Source)
 }
 
 func TestTokenWithActiveUserNotInKeyringFallsBackToBlank(t *testing.T) {
@@ -999,16 +999,16 @@ func TestActiveTokenType(t *testing.T) {
 	tests := []struct {
 		name  string
 		token string
-		want  gh.TokenType
+		want  gm.TokenType
 	}{
-		{name: "oauth", token: "gho_test", want: gh.TokenTypeOAuth},
-		{name: "personal access", token: "ghp_test", want: gh.TokenTypePersonalAccess},
-		{name: "fine-grained pat", token: "github_pat_test", want: gh.TokenTypeFineGrainedPAT},
-		{name: "user-to-server", token: "ghu_test", want: gh.TokenTypeUserToServer},
-		{name: "server-to-server", token: "ghs_test", want: gh.TokenTypeServerToServer},
-		{name: "refresh", token: "ghr_test", want: gh.TokenTypeRefresh},
-		{name: "a prefix gh does not know", token: "test", want: gh.TokenTypeUnknown},
-		{name: "no token at all", token: "", want: gh.TokenTypeUnknown},
+		{name: "oauth", token: "gho_test", want: gm.TokenTypeOAuth},
+		{name: "personal access", token: "ghp_test", want: gm.TokenTypePersonalAccess},
+		{name: "fine-grained pat", token: "github_pat_test", want: gm.TokenTypeFineGrainedPAT},
+		{name: "user-to-server", token: "ghu_test", want: gm.TokenTypeUserToServer},
+		{name: "server-to-server", token: "ghs_test", want: gm.TokenTypeServerToServer},
+		{name: "refresh", token: "ghr_test", want: gm.TokenTypeRefresh},
+		{name: "a prefix gh does not know", token: "test", want: gm.TokenTypeUnknown},
+		{name: "no token at all", token: "", want: gm.TokenTypeUnknown},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

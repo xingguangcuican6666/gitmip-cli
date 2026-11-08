@@ -48,10 +48,10 @@ func newCmdClone(f *cmdutil.Factory, runF func(*cloneOptions) error) *cobra.Comm
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Clone and overwrite labels from cli/cli repository into the current repository
-			$ gh label clone cli/cli --force
+			$ gm label clone cli/cli --force
 
 			# Clone labels from cli/cli repository into octocat/cli repository
-			$ gh label clone cli/cli --repo octocat/cli
+			$ gm label clone cli/cli --repo octocat/cli
 		`),
 		Args: cmdutil.ExactArgs(1, "cannot clone labels: source-repository argument required"),
 		RunE: func(c *cobra.Command, args []string) error {

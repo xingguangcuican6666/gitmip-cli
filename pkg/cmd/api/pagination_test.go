@@ -207,7 +207,7 @@ func Test_addPerPageGitea(t *testing.T) {
 			want:    "items?limit=6&state=open",
 		},
 		{
-			// gh api takes the path verbatim, so a user-supplied per_page
+			// gm api takes the path verbatim, so a user-supplied per_page
 			// must not be rewritten even though Gitea ignores the name.
 			name:    "preserves user-supplied per_page spelling",
 			p:       "items?per_page=6",

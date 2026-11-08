@@ -75,37 +75,37 @@ func NewCmdBrowse(f *cmdutil.Factory, runF func(*BrowseOptions) error) *cobra.Co
 		Args: cobra.MaximumNArgs(1),
 		Example: heredoc.Doc(`
 			# Open the home page of the current repository
-			$ gh browse
+			$ gm browse
 
 			# Open the script directory of the current repository
-			$ gh browse script/
+			$ gm browse script/
 
 			# Open issue or pull request 217
-			$ gh browse 217
+			$ gm browse 217
 
 			# Open commit page
-			$ gh browse 77507cd94ccafcf568f8560cfecde965fcfa63
+			$ gm browse 77507cd94ccafcf568f8560cfecde965fcfa63
 
 			# Open repository settings
-			$ gh browse --settings
+			$ gm browse --settings
 
 			# Open main.go at line 312
-			$ gh browse main.go:312
+			$ gm browse main.go:312
 
 			# Open blame view for main.go at line 312
-			$ gh browse main.go:312 --blame
+			$ gm browse main.go:312 --blame
 
 			# Open main.go with the repository at head of bug-fix branch
-			$ gh browse main.go --branch bug-fix
+			$ gm browse main.go --branch bug-fix
 
 			# Open main.go with the repository at commit 775007cd
-			$ gh browse main.go --commit=77507cd94ccafcf568f8560cfecde965fcfa63
+			$ gm browse main.go --commit=77507cd94ccafcf568f8560cfecde965fcfa63
 		`),
 		Annotations: map[string]string{
 			"help:arguments": heredoc.Doc(`
 				A browser location can be specified using arguments in the following format:
 				- by number for issue or pull request, e.g. "123"; or
-				- by path for opening folders and files, e.g. "cmd/gh/main.go"; or
+				- by path for opening folders and files, e.g. "cmd/gm/main.go"; or
 				- by commit SHA
 			`),
 			"help:environment": heredoc.Doc(`

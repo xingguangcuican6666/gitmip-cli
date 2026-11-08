@@ -10,7 +10,7 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/pkg/cmd/gist/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -20,7 +20,7 @@ import (
 
 type RenameOptions struct {
 	IO         *iostreams.IOStreams
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 	HttpClient func() (*http.Client, error)
 
 	Selector    string

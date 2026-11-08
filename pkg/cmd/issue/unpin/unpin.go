@@ -6,8 +6,8 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmd/issue/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -18,7 +18,7 @@ import (
 
 type UnpinOptions struct {
 	HttpClient func() (*http.Client, error)
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 	IO         *iostreams.IOStreams
 	BaseRepo   func() (ghrepo.Interface, error)
 
@@ -43,13 +43,13 @@ func NewCmdUnpin(f *cmdutil.Factory, runF func(*UnpinOptions) error) *cobra.Comm
 		`),
 		Example: heredoc.Doc(`
 			# Unpin issue from the current repository
-			$ gh issue unpin 23
+			$ gm issue unpin 23
 
 			# Unpin issue by URL
-			$ gh issue unpin https://github.com/owner/repo/issues/23
+			$ gm issue unpin https://github.com/owner/repo/issues/23
 
 			# Unpin an issue from specific repository
-			$ gh issue unpin 23 --repo owner/repo
+			$ gm issue unpin 23 --repo owner/repo
 		`),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

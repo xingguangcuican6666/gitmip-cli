@@ -6,31 +6,31 @@ package ghmock
 import (
 	"sync"
 
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 )
 
-// Ensure, that TokenRefresherMock does implement gh.TokenRefresher.
+// Ensure, that TokenRefresherMock does implement gm.TokenRefresher.
 // If this is not the case, regenerate this file with moq.
-var _ gh.TokenRefresher = &TokenRefresherMock{}
+var _ gm.TokenRefresher = &TokenRefresherMock{}
 
-// TokenRefresherMock is a mock implementation of gh.TokenRefresher.
+// TokenRefresherMock is a mock implementation of gm.TokenRefresher.
 //
 //	func TestSomethingThatUsesTokenRefresher(t *testing.T) {
 //
-//		// make and configure a mocked gh.TokenRefresher
+//		// make and configure a mocked gm.TokenRefresher
 //		mockedTokenRefresher := &TokenRefresherMock{
-//			RefreshFunc: func(refreshToken string, hostname string) (gh.RefreshableCredential, error) {
+//			RefreshFunc: func(refreshToken string, hostname string) (gm.RefreshableCredential, error) {
 //				panic("mock out the Refresh method")
 //			},
 //		}
 //
-//		// use mockedTokenRefresher in code that requires gh.TokenRefresher
+//		// use mockedTokenRefresher in code that requires gm.TokenRefresher
 //		// and then make assertions.
 //
 //	}
 type TokenRefresherMock struct {
 	// RefreshFunc mocks the Refresh method.
-	RefreshFunc func(refreshToken string, hostname string) (gh.RefreshableCredential, error)
+	RefreshFunc func(refreshToken string, hostname string) (gm.RefreshableCredential, error)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -46,7 +46,7 @@ type TokenRefresherMock struct {
 }
 
 // Refresh calls RefreshFunc.
-func (mock *TokenRefresherMock) Refresh(refreshToken string, hostname string) (gh.RefreshableCredential, error) {
+func (mock *TokenRefresherMock) Refresh(refreshToken string, hostname string) (gm.RefreshableCredential, error) {
 	if mock.RefreshFunc == nil {
 		panic("TokenRefresherMock.RefreshFunc: method is nil but TokenRefresher.Refresh was just called")
 	}

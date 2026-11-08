@@ -246,7 +246,7 @@ func TestNewCmdDelete(t *testing.T) {
 				gotOpts = opts
 				return nil
 			})
-			// gh issue adds -R and its hook, which replaces f.BaseRepo before RunE.
+			// gm issue adds -R and its hook, which replaces f.BaseRepo before RunE.
 			cmdutil.EnableRepoOverride(cmd, f)
 
 			argv, err := shlex.Split(tt.args)
@@ -279,7 +279,7 @@ func TestNewCmdDelete(t *testing.T) {
 }
 
 func TestDeleteRun(t *testing.T) {
-	// The spec's issue 142, plus an artifact whose type gh doesn't know and
+	// The spec's issue 142, plus an artifact whose type gm doesn't know and
 	// one whose name needs cleaning up. Other numbers don't exist.
 	artifacts := map[int]*client.ArtifactWithVersions{
 		2: {Number: 2, Type: "generic", Name: "OAuth callback plan"},
@@ -555,7 +555,7 @@ func TestDeleteRun(t *testing.T) {
 			wantErrIs: cmdutil.SilentError,
 		},
 		{
-			name: "a type gh doesn't know is deleted as usual",
+			name: "a type gm doesn't know is deleted as usual",
 			opts: DeleteOptions{IssueNumber: 142, ArtifactNumbers: []int{7}, Confirmed: true},
 			tty:  true,
 			wantCalls: []string{

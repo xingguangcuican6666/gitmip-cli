@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// DeleteOptions holds the flags and dependencies of gh issue artifact delete.
+// DeleteOptions holds the flags and dependencies of gm issue artifact delete.
 type DeleteOptions struct {
 	IO       *iostreams.IOStreams
 	BaseRepo func() (ghrepo.Interface, error)
@@ -24,7 +24,7 @@ type DeleteOptions struct {
 
 	IssueNumber     int
 	ArtifactNumbers []int
-	// Confirmed skips the confirmation prompt. It is required when gh can't
+	// Confirmed skips the confirmation prompt. It is required when gm can't
 	// prompt.
 	Confirmed bool
 }
@@ -33,7 +33,7 @@ type iprompter interface {
 	Confirm(string, bool) (bool, error)
 }
 
-// NewCmdDelete creates the gh issue artifact delete command.
+// NewCmdDelete creates the gm issue artifact delete command.
 func NewCmdDelete(f *cmdutil.Factory, runF func(*DeleteOptions) error) *cobra.Command {
 	opts := &DeleteOptions{
 		IO:       f.IOStreams,
@@ -54,10 +54,10 @@ func NewCmdDelete(f *cmdutil.Factory, runF func(*DeleteOptions) error) *cobra.Co
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Delete artifact 2 from issue 142
-			$ gh issue artifact delete 142 2
+			$ gm issue artifact delete 142 2
 
 			# Delete two artifacts without a prompt
-			$ gh issue artifact delete 142 2 5 --yes
+			$ gm issue artifact delete 142 2 5 --yes
 		`),
 		Args: cmdutil.MinimumArgs(1, shared.MissingArtifactMessage),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -84,7 +84,7 @@ func NewCmdDelete(f *cmdutil.Factory, runF func(*DeleteOptions) error) *cobra.Co
 	return cmd
 }
 
-// lookup is what gh learned about one artifact number before deleting it.
+// lookup is what gm learned about one artifact number before deleting it.
 type lookup struct {
 	number int
 	// name is the artifact's name, with its whitespace cleaned up for
@@ -162,7 +162,7 @@ func deleteRun(opts *DeleteOptions) error {
 			failed = true
 			continue
 		}
-		// Like gh issue delete, a deleted artifact is reported on stderr, and
+		// Like gm issue delete, a deleted artifact is reported on stderr, and
 		// only in a terminal: a script already knows the numbers it passed.
 		if opts.IO.IsStdoutTTY() {
 			fmt.Fprintf(opts.IO.ErrOut, "%s Deleted artifact %d (%s) from %s\n", cs.SuccessIconWithColor(cs.Red), l.number, l.name, issueRef)
@@ -175,9 +175,9 @@ func deleteRun(opts *DeleteOptions) error {
 	return nil
 }
 
-// printFailure reports an artifact gh couldn't delete, on stderr. In a
+// printFailure reports an artifact gm couldn't delete, on stderr. In a
 // terminal, it's the failure line the other artifact commands print. Piped,
-// it's "<number>: <reason>", like gh codespace delete, with the same reason.
+// it's "<number>: <reason>", like gm codespace delete, with the same reason.
 func printFailure(ios *iostreams.IOStreams, number int, err error) {
 	if !ios.IsStdoutTTY() {
 		fmt.Fprintf(ios.ErrOut, "%d: %s\n", number, shared.FailureReason(err))

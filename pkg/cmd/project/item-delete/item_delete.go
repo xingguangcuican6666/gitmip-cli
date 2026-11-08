@@ -40,7 +40,7 @@ func NewCmdDeleteItem(f *cmdutil.Factory, runF func(config deleteItemConfig) err
 		Use:   "item-delete [<number>]",
 		Example: heredoc.Doc(`
 			# Delete an item in the current user's project "1"
-			$ gh project item-delete 1 --owner "@me" --id <item-id>
+			$ gm project item-delete 1 --owner "@me" --id <item-id>
 		`),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

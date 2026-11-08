@@ -7,7 +7,7 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/httpmock"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -161,7 +161,7 @@ func TestListRun(t *testing.T) {
 		if tt.httpStubs != nil {
 			tt.httpStubs(t, reg)
 		}
-		tt.opts.Config = func() (gh.Config, error) {
+		tt.opts.Config = func() (gm.Config, error) {
 			return config.NewMockConfig(), nil
 		}
 		tt.opts.HTTPClient = func() (*http.Client, error) {

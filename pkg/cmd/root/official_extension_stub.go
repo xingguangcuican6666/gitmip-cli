@@ -45,7 +45,7 @@ func officialExtensionStubRun(io *iostreams.IOStreams, p prompter.Prompter, em e
 			prompt := heredoc.Docf(`
 				%[1]s is available as an official extension.
 				Would you like to install it now?
-			`, fmt.Sprintf("gh %s", ext.Name))
+			`, fmt.Sprintf("gm %s", ext.Name))
 			confirmed, err := p.Confirm(prompt, true)
 			if err != nil {
 				return err
@@ -57,8 +57,8 @@ func officialExtensionStubRun(io *iostreams.IOStreams, p prompter.Prompter, em e
 			fmt.Fprint(stderr, heredoc.Docf(`
 				%[1]s is available as an official extension.
 				To install it, run:
-				  gh extension install %[2]s/%[3]s
-			`, fmt.Sprintf("gh %s", ext.Name), ext.Owner, ext.Repo))
+				  gm extension install %[2]s/%[3]s
+			`, fmt.Sprintf("gm %s", ext.Name), ext.Owner, ext.Repo))
 			return cmdutil.SilentError
 		}
 	}

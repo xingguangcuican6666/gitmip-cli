@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 )
 
 //go:generate moq -rm -out client_mock.go . CapiClient
@@ -30,9 +30,9 @@ type CAPIClient struct {
 }
 
 // authConfig resolves the active token for a GitHub host, refreshing an expiring token when it is near expiry.
-// It is satisfied by gh's AuthConfig and lets the transport obtain a fresh token on each request.
+// It is satisfied by gm's AuthConfig and lets the transport obtain a fresh token on each request.
 type authConfig interface {
-	ActiveTokenWithRefresh(hostname string) (gh.Credential, gh.RefreshStatus, error)
+	ActiveTokenWithRefresh(hostname string) (gm.Credential, gm.RefreshStatus, error)
 }
 
 // NewCAPIClient creates a new CAPI client. Provide an auth source, the user's

@@ -18,8 +18,8 @@ import (
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/git"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/pkg/extensions"
 	"github.com/cli/cli/v2/pkg/findsh"
@@ -51,7 +51,7 @@ type Manager struct {
 	platform   func() (string, string)
 	client     *http.Client
 	gitClient  gitClient
-	config     gh.Config
+	config     gm.Config
 	io         *iostreams.IOStreams
 	ghPath     string
 	dryRunMode bool
@@ -79,7 +79,7 @@ func NewManager(ios *iostreams.IOStreams, gc *git.Client, ghPath string) *Manage
 	}
 }
 
-func (m *Manager) SetConfig(cfg gh.Config) {
+func (m *Manager) SetConfig(cfg gm.Config) {
 	m.config = cfg
 }
 
@@ -130,7 +130,7 @@ func (m *Manager) Dispatch(args []string, stdin io.Reader, stdout, stderr io.Wri
 		forwardArgs = append([]string{"-c", `command "$@"`, "--", exe}, forwardArgs...)
 		externalCmd = m.newCommand(shExe, forwardArgs...)
 	}
-	// Tell the extension that gh dispatched it and provide a reliable path back to this executable.
+	// Tell the extension that gm dispatched it and provide a reliable path back to this executable.
 	externalCmd.Env = append(externalCmd.Environ(), "GH_EXTENSION=1", "GH_PATH="+m.ghPath)
 
 	externalCmd.Stdin = stdin
@@ -312,7 +312,7 @@ func (m *Manager) installBin(repo ghrepo.Interface, target string) error {
 			if strings.HasSuffix(a.Name, darwinAmd64) {
 				if !hasRosetta() {
 					return fmt.Errorf(
-						"%[1]s unsupported for %[2]s. Install Rosetta with `softwareupdate --install-rosetta` to use the available %[3]s binary, or open an issue: `gh issue create -R %[4]s/%[1]s -t'Support %[2]s'`",
+						"%[1]s unsupported for %[2]s. Install Rosetta with `softwareupdate --install-rosetta` to use the available %[3]s binary, or open an issue: `gm issue create -R %[4]s/%[1]s -t'Support %[2]s'`",
 						repo.RepoName(), platform, darwinAmd64, repo.RepoOwner())
 				}
 
@@ -385,7 +385,7 @@ func (m *Manager) installBin(repo ghrepo.Interface, target string) error {
 
 func generateMissingBinaryIssueCreateCommand(repoOwner string, repoName string, currentPlatform string) string {
 	issueBody := generateMissingBinaryIssueBody(currentPlatform)
-	return fmt.Sprintf("gh issue create -R %[1]s/%[2]s --title \"Add support for the %[3]s architecture\" --body \"%[4]s\"", repoOwner, repoName, currentPlatform, issueBody)
+	return fmt.Sprintf("gm issue create -R %[1]s/%[2]s --title \"Add support for the %[3]s architecture\" --body \"%[4]s\"", repoOwner, repoName, currentPlatform, issueBody)
 }
 
 func generateMissingBinaryIssueBody(currentPlatform string) string {
@@ -865,7 +865,7 @@ func codesignBinary(binPath string) error {
 // Because extension names are not unique across GitHub organizations and users, we feel its important to clean up this metadata
 // before installing or removing an extension with the same name to avoid confusing the extension manager based on past extensions.
 //
-// As of cli/cli#9934, the only effect on gh from not cleaning up metadata before installing or removing an extension are:
+// As of cli/cli#9934, the only effect on gm from not cleaning up metadata before installing or removing an extension are:
 //
 //  1. The last `checked_for_update_at` timestamp is sufficiently in the past and will check for an update on first use,
 //     which would happen if no extension update metadata existed.

@@ -9,7 +9,7 @@ import (
 
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/pkg/cmd/gist/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -301,7 +301,7 @@ func Test_deleteRun(t *testing.T) {
 			return &http.Client{Transport: reg}, nil
 		}
 
-		tt.opts.Config = func() (gh.Config, error) {
+		tt.opts.Config = func() (gm.Config, error) {
 			return config.NewMockConfig(), nil
 		}
 		ios, _, stdout, stderr := iostreams.Test()

@@ -895,14 +895,14 @@ func TestCheckType(t *testing.T) {
 			artifactType: "embedded_html",
 		},
 		{
-			name:         "a type gh doesn't know",
+			name:         "a type gm doesn't know",
 			artifactType: "bad-type",
-			wantErr:      `artifact 7 has type "bad-type", which this version of gh doesn't support; upgrade gh`,
+			wantErr:      `artifact 7 has type "bad-type", which this version of gm doesn't support; upgrade gm`,
 		},
 		{
 			name:         "an empty type",
 			artifactType: "",
-			wantErr:      `artifact 7 has type "", which this version of gh doesn't support; upgrade gh`,
+			wantErr:      `artifact 7 has type "", which this version of gm doesn't support; upgrade gm`,
 		},
 	}
 
@@ -946,7 +946,7 @@ func TestSupportsAttachments(t *testing.T) {
 			want:         false,
 		},
 		{
-			name:         "a type gh doesn't know",
+			name:         "a type gm doesn't know",
 			artifactType: "bad-type",
 			want:         false,
 		},

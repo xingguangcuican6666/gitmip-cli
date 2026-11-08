@@ -17,10 +17,10 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/internal/gh"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
 	"github.com/cli/cli/v2/internal/ghinstance"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmd/factory"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -40,7 +40,7 @@ type ApiOptions struct {
 	InvokingAgent     string
 	BaseRepo          func() (ghrepo.Interface, error)
 	Branch            func() (string, error)
-	Config            func() (gh.Config, error)
+	Config            func() (gm.Config, error)
 	HttpClient        func(api.HTTPClientOptions) (*http.Client, error)
 	IO                *iostreams.IOStreams
 	TelemetryDisabler ghtelemetry.Disabler
@@ -141,42 +141,42 @@ func NewCmdApi(f *cmdutil.Factory, runF func(*ApiOptions) error) *cobra.Command 
 		`, "`"),
 		Example: heredoc.Doc(`
 			# List releases in the current repository
-			$ gh api repos/{owner}/{repo}/releases
+			$ gm api repos/{owner}/{repo}/releases
 
 			# Post an issue comment
-			$ gh api repos/{owner}/{repo}/issues/123/comments -f body='Hi from CLI'
+			$ gm api repos/{owner}/{repo}/issues/123/comments -f body='Hi from CLI'
 
 			# Post nested parameter read from a file
-			$ gh api gists -F 'files[myfile.txt][content]=@myfile.txt'
+			$ gm api gists -F 'files[myfile.txt][content]=@myfile.txt'
 
 			# Add parameters to a GET request
-			$ gh api -X GET search/issues -f q='repo:cli/cli is:open remote'
+			$ gm api -X GET search/issues -f q='repo:cli/cli is:open remote'
 
 			# Use a JSON file as request body
-			$ gh api repos/{owner}/{repo}/rulesets --input file.json
+			$ gm api repos/{owner}/{repo}/rulesets --input file.json
 
 			# Set a custom HTTP header
-			$ gh api -H 'Accept: application/vnd.github.v3.raw+json' ...
+			$ gm api -H 'Accept: application/vnd.github.v3.raw+json' ...
 
 			# Opt into GitHub API previews
-			$ gh api --preview baptiste,nebula ...
+			$ gm api --preview baptiste,nebula ...
 
 			# Print only specific fields from the response
-			$ gh api repos/{owner}/{repo}/issues --jq '.[].title'
+			$ gm api repos/{owner}/{repo}/issues --jq '.[].title'
 
 			# Use a template for the output
-			$ gh api repos/{owner}/{repo}/issues --template \
+			$ gm api repos/{owner}/{repo}/issues --template \
 			  '{{range .}}{{.title}} ({{.labels | pluck "name" | join ", " | color "yellow"}}){{"\n"}}{{end}}'
 
 			# Update allowed values of the "environment" custom property in a deeply nested array
-			$ gh api -X PATCH /orgs/{org}/properties/schema \
+			$ gm api -X PATCH /orgs/{org}/properties/schema \
 			   -F 'properties[][property_name]=environment' \
 			   -F 'properties[][default_value]=production' \
 			   -F 'properties[][allowed_values][]=staging' \
 			   -F 'properties[][allowed_values][]=production'
 
 			# List releases with GraphQL
-			$ gh api graphql -F owner='{owner}' -F name='{repo}' -f query='
+			$ gm api graphql -F owner='{owner}' -F name='{repo}' -f query='
 			  query($name: String!, $owner: String!) {
 			    repository(owner: $owner, name: $name) {
 			      releases(last: 3) {
@@ -187,7 +187,7 @@ func NewCmdApi(f *cmdutil.Factory, runF func(*ApiOptions) error) *cobra.Command 
 			'
 
 			# List all repositories for a user
-			$ gh api graphql --paginate -f query='
+			$ gm api graphql --paginate -f query='
 			  query($endCursor: String) {
 			    viewer {
 			      repositories(first: 100, after: $endCursor) {
@@ -202,7 +202,7 @@ func NewCmdApi(f *cmdutil.Factory, runF func(*ApiOptions) error) *cobra.Command 
 			'
 
 			# Get the percentage of forks for the current user
-			$ gh api graphql --paginate --slurp -f query='
+			$ gm api graphql --paginate --slurp -f query='
 			  query($endCursor: String) {
 			    viewer {
 			      repositories(first: 100, after: $endCursor) {
@@ -223,7 +223,7 @@ func NewCmdApi(f *cmdutil.Factory, runF func(*ApiOptions) error) *cobra.Command 
 				API requests to %[1]sgithub.com%[1]s, a subdomain of %[1]sghe.com%[1]s, or %[1]sgithub.localhost%[1]s.
 
 				GH_ENTERPRISE_TOKEN, GITHUB_ENTERPRISE_TOKEN (in order of precedence): an
-				authentication token for API requests to GitHub Enterprise Server. %[1]sgh%[1]s treats
+				authentication token for API requests to GitHub Enterprise Server. %[1]sgm%[1]s treats
 				any host other than %[1]sgithub.com%[1]s, a subdomain of %[1]sghe.com%[1]s, or
 				%[1]sgithub.localhost%[1]s as a GitHub Enterprise Server host.
 
@@ -303,7 +303,7 @@ func NewCmdApi(f *cmdutil.Factory, runF func(*ApiOptions) error) *cobra.Command 
 	cmd.Flags().BoolVar(&opts.Paginate, "paginate", false, "Make additional HTTP requests to fetch all pages of results")
 	cmd.Flags().StringVar(&opts.RequestInputFile, "input", "", "The `file` to use as body for the HTTP request (use \"-\" to read from standard input)")
 	cmd.Flags().BoolVar(&opts.Silent, "silent", false, "Do not print the response body")
-	cmd.Flags().StringVarP(&opts.Template, "template", "t", "", "Format JSON output using a Go template; see \"gh help formatting\"")
+	cmd.Flags().StringVarP(&opts.Template, "template", "t", "", "Format JSON output using a Go template; see \"gm help formatting\"")
 	cmd.Flags().StringVarP(&opts.FilterOutput, "jq", "q", "", "Query to select values from the response using jq syntax")
 	cmd.Flags().DurationVar(&opts.CacheTTL, "cache", 0, "Cache the response, e.g. \"3600s\", \"60m\", \"1h\"")
 	cmd.Flags().BoolVar(&opts.Verbose, "verbose", false, "Include full HTTP request and response in the output")
@@ -319,7 +319,7 @@ func apiRun(opts *ApiOptions) error {
 
 	// The host is resolved before the request is built because pagination
 	// depends on it: GitHub and Gitea name the page size parameter differently,
-	// and gh api has no other way to know which API shape the host serves.
+	// and gm api has no other way to know which API shape the host serves.
 	cfg, err := opts.Config()
 	if err != nil {
 		return err
@@ -562,9 +562,9 @@ func processResponse(resp *http.Response, opts *ApiOptions, bodyWriter, headersW
 		serverError = fmt.Sprintf("HTTP %d", resp.StatusCode)
 	}
 	if serverError != "" {
-		fmt.Fprintf(opts.IO.ErrOut, "gh: %s\n", serverError)
+		fmt.Fprintf(opts.IO.ErrOut, "gm: %s\n", serverError)
 		if msg := api.ScopesSuggestion(resp); msg != "" {
-			fmt.Fprintf(opts.IO.ErrOut, "gh: %s\n", msg)
+			fmt.Fprintf(opts.IO.ErrOut, "gm: %s\n", msg)
 		}
 		if u := factory.SSOURL(); u != "" {
 			fmt.Fprintf(opts.IO.ErrOut, "Authorize in your web browser: %s\n", u)

@@ -36,10 +36,10 @@ func NewCmdList(f *cmdutil.Factory, runF func(config listConfig) error) *cobra.C
 		Short: "List the projects for an owner",
 		Example: heredoc.Doc(`
 			# List the current user's projects
-			$ gh project list
+			$ gm project list
 
 			# List the projects for org github including closed projects
-			$ gh project list --owner github --closed
+			$ gm project list --owner github --closed
 		`),
 		Aliases: []string{"ls"},
 		RunE: func(cmd *cobra.Command, args []string) error {

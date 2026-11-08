@@ -75,8 +75,8 @@ func CurrentUserID(client *Client, hostname string) (string, error) {
 
 // giteaUser is the subset of Gitea's User schema these helpers need. Gitea
 // identifies users by a numeric id rather than a node id.
-// giteaUser is the subset of Gitea's User schema gh reads. FullName is what
-// Gitea calls the display name, and gh's Author and GitHubUser types both carry
+// giteaUser is the subset of Gitea's User schema gm reads. FullName is what
+// Gitea calls the display name, and gm's Author and GitHubUser types both carry
 // a Name alongside the Login.
 type giteaUser struct {
 	ID       int64  `json:"id"`

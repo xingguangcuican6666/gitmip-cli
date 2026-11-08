@@ -10,9 +10,9 @@ import (
 	"github.com/cli/cli/v2/git"
 	"github.com/cli/cli/v2/internal/authflow"
 	"github.com/cli/cli/v2/internal/browser"
-	"github.com/cli/cli/v2/internal/gh"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
 	"github.com/cli/cli/v2/internal/ghinstance"
+	"github.com/cli/cli/v2/internal/gm"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/pkg/cmd/auth/shared"
 	"github.com/cli/cli/v2/pkg/cmd/auth/shared/gitcredentials"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -23,7 +23,7 @@ import (
 
 type LoginOptions struct {
 	IO              *iostreams.IOStreams
-	Config          func() (gh.Config, error)
+	Config          func() (gm.Config, error)
 	HttpClient      func() (*http.Client, error)
 	PlainHttpClient func() (*http.Client, error)
 	GitClient       *git.Client
@@ -80,8 +80,8 @@ func NewCmdLogin(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder, r
 
 			The default authentication mode is a web-based browser flow. After completion, an
 			authentication token will be stored securely in the system credential store.
-			If a credential store is not found or there is an issue using it gh will fallback
-			to writing the token to a plain text file. See %[1]sgh auth status%[1]s for its
+			If a credential store is not found or there is an issue using it gm will fallback
+			to writing the token to a plain text file. See %[1]sgm auth status%[1]s for its
 			stored location.
 
 			Alternatively, use %[1]s--with-token%[1]s to pass in a personal access token (classic) on standard input.
@@ -90,11 +90,11 @@ func NewCmdLogin(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder, r
 			as the inherent scoping to certain resources may cause confusing behaviour when interacting with other
 			resources. Favour setting %[1]sGH_TOKEN%[1]s for fine-grained personal access token usage.
 
-			Alternatively, gh will use the authentication token found in environment variables.
-			This method is most suitable for "headless" use of gh such as in automation. See
-			%[1]sgh help environment%[1]s for more info.
+			Alternatively, gm will use the authentication token found in environment variables.
+			This method is most suitable for "headless" use of gm such as in automation. See
+			%[1]sgm help environment%[1]s for more info.
 
-			To use gh in GitHub Actions, add %[1]sGH_TOKEN: ${{ github.token }}%[1]s to %[1]senv%[1]s.
+			To use gm in GitHub Actions, add %[1]sGH_TOKEN: ${{ github.token }}%[1]s to %[1]senv%[1]s.
 
 			The git protocol to use for git operations on this host can be set with %[1]s--git-protocol%[1]s,
 			or during the interactive prompting. Although login is for a single account on a host, setting
@@ -104,7 +104,7 @@ func NewCmdLogin(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder, r
 			prompting to create and upload a new key if one is not found. This can be skipped with
 			%[1]s--skip-ssh-key%[1]s flag.
 
-			Use %[1]s--expiring%[1]s to prefer expiring credentials that gh refreshes automatically.
+			Use %[1]s--expiring%[1]s to prefer expiring credentials that gm refreshes automatically.
 			This is a preference, not a guarantee: whether expiring tokens are issued depends on the
 			host and the OAuth app configuration. A host without support issues a non-expiring token
 			instead, and a host configured for them may issue expiring tokens even without the flag.
@@ -112,7 +112,7 @@ func NewCmdLogin(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder, r
 			without passing %[1]s--expiring%[1]s every time, and pass %[1]s--expiring=false%[1]s to request a
 			non-expiring token even when that configuration is enabled.
 			When using expiring credentials for git operations, git 2.46 or newer is recommended so
-			gh can mark the token as non-cacheable; with older git a credential caching helper may store
+			gm can mark the token as non-cacheable; with older git a credential caching helper may store
 			and reuse an expired token.
 
 			For more information on OAuth scopes, see
@@ -120,16 +120,16 @@ func NewCmdLogin(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder, r
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Start interactive setup
-			$ gh auth login
+			$ gm auth login
 
 			# Open a browser to authenticate and copy one-time OAuth code to clipboard
-			$ gh auth login --web --clipboard
+			$ gm auth login --web --clipboard
 
 			# Authenticate against github.com by reading the token from a file
-			$ gh auth login --with-token < mytoken.txt
+			$ gm auth login --with-token < mytoken.txt
 
 			# Authenticate with specific host
-			$ gh auth login --hostname enterprise.internal
+			$ gm auth login --hostname enterprise.internal
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if opts.Telemetry != nil {
@@ -192,7 +192,7 @@ func NewCmdLogin(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder, r
 
 	cmd.Flags().BoolVar(&opts.InsecureStorage, "insecure-storage", false, "Save authentication credentials in plain text instead of credential store")
 	cmd.Flags().BoolVar(&opts.SkipSSHKeyPrompt, "skip-ssh-key", false, "Skip generate/upload SSH key prompt")
-	cmdutil.NilBoolFlag(cmd, &opts.Expiring, "expiring", "", "Prefer expiring credentials that gh refreshes automatically, if the host supports them")
+	cmdutil.NilBoolFlag(cmd, &opts.Expiring, "expiring", "", "Prefer expiring credentials that gm refreshes automatically, if the host supports them")
 
 	return cmd
 }

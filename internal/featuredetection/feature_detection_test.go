@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/httpmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -378,17 +378,17 @@ func TestProjectV1Support(t *testing.T) {
 		name         string
 		hostname     string
 		httpStubs    func(*httpmock.Registry)
-		wantFeatures gh.ProjectsV1Support
+		wantFeatures gm.ProjectsV1Support
 	}{
 		{
 			name:         "github.com",
 			hostname:     "github.com",
-			wantFeatures: gh.ProjectsV1Unsupported,
+			wantFeatures: gm.ProjectsV1Unsupported,
 		},
 		{
 			name:         "ghec data residency (ghe.com)",
 			hostname:     "stampname.ghe.com",
-			wantFeatures: gh.ProjectsV1Unsupported,
+			wantFeatures: gm.ProjectsV1Unsupported,
 		},
 		{
 			name:     "GHE 3.16.0",
@@ -399,7 +399,7 @@ func TestProjectV1Support(t *testing.T) {
 					httpmock.StringResponse(`{"installed_version":"3.16.0"}`),
 				)
 			},
-			wantFeatures: gh.ProjectsV1Supported,
+			wantFeatures: gm.ProjectsV1Supported,
 		},
 		{
 			name:     "GHE 3.16.1",
@@ -410,7 +410,7 @@ func TestProjectV1Support(t *testing.T) {
 					httpmock.StringResponse(`{"installed_version":"3.16.1"}`),
 				)
 			},
-			wantFeatures: gh.ProjectsV1Supported,
+			wantFeatures: gm.ProjectsV1Supported,
 		},
 		{
 			name:     "GHE 3.17",
@@ -421,7 +421,7 @@ func TestProjectV1Support(t *testing.T) {
 					httpmock.StringResponse(`{"installed_version":"3.17.0"}`),
 				)
 			},
-			wantFeatures: gh.ProjectsV1Unsupported,
+			wantFeatures: gm.ProjectsV1Unsupported,
 		},
 	}
 

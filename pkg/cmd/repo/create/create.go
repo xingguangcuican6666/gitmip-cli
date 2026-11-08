@@ -17,8 +17,8 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/git"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmd/repo/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -39,7 +39,7 @@ type iprompter interface {
 type CreateOptions struct {
 	HttpClient func() (*http.Client, error)
 	GitClient  *git.Client
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 	IO         *iostreams.IOStreams
 	Prompter   iprompter
 	BackOff    backoff.BackOff
@@ -84,7 +84,7 @@ func NewCmdCreate(f *cmdutil.Factory, runF func(*CreateOptions) error) *cobra.Co
 		Long: heredoc.Docf(`
 			Create a new GitHub repository.
 
-			To create a repository interactively, use %[1]sgh repo create%[1]s with no arguments.
+			To create a repository interactively, use %[1]sgm repo create%[1]s with no arguments.
 
 			To create a remote repository non-interactively, supply the repository name and one of %[1]s--public%[1]s, %[1]s--private%[1]s, or %[1]s--internal%[1]s.
 			Pass %[1]s--clone%[1]s to clone the new repository locally.
@@ -99,22 +99,22 @@ func NewCmdCreate(f *cmdutil.Factory, runF func(*CreateOptions) error) *cobra.Co
 
 			For language or platform .gitignore templates to use with %[1]s--gitignore%[1]s, <https://github.com/github/gitignore>.
 
-			For license keywords to use with %[1]s--license%[1]s, run %[1]sgh repo license list%[1]s or visit <https://choosealicense.com>.
+			For license keywords to use with %[1]s--license%[1]s, run %[1]sgm repo license list%[1]s or visit <https://choosealicense.com>.
 
 			The repo is created with the configured repository default branch, see <https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-personal-account-on-github/managing-user-account-settings/managing-the-default-branch-name-for-your-repositories>.
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Create a repository interactively
-			$ gh repo create
+			$ gm repo create
 
 			# Create a new remote repository and clone it locally
-			$ gh repo create my-project --public --clone
+			$ gm repo create my-project --public --clone
 
 			# Create a new remote repository in a different organization
-			$ gh repo create my-org/my-project --public
+			$ gm repo create my-org/my-project --public
 
 			# Create a remote repository from the current directory
-			$ gh repo create my-project --private --source=. --remote=upstream
+			$ gm repo create my-project --private --source=. --remote=upstream
 		`),
 		Args:    cobra.MaximumNArgs(1),
 		Aliases: []string{"new"},

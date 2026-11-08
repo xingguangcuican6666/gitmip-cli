@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 )
@@ -13,7 +13,7 @@ func Test_CheckAuth(t *testing.T) {
 	tests := []struct {
 		name     string
 		env      map[string]string
-		cfgStubs func(*testing.T, gh.Config)
+		cfgStubs func(*testing.T, gm.Config)
 		expected bool
 	}{
 		{
@@ -27,7 +27,7 @@ func Test_CheckAuth(t *testing.T) {
 		},
 		{
 			name: "known host",
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				_, err := c.Authentication().Login("github.com", "test-user", "test-token", "https", false)
 				require.NoError(t, err)
 			},

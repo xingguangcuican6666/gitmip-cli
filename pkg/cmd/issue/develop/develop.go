@@ -54,26 +54,26 @@ func NewCmdDevelop(f *cmdutil.Factory, runF func(*DevelopOptions) error) *cobra.
 
 			When using the %[1]s--base%[1]s flag, the new development branch will be created from the specified
 			remote branch. The new branch will be configured as the base branch for pull requests created using
-			%[1]sgh pr create%[1]s.
+			%[1]sgm pr create%[1]s.
 		`, "`"),
 		Example: heredoc.Doc(`
 			# List branches for issue 123
-			$ gh issue develop --list 123
+			$ gm issue develop --list 123
 
 			# List branches for issue 123 in repo cli/cli
-			$ gh issue develop --list --repo cli/cli 123
+			$ gm issue develop --list --repo cli/cli 123
 
 			# Create a branch for issue 123 based on the my-feature branch
-			$ gh issue develop 123 --base my-feature
+			$ gm issue develop 123 --base my-feature
 
 			# Create a branch for issue 123 and check it out
-			$ gh issue develop 123 --checkout
+			$ gm issue develop 123 --checkout
 
 			# Create a branch for issue 123 and check it out in a worktree
-			$ gh issue develop 123 --checkout --worktree /path/to/wt-feature
+			$ gm issue develop 123 --checkout --worktree /path/to/wt-feature
 
 			# Create a branch in repo monalisa/cli for issue 123 in repo cli/cli
-			$ gh issue develop 123 --repo cli/cli --branch-repo monalisa/cli
+			$ gm issue develop 123 --repo cli/cli --branch-repo monalisa/cli
 		`),
 		Args: cmdutil.ExactArgs(1, "issue number or url is required"),
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {

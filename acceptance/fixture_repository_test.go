@@ -327,7 +327,7 @@ func TestDeferredRepositoryCleanup(t *testing.T) {
 func TestManagedFixtureRejectsRepositoryCreation(t *testing.T) {
 	file := filepath.Join(t.TempDir(), "managed.txt")
 	script := "fixture-repo shared REPO\n" +
-		"! exec gh repo create example --private\n" +
+		"! exec gm repo create example --private\n" +
 		"stderr 'requires.*fixture-repo none'\n"
 	require.NoError(t, os.WriteFile(file, []byte(script), 0o600))
 

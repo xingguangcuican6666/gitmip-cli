@@ -5,19 +5,19 @@ import (
 	"testing"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/iostreams"
 )
 
 type tinyConfig map[string]string
 
-func (c tinyConfig) ActiveTokenWithRefresh(host string) (gh.Credential, gh.RefreshStatus, error) {
-	status := gh.RefreshStatusInapplicable
+func (c tinyConfig) ActiveTokenWithRefresh(host string) (gm.Credential, gm.RefreshStatus, error) {
+	status := gm.RefreshStatusInapplicable
 	switch c["_refresh_status"] {
 	case "expired":
-		status = gh.RefreshStatusExpired
+		status = gm.RefreshStatusExpired
 	}
-	return gh.Credential{
+	return gm.Credential{
 		Token:        c[fmt.Sprintf("%s:%s", host, "oauth_token")],
 		Source:       c["_source"],
 		RefreshToken: c["_refresh_token"],
@@ -281,7 +281,7 @@ func Test_helperRun(t *testing.T) {
 				username=monalisa
 				password=OTOKEN
 			`),
-			wantStderr: "WARNING: gh: this git version cannot mark the expiring token as non-cacheable; upgrade to git 2.46 or newer, or avoid a credential caching helper, to prevent a stale token being reused\n",
+			wantStderr: "WARNING: gm: this git version cannot mark the expiring token as non-cacheable; upgrade to git 2.46 or newer, or avoid a credential caching helper, to prevent a stale token being reused\n",
 		},
 		{
 			name: "non-refreshable token, authtype capability present",
@@ -327,7 +327,7 @@ func Test_helperRun(t *testing.T) {
 			`),
 			wantErr:    true,
 			wantStdout: "",
-			wantStderr: "the token for example.com has expired; please run 'gh auth login' to re-authenticate\n",
+			wantStderr: "the token for example.com has expired; please run 'gm auth login' to re-authenticate\n",
 		},
 		{
 			name: "noop store operation",

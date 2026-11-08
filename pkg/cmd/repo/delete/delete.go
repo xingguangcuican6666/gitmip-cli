@@ -49,7 +49,7 @@ func NewCmdDelete(f *cmdutil.Factory, runF func(*DeleteOptions) error) *cobra.Co
 			
 			For safety, when no repository argument is provided, the %[1]s--yes%[1]s flag is ignored 
 			and you will be prompted for confirmation. To delete the current repository non-interactively, 
-			specify it explicitly (e.g., %[1]sgh repo delete owner/repo --yes%[1]s).
+			specify it explicitly (e.g., %[1]sgm repo delete owner/repo --yes%[1]s).
 
 			Deleting a private repository that is not itself a fork also deletes its forks, including
 			forks you may not be able to see. If it has forks, you will be asked to confirm deleting
@@ -58,7 +58,7 @@ func NewCmdDelete(f *cmdutil.Factory, runF func(*DeleteOptions) error) *cobra.Co
 			Like %[1]s--yes%[1]s, it is ignored when no repository argument is provided.
 
 			Deletion requires authorization with the %[1]sdelete_repo%[1]s scope.
-			To authorize, run %[1]sgh auth refresh -s delete_repo%[1]s
+			To authorize, run %[1]sgm auth refresh -s delete_repo%[1]s
 		`, "`"),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

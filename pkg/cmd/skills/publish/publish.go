@@ -18,8 +18,8 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/git"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/internal/skills/discovery"
@@ -35,7 +35,7 @@ import (
 type PublishOptions struct {
 	IO         *iostreams.IOStreams
 	HttpClient func() (*http.Client, error)
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 	Prompter   prompter.Prompter
 	GitClient  *git.Client
 
@@ -133,16 +133,16 @@ func NewCmdPublish(f *cmdutil.Factory, runF func(*PublishOptions) error) *cobra.
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Validate and publish interactively
-			$ gh skill publish
+			$ gm skill publish
 
 			# Publish with a specific tag (non-interactive)
-			$ gh skill publish --tag v1.0.0
+			$ gm skill publish --tag v1.0.0
 
 			# Validate only (no publish)
-			$ gh skill publish --dry-run
+			$ gm skill publish --dry-run
 
 			# Strip install metadata without publishing
-			$ gh skill publish --fix
+			$ gm skill publish --fix
 		`),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -418,7 +418,7 @@ func publishRun(opts *PublishOptions) error {
 
 	if opts.Fix {
 		if fixes > 0 {
-			fmt.Fprintf(opts.IO.ErrOut, "\nFixed %d file(s). Review and commit the changes, then run %s to publish.\n", fixes, "gh skill publish")
+			fmt.Fprintf(opts.IO.ErrOut, "\nFixed %d file(s). Review and commit the changes, then run %s to publish.\n", fixes, "gm skill publish")
 		} else {
 			fmt.Fprintf(opts.IO.ErrOut, "\nNo issues to fix.\n")
 		}
@@ -492,14 +492,14 @@ func runPublishRelease(opts *PublishOptions, client *api.Client, host, owner, re
 		if addTopic {
 			if err := addAgentSkillsTopic(client, host, owner, repo); err != nil {
 				fmt.Fprintf(opts.IO.ErrOut, "%s Could not add topic: %v\n", cs.WarningIcon(), err)
-				fmt.Fprintf(opts.IO.ErrOut, "  Add it manually: gh repo edit %s/%s --add-topic agent-skills\n", owner, repo)
+				fmt.Fprintf(opts.IO.ErrOut, "  Add it manually: gm repo edit %s/%s --add-topic agent-skills\n", owner, repo)
 			} else {
 				fmt.Fprintf(opts.IO.Out, "%s Added \"agent-skills\" topic\n", cs.SuccessIcon())
 			}
 		}
 	}
 
-	// Push unpushed commits (like gh pr create)
+	// Push unpushed commits (like gm pr create)
 	if err := ensurePushed(opts, dir, remoteName); err != nil {
 		return err
 	}
@@ -625,14 +625,14 @@ func runPublishRelease(opts *PublishOptions, client *api.Client, host, owner, re
 	}
 
 	fmt.Fprintf(opts.IO.Out, "%s Published %s\n", cs.SuccessIcon(), tag)
-	fmt.Fprintf(opts.IO.Out, "%s Install with: gh skill install %s/%s\n", cs.SuccessIcon(), owner, repo)
-	fmt.Fprintf(opts.IO.Out, "%s Pin with:     gh skill install %s/%s <skill> --pin %s\n", cs.SuccessIcon(), owner, repo, tag)
+	fmt.Fprintf(opts.IO.Out, "%s Install with: gm skill install %s/%s\n", cs.SuccessIcon(), owner, repo)
+	fmt.Fprintf(opts.IO.Out, "%s Pin with:     gm skill install %s/%s <skill> --pin %s\n", cs.SuccessIcon(), owner, repo, tag)
 
 	return nil
 }
 
 // ensurePushed checks whether the current branch has unpushed commits and
-// pushes them automatically, consistent with how gh pr create behaves.
+// pushes them automatically, consistent with how gm pr create behaves.
 func ensurePushed(opts *PublishOptions, dir, remoteName string) error {
 	if opts.GitClient == nil {
 		return nil
@@ -804,14 +804,14 @@ func checkSecuritySettings(client *api.Client, host, owner, repo string, skillDi
 	if sa.SecretScanning == nil || sa.SecretScanning.Status != "enabled" {
 		diagnostics = append(diagnostics, publishDiagnostic{
 			severity: "warning",
-			message:  "secret scanning is not enabled. Recommended to prevent accidental credential exposure (gh repo edit --enable-secret-scanning)",
+			message:  "secret scanning is not enabled. Recommended to prevent accidental credential exposure (gm repo edit --enable-secret-scanning)",
 		})
 	}
 
 	if sa.SecretScanningPushProtection == nil || sa.SecretScanningPushProtection.Status != "enabled" {
 		diagnostics = append(diagnostics, publishDiagnostic{
 			severity: "warning",
-			message:  "secret scanning push protection is not enabled. Blocks pushes containing secrets (gh repo edit --enable-secret-scanning-push-protection)",
+			message:  "secret scanning push protection is not enabled. Blocks pushes containing secrets (gm repo edit --enable-secret-scanning-push-protection)",
 		})
 	}
 
@@ -1023,7 +1023,7 @@ func detectMissingRepoDiagnostic(gitClient *git.Client, dir string) []publishDia
 	if _, err := dirGitClient.GitDir(context.Background()); err != nil {
 		return []publishDiagnostic{{
 			severity: "warning",
-			message:  "not a git repository. Initialize with: git init && gh repo create",
+			message:  "not a git repository. Initialize with: git init && gm repo create",
 		}}
 	}
 
@@ -1031,7 +1031,7 @@ func detectMissingRepoDiagnostic(gitClient *git.Client, dir string) []publishDia
 	if err != nil || len(remotes) == 0 {
 		return []publishDiagnostic{{
 			severity: "warning",
-			message:  "no git remote found. Create a GitHub repository with: gh repo create",
+			message:  "no git remote found. Create a GitHub repository with: gm repo create",
 		}}
 	}
 

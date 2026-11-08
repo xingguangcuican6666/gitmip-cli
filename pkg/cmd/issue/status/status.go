@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	issueShared "github.com/cli/cli/v2/pkg/cmd/issue/shared"
 	prShared "github.com/cli/cli/v2/pkg/cmd/pr/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -17,7 +17,7 @@ import (
 
 type StatusOptions struct {
 	HttpClient func() (*http.Client, error)
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 	IO         *iostreams.IOStreams
 	BaseRepo   func() (ghrepo.Interface, error)
 

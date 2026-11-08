@@ -11,8 +11,8 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/browser"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/text"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -26,7 +26,7 @@ type ViewOptions struct {
 	BaseRepo   func() (ghrepo.Interface, error)
 	Browser    browser.Browser
 	Exporter   cmdutil.Exporter
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 
 	RepoArg string
 	Web     bool

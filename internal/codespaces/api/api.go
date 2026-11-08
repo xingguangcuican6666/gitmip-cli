@@ -280,7 +280,7 @@ type RuntimeConstraints struct {
 	AllowedPortPrivacySettings []string `json:"allowed_port_privacy_settings"`
 }
 
-// ListCodespaceFields is the list of exportable fields for a codespace when using the `gh cs list` command.
+// ListCodespaceFields is the list of exportable fields for a codespace when using the `gm cs list` command.
 var ListCodespaceFields = []string{
 	"displayName",
 	"name",
@@ -294,7 +294,7 @@ var ListCodespaceFields = []string{
 	"vscsTarget",
 }
 
-// ViewCodespaceFields is the list of exportable fields for a codespace when using the `gh cs view` command.
+// ViewCodespaceFields is the list of exportable fields for a codespace when using the `gm cs view` command.
 var ViewCodespaceFields = []string{
 	"name",
 	"displayName",

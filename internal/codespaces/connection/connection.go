@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	clientName = "gh"
+	clientName = "gm"
 )
 
 type TunnelClient struct {

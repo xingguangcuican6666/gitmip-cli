@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/spf13/cobra"
@@ -13,7 +13,7 @@ import (
 
 type GetOptions struct {
 	IO     *iostreams.IOStreams
-	Config gh.Config
+	Config gm.Config
 
 	Hostname string
 	Key      string
@@ -28,7 +28,7 @@ func NewCmdConfigGet(f *cmdutil.Factory, runF func(*GetOptions) error) *cobra.Co
 		Use:   "get <key>",
 		Short: "Print the value of a given configuration key",
 		Example: heredoc.Doc(`
-			$ gh config get git_protocol
+			$ gm config get git_protocol
 		`),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

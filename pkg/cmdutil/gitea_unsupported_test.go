@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
@@ -16,17 +16,17 @@ import (
 func testFactoryForHost(t *testing.T, host string, ht hosttype.Type) *Factory {
 	t.Helper()
 	t.Cleanup(hosttype.SetHostTypeOverride(map[string]hosttype.Type{host: ht}))
-	return &Factory{Config: func() (gh.Config, error) { return pinnedAuthConfig(host), nil }}
+	return &Factory{Config: func() (gm.Config, error) { return pinnedAuthConfig(host), nil }}
 }
 
 // pinnedAuthConfig builds a mock config whose auth answers DefaultHost with host.
-func pinnedAuthConfig(host string) gh.Config {
+func pinnedAuthConfig(host string) gm.Config {
 	cfg := config.NewMockConfigFromString("hosts:\n    " + host + ":\n        git_protocol: https\n        user: someone\n")
 	auth := cfg.Authentication()
 	if setter, ok := auth.(interface{ SetDefaultHost(string, string) }); ok {
 		setter.SetDefaultHost(host, "test")
 	}
-	cfg.AuthenticationFunc = func() gh.AuthConfig { return auth }
+	cfg.AuthenticationFunc = func() gm.AuthConfig { return auth }
 	return cfg
 }
 
@@ -100,7 +100,7 @@ func TestRefuseFamilyOnGiteaHonoursRepoOverride(t *testing.T) {
 		"git.example.com": hosttype.Gitea,
 	}))
 	cfg := config.NewMockConfigFromString("hosts:\n    github.com:\n        git_protocol: https\n        user: someone\n")
-	f := &Factory{Config: func() (gh.Config, error) { return cfg, nil }}
+	f := &Factory{Config: func() (gm.Config, error) { return cfg, nil }}
 	root := newFamilyCmd(t, &ran)
 
 	RefuseFamilyOnGitea(root, f, "Things")
@@ -118,7 +118,7 @@ func TestRefuseFamilyOnGiteaHonoursRepoOverrideEnv(t *testing.T) {
 		"github.com":      hosttype.GitHub,
 		"git.example.com": hosttype.Gitea,
 	}))
-	f := &Factory{Config: func() (gh.Config, error) { return pinnedAuthConfig("github.com"), nil }}
+	f := &Factory{Config: func() (gm.Config, error) { return pinnedAuthConfig("github.com"), nil }}
 	root := newFamilyCmd(t, &ran)
 	root.SilenceErrors = true
 	root.SilenceUsage = true
@@ -138,7 +138,7 @@ func TestRefuseFamilyOnGiteaIgnoresUnparseableOverride(t *testing.T) {
 		"github.com":      hosttype.GitHub,
 		"git.example.com": hosttype.Gitea,
 	}))
-	f := &Factory{Config: func() (gh.Config, error) { return pinnedAuthConfig("github.com"), nil }}
+	f := &Factory{Config: func() (gm.Config, error) { return pinnedAuthConfig("github.com"), nil }}
 	root := newFamilyCmd(t, &ran)
 	root.SilenceErrors = true
 	root.SilenceUsage = true

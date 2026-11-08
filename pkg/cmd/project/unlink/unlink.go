@@ -8,8 +8,8 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmd/project/shared/client"
 	"github.com/cli/cli/v2/pkg/cmd/project/shared/queries"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -31,7 +31,7 @@ type unlinkOpts struct {
 
 type unlinkConfig struct {
 	httpClient func() (*http.Client, error)
-	config     func() (gh.Config, error)
+	config     func() (gm.Config, error)
 	client     *queries.Client
 	opts       unlinkOpts
 	io         *iostreams.IOStreams
@@ -44,13 +44,13 @@ func NewCmdUnlink(f *cmdutil.Factory, runF func(config unlinkConfig) error) *cob
 		Use:   "unlink [<number>]",
 		Example: heredoc.Doc(`
 			# Unlink monalisa's project 1 from her repository "my_repo"
-			$ gh project unlink 1 --owner monalisa --repo my_repo
+			$ gm project unlink 1 --owner monalisa --repo my_repo
 
 			# Unlink monalisa's organization's project 1 from her team "my_team"
-			$ gh project unlink 1 --owner my_organization --team my_team
+			$ gm project unlink 1 --owner my_organization --team my_team
 
 			# Unlink monalisa's project 1 from the repository of current directory if neither --repo nor --team is specified
-			$ gh project unlink 1
+			$ gm project unlink 1
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := client.New(f)

@@ -234,7 +234,7 @@ func TestNewCmdView(t *testing.T) {
 				gotOpts = opts
 				return nil
 			})
-			// gh issue adds -R and its hook, which replaces f.BaseRepo before RunE.
+			// gm issue adds -R and its hook, which replaces f.BaseRepo before RunE.
 			cmdutil.EnableRepoOverride(cmd, f)
 
 			argv, err := shlex.Split(tt.args)
@@ -937,23 +937,23 @@ func TestViewRun(t *testing.T) {
 			wantErr:   "artifact 3 doesn't link to an http(s) URL; `--web` only opens http(s) URLs",
 		},
 		{
-			name: "a type gh doesn't know is refused",
+			name: "a type gm doesn't know is refused",
 			opts: ViewOptions{IssueNumber: 142, ArtifactNumber: 7},
 			tty:  true,
 			artifact: &client.ArtifactWithVersions{
 				Number: 7, Type: "bad-type", Name: "Espresso checklist", Body: "Descale weekly.",
 			},
 			wantCalls: []string{"IsPullRequest monalisa/monas-cafe#142", "Get monalisa/monas-cafe#142 artifact 7"},
-			wantErr:   `artifact 7 has type "bad-type", which this version of gh doesn't support; upgrade gh`,
+			wantErr:   `artifact 7 has type "bad-type", which this version of gm doesn't support; upgrade gm`,
 		},
 		{
-			name: "a type gh doesn't know is refused with --json too",
+			name: "a type gm doesn't know is refused with --json too",
 			opts: ViewOptions{IssueNumber: 142, ArtifactNumber: 7, Exporter: jsonExporter("number", "type")},
 			artifact: &client.ArtifactWithVersions{
 				Number: 7, Type: "bad-type", Name: "Espresso checklist", Body: "Descale weekly.",
 			},
 			wantCalls: []string{"IsPullRequest monalisa/monas-cafe#142", "Get monalisa/monas-cafe#142 artifact 7"},
-			wantErr:   `artifact 7 has type "bad-type", which this version of gh doesn't support; upgrade gh`,
+			wantErr:   `artifact 7 has type "bad-type", which this version of gm doesn't support; upgrade gm`,
 		},
 		{
 			name:          "a pull request is refused before any artifact request",

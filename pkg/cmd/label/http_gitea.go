@@ -28,7 +28,7 @@ import (
 // and the same rule is applied here: a name that matches more than one label is
 // an error rather than a silent choice between them. Because duplicates are
 // possible, creating a label checks for an existing one first, which keeps
-// `--force` and the skip logic in `gh label clone` working the way they do on
+// `--force` and the skip logic in `gm label clone` working the way they do on
 // GitHub.
 //
 // Gitea's Label schema carries no timestamps and no default flag, so createdAt,
@@ -161,7 +161,7 @@ func matchesLabelSearch(l label, search string) bool {
 		strings.Contains(strings.ToLower(l.Description), search)
 }
 
-// giteaSortType maps gh's order flag onto the values Gitea accepts, which are
+// giteaSortType maps gm's order flag onto the values Gitea accepts, which are
 // name-based: the default is ascending by name and "reversealphabetically" is
 // descending. Gitea offers no creation-date ordering, which
 // validateGiteaLabelOptions rejects before this is reached.
@@ -173,8 +173,8 @@ func giteaSortType(order string) string {
 }
 
 func validateGiteaLabelOptions(opts listQueryOptions) error {
-	// "created" is gh's default sort, so rejecting it outright would fail every
-	// plain `gh label list`. Only an explicit request is refused; the default
+	// "created" is gm's default sort, so rejecting it outright would fail every
+	// plain `gm label list`. Only an explicit request is refused; the default
 	// falls through to Gitea's own ordering, which is ascending by name.
 	if opts.sortSpecified && strings.EqualFold(opts.Sort, "created") {
 		return fmt.Errorf("Gitea does not sort labels by creation date; use `--sort name`")
@@ -277,7 +277,7 @@ var errGiteaLabelNotFound = errors.New("label not found")
 
 // createLabelGitea creates a label, reporting errLabelAlreadyExists when the
 // repository already holds one of that name. Gitea would accept the duplicate,
-// so the check is what keeps `--force` and `gh label clone` behaving as they do
+// so the check is what keeps `--force` and `gm label clone` behaving as they do
 // on GitHub.
 func createLabelGitea(client *http.Client, repo ghrepo.Interface, opts *createOptions) error {
 	apiClient := api.NewClientFromHTTP(client)
@@ -321,7 +321,7 @@ func createLabelGitea(client *http.Client, repo ghrepo.Interface, opts *createOp
 }
 
 // updateLabelGitea edits a label. Gitea's EditLabelOption takes `name` as the
-// new name, so gh's NewName maps onto it and the label is addressed by id.
+// new name, so gm's NewName maps onto it and the label is addressed by id.
 func updateLabelGitea(apiClient *api.Client, repo ghrepo.Interface, opts *editOptions) error {
 	id, err := giteaLabelID(apiClient, repo, opts.Name)
 	if err != nil {
@@ -386,7 +386,7 @@ func deleteLabelGitea(client *http.Client, repo ghrepo.Interface, name string) e
 
 // giteaColor normalizes a color for Gitea. Its API example shows "#00aabb" and
 // the server normalizes on write, but returning the bare six digits is what its
-// responses contain and what gh displays, so the prefix is dropped on the way in.
+// responses contain and what gm displays, so the prefix is dropped on the way in.
 func isGiteaNotFound(err error) bool {
 	var httpErr api.HTTPError
 	return errors.As(err, &httpErr) && httpErr.StatusCode == 404

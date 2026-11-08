@@ -10,7 +10,7 @@ import (
 	"github.com/cli/cli/v2/internal/ghrepo"
 )
 
-// Gitea has no GraphQL API, so the comment mutations gh issues as GraphQL
+// Gitea has no GraphQL API, so the comment mutations gm issues as GraphQL
 // mutations are REST calls here.
 //
 // Creating a comment addresses the issue by repository path plus index, because

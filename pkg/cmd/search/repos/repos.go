@@ -47,32 +47,32 @@ func NewCmdRepos(f *cmdutil.Factory, runF func(*ReposOptions) error) *cobra.Comm
 			GitHub search syntax is documented at:
 			<https://docs.github.com/search-github/searching-on-github/searching-for-repositories>
 
-			For more information on handling search queries containing a hyphen, run %[1]sgh search --help%[1]s.
+			For more information on handling search queries containing a hyphen, run %[1]sgm search --help%[1]s.
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Search repositories matching set of keywords "cli" and "shell"
-			$ gh search repos cli shell
+			$ gm search repos cli shell
 
 			# Search repositories matching phrase "vim plugin"
-			$ gh search repos "vim plugin"
+			$ gm search repos "vim plugin"
 
 			# Search repositories using raw search qualifiers as separate arguments
-			$ gh search repos topic:github 'stars:>5000'
+			$ gm search repos topic:github 'stars:>5000'
 
 			# Search repositories public repos in the microsoft organization
-			$ gh search repos --owner=microsoft --visibility=public
+			$ gm search repos --owner=microsoft --visibility=public
 
 			# Search repositories with a set of topics
-			$ gh search repos --topic=unix,terminal
+			$ gm search repos --topic=unix,terminal
 
 			# Search repositories by coding language and number of good first issues
-			$ gh search repos --language=go --good-first-issues=">=10"
+			$ gm search repos --language=go --good-first-issues=">=10"
 
 			# Search repositories without topic "linux"
-			$ gh search repos -- -topic:linux
+			$ gm search repos -- -topic:linux
 
 			# Search repositories excluding archived repositories
-			$ gh search repos --archived=false
+			$ gm search repos --archived=false
 		`),
 		RunE: func(c *cobra.Command, args []string) error {
 			if len(args) == 0 && c.Flags().NFlag() == 0 {

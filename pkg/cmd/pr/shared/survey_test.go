@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/stretchr/testify/assert"
@@ -71,7 +71,7 @@ func TestMetadataSurvey_selectAll(t *testing.T) {
 		Assignees: []string{"hubot"},
 		Type:      PRMetadata,
 	}
-	err := MetadataSurvey(pm, ios, repo, fetcher, state, gh.ProjectsV1Supported, nil, nil)
+	err := MetadataSurvey(pm, ios, repo, fetcher, state, gm.ProjectsV1Supported, nil, nil)
 	assert.NoError(t, err)
 
 	assert.Equal(t, "", stdout.String())
@@ -117,7 +117,7 @@ func TestMetadataSurvey_keepExisting(t *testing.T) {
 		Assignees: []string{"hubot"},
 	}
 
-	err := MetadataSurvey(pm, ios, repo, fetcher, state, gh.ProjectsV1Supported, nil, nil)
+	err := MetadataSurvey(pm, ios, repo, fetcher, state, gm.ProjectsV1Supported, nil, nil)
 	assert.NoError(t, err)
 
 	assert.Equal(t, "", stdout.String())
@@ -146,7 +146,7 @@ func TestMetadataSurveyProjectV1Deprecation(t *testing.T) {
 			return []int{0}, nil
 		})
 
-		err := MetadataSurvey(pm, ios, repo, fetcher, &IssueMetadataState{}, gh.ProjectsV1Supported, nil, nil)
+		err := MetadataSurvey(pm, ios, repo, fetcher, &IssueMetadataState{}, gm.ProjectsV1Supported, nil, nil)
 		require.ErrorContains(t, err, "expected test error")
 
 		require.True(t, fetcher.projectsV1Requested, "expected projectsV1 to be requested")
@@ -167,7 +167,7 @@ func TestMetadataSurveyProjectV1Deprecation(t *testing.T) {
 			return []int{0}, nil
 		})
 
-		err := MetadataSurvey(pm, ios, repo, fetcher, &IssueMetadataState{}, gh.ProjectsV1Unsupported, nil, nil)
+		err := MetadataSurvey(pm, ios, repo, fetcher, &IssueMetadataState{}, gm.ProjectsV1Unsupported, nil, nil)
 		require.ErrorContains(t, err, "expected test error")
 
 		require.False(t, fetcher.projectsV1Requested, "expected projectsV1 not to be requested")

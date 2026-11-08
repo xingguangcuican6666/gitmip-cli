@@ -48,9 +48,9 @@ func NewCmdUpdateBranch(f *cmdutil.Factory, runF func(*UpdateBranchOptions) erro
 			branch, the %[1]s--rebase%[1]s option should be provided.
 		`, "`"),
 		Example: heredoc.Doc(`
-			$ gh pr update-branch 23
-			$ gh pr update-branch 23 --rebase
-			$ gh pr update-branch 23 --repo owner/repo
+			$ gm pr update-branch 23
+			$ gm pr update-branch 23 --rebase
+			$ gm pr update-branch 23 --repo owner/repo
 		`),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

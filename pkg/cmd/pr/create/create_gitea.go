@@ -13,7 +13,7 @@ import (
 
 // createGiteaPullRequest opens the pull request on a Gitea host.
 //
-// The metadata gh collects through AddMetadataToIssueParams is expressed here as
+// The metadata gm collects through AddMetadataToIssueParams is expressed here as
 // logins and numeric ids, which is what Gitea's create endpoint takes. The
 // params map those helpers build is GitHub-shaped: node ids, project ids and a
 // separate update call afterwards. None of that applies, so the metadata state
@@ -113,14 +113,14 @@ func giteaCreateMilestoneID(state shared.IssueMetadataState) (int64, error) {
 // takes.
 //
 // A reviewer with a slash in it is a team on GitHub. Gitea does have
-// team_reviewers, but gh cannot enumerate an organisation's teams on a Gitea
+// team_reviewers, but gm cannot enumerate an organisation's teams on a Gitea
 // host, so such a reviewer is refused rather than dropped.
 func giteaAssigneesAndReviewers(state shared.IssueMetadataState) (assignees, reviewers []string, err error) {
 	assignees = append(assignees, state.Assignees...)
 
 	for _, r := range state.Reviewers {
 		if strings.ContainsRune(r, '/') {
-			return nil, nil, fmt.Errorf("Gitea has no team reviewers gh can resolve, so %q cannot be requested", r)
+			return nil, nil, fmt.Errorf("Gitea has no team reviewers gm can resolve, so %q cannot be requested", r)
 		}
 		reviewers = append(reviewers, r)
 	}

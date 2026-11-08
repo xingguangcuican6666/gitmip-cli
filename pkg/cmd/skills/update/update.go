@@ -10,8 +10,8 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/git"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/internal/skills/discovery"
 	"github.com/cli/cli/v2/internal/skills/frontmatter"
@@ -27,7 +27,7 @@ import (
 type UpdateOptions struct {
 	IO         *iostreams.IOStreams
 	HttpClient func() (*http.Client, error)
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 	Prompter   prompter.Prompter
 	GitClient  *git.Client
 
@@ -105,22 +105,22 @@ func NewCmdUpdate(f *cmdutil.Factory, runF func(*UpdateOptions) error) *cobra.Co
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Check and update all skills interactively
-			$ gh skill update
+			$ gm skill update
 
 			# Update specific skills
-			$ gh skill update mcp-cli git-commit
+			$ gm skill update mcp-cli git-commit
 
 			# Update all without prompting
-			$ gh skill update --all
+			$ gm skill update --all
 
 			# Re-download all skills (restore locally modified files)
-			$ gh skill update --force --all
+			$ gm skill update --force --all
 
 			# Check for updates without applying (read-only)
-			$ gh skill update --dry-run
+			$ gm skill update --dry-run
 
 			# Unpin skills and update them to latest
-			$ gh skill update --unpin
+			$ gm skill update --unpin
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts.Skills = args
@@ -338,7 +338,7 @@ func updateRun(opts *UpdateOptions) error {
 		fmt.Fprintf(opts.IO.ErrOut, "%s %s is pinned to %s (skipped)\n", cs.Muted("⊘"), s.name, s.pinned)
 	}
 	for _, name := range noMeta {
-		fmt.Fprintf(opts.IO.ErrOut, "%s %s has no GitHub metadata. Run `gh skill update %s` interactively to add metadata, or reinstall to enable updates\n", cs.WarningIcon(), name, name)
+		fmt.Fprintf(opts.IO.ErrOut, "%s %s has no GitHub metadata. Run `gm skill update %s` interactively to add metadata, or reinstall to enable updates\n", cs.WarningIcon(), name, name)
 	}
 
 	if len(updates) == 0 {
@@ -427,7 +427,7 @@ func updateSkillInPlace(opts *UpdateOptions, u pendingUpdate, apiClient *api.Cli
 
 	// Stage as a sibling of the existing skill directory so the swap stays
 	// on the same filesystem and every rename is atomic.
-	staging, err := os.MkdirTemp(parent, "."+u.skill.Name+".gh-skill-update-")
+	staging, err := os.MkdirTemp(parent, "."+u.skill.Name+".gm-skill-update-")
 	if err != nil {
 		return fmt.Errorf("could not create staging directory: %w", err)
 	}
@@ -468,7 +468,7 @@ func updateSkillInPlace(opts *UpdateOptions, u pendingUpdate, apiClient *api.Cli
 //
 // src and dest must live on the same filesystem so renames are atomic.
 func swapDirectoryContents(dest, src string) error {
-	backup, err := os.MkdirTemp(filepath.Dir(dest), "."+filepath.Base(dest)+".gh-skill-backup-")
+	backup, err := os.MkdirTemp(filepath.Dir(dest), "."+filepath.Base(dest)+".gm-skill-backup-")
 	if err != nil {
 		return fmt.Errorf("could not create backup directory: %w", err)
 	}

@@ -35,10 +35,10 @@ func NewCmdView(f *cmdutil.Factory, runF func(config viewConfig) error) *cobra.C
 		Use:   "view [<number>]",
 		Example: heredoc.Doc(`
 			# View the current user's project "1"
-			$ gh project view 1
+			$ gm project view 1
 
 			# Open user monalisa's project "1" in the browser
-			$ gh project view 1 --owner monalisa --web
+			$ gm project view 1 --owner monalisa --web
 		`),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

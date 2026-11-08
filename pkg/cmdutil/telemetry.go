@@ -4,7 +4,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )

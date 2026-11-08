@@ -19,9 +19,9 @@ func NewCmdRuleset(f *cmdutil.Factory) *cobra.Command {
 		`),
 		Aliases: []string{"rs"},
 		Example: heredoc.Doc(`
-			$ gh ruleset list
-			$ gh ruleset view --repo OWNER/REPO --web
-			$ gh ruleset check branch-name
+			$ gm ruleset list
+			$ gm ruleset view --repo OWNER/REPO --web
+			$ gm ruleset check branch-name
 		`),
 	}
 

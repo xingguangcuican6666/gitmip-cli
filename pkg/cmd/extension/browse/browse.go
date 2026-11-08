@@ -11,8 +11,8 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/cli/cli/v2/git"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/extensions"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/cli/cli/v2/pkg/search"
@@ -27,7 +27,7 @@ type ExtBrowseOpts struct {
 	Em           extensions.ExtensionManager
 	Client       *http.Client
 	Logger       *log.Logger
-	Cfg          gh.Config
+	Cfg          gm.Config
 	Rg           readmeLoader
 	Debug        bool
 	SingleColumn bool

@@ -57,11 +57,11 @@ func NewCmdCreate(f *cmdutil.Factory, runF func(*createOptions) error) *cobra.Co
 		Example: heredoc.Doc(`
 			# Create an alphanumeric autolink to example.com for the key prefix "TICKET-".
 			# Generates https://example.com/TICKET?query=123abc from "TICKET-123abc".
-			$ gh repo autolink create TICKET- "https://example.com/TICKET?query=<num>"
+			$ gm repo autolink create TICKET- "https://example.com/TICKET?query=<num>"
 
 			# Create a numeric autolink to example.com for the key prefix "STORY-".
 			# Generates https://example.com/STORY?id=123 from "STORY-123".
-			$ gh repo autolink create STORY- "https://example.com/STORY?id=<num>" --numeric
+			$ gm repo autolink create STORY- "https://example.com/STORY?id=<num>" --numeric
 		`),
 		Args:    cmdutil.ExactArgs(2, "Cannot create autolink: keyPrefix and urlTemplate arguments are both required"),
 		Aliases: []string{"new"},

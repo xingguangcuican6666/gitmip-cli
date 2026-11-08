@@ -8,7 +8,7 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/httpmock"
 	"github.com/cli/cli/v2/pkg/iostreams"
 )
@@ -234,7 +234,7 @@ func TestListRun(t *testing.T) {
 
 			opts := tt.opts
 			opts.IO = ios
-			opts.Config = func() (gh.Config, error) { return config.NewMockConfig(), nil }
+			opts.Config = func() (gm.Config, error) { return config.NewMockConfig(), nil }
 
 			err := listRun(&opts)
 			if (err != nil) != tt.wantErr {

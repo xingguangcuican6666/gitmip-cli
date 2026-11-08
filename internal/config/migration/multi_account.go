@@ -64,7 +64,7 @@ type tokenSource struct {
 // The reason for this is that we can then add new users under a host.
 // Note that we are only copying the config under a new users key, and
 // under a specific user. The original config is left alone. This is to
-// allow forward compatibility for older versions of gh and also to avoid
+// allow forward compatibility for older versions of gm and also to avoid
 // breaking existing users of go-gh which looks at a specific location
 // in the config for oauth tokens that are stored insecurely.
 
@@ -226,6 +226,8 @@ func migrateConfig(c *config.Config, hostname, username string) error {
 	return nil
 }
 
+// keyringServiceName matches the storage prefix in internal/config, which stays
+// "gh:" so credentials saved before the CLI was renamed remain reachable.
 func keyringServiceName(hostname string) string {
 	return "gh:" + hostname
 }

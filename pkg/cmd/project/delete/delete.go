@@ -39,7 +39,7 @@ func NewCmdDelete(f *cmdutil.Factory, runF func(config deleteConfig) error) *cob
 		Use:   "delete [<number>]",
 		Example: heredoc.Doc(`
 			# Delete the current user's project "1"
-			$ gh project delete 1 --owner "@me"
+			$ gm project delete 1 --owner "@me"
 		`),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

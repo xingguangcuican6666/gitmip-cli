@@ -61,16 +61,16 @@ func NewCmdExtension(io *iostreams.IOStreams, em extensions.ExtensionManager, ex
 						cs.Cyan(strings.TrimPrefix(ext.CurrentVersion(), "v")),
 						cs.Cyan(strings.TrimPrefix(releaseInfo.Version, "v")))
 					if ext.IsPinned() {
-						fmt.Fprintf(stderr, "To upgrade, run: gh extension upgrade %s --force\n", ext.Name())
+						fmt.Fprintf(stderr, "To upgrade, run: gm extension upgrade %s --force\n", ext.Name())
 					} else {
-						fmt.Fprintf(stderr, "To upgrade, run: gh extension upgrade %s\n", ext.Name())
+						fmt.Fprintf(stderr, "To upgrade, run: gm extension upgrade %s\n", ext.Name())
 					}
 					fmt.Fprintf(stderr, "%s\n\n",
 						cs.Yellow(releaseInfo.URL))
 				}
 			default:
 				// Do not make the user wait for extension update check if incomplete by this time.
-				// This is being handled in non-blocking default as there is no context to cancel like in gh update checks.
+				// This is being handled in non-blocking default as there is no context to cancel like in gm update checks.
 			}
 		},
 		GroupID:            "extension",

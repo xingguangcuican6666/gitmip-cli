@@ -20,7 +20,7 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/internal/ci"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/internal/safepaths"
 	"github.com/cli/cli/v2/internal/safeurl"
@@ -52,9 +52,9 @@ func NewCmdCopilot(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder,
 		Long: heredoc.Docf(`
 			Runs the GitHub Copilot CLI.
 
-			Executing the Copilot CLI through %[1]sgh%[1]s is currently in preview and subject to change.
+			Executing the Copilot CLI through %[1]sgm%[1]s is currently in preview and subject to change.
 
-			If already installed, %[1]sgh%[1]s will execute the Copilot CLI found in your %[1]sPATH%[1]s.
+			If already installed, %[1]sgm%[1]s will execute the Copilot CLI found in your %[1]sPATH%[1]s.
 			If the Copilot CLI is not installed, it will be downloaded to %[2]s.
 
 			Use %[1]s--remove%[1]s to remove the downloaded Copilot CLI.
@@ -62,23 +62,23 @@ func NewCmdCopilot(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder,
 			This command is only supported on Windows, Linux, and Darwin, on amd64/x64
 			or arm64 architectures.
 
-			To prevent %[1]sgh%[1]s from interpreting flags intended for Copilot,
+			To prevent %[1]sgm%[1]s from interpreting flags intended for Copilot,
 			use %[1]s--%[1]s before Copilot flags and args.
 
 			Learn more at https://gh.io/copilot-cli
 		`, "`", copilotInstallDir()),
 		Example: heredoc.Doc(`
 			# Download and run the Copilot CLI
-			$ gh copilot
+			$ gm copilot
 
 			# Run the Copilot CLI
-			$ gh copilot -p "Summarize this week's commits" --allow-tool 'shell(git)'
+			$ gm copilot -p "Summarize this week's commits" --allow-tool 'shell(git)'
 
-			# Remove the Copilot CLI (if installed through gh)
-			$ gh copilot --remove
+			# Remove the Copilot CLI (if installed through gm)
+			$ gm copilot --remove
 
 			# Run the Copilot CLI help command
-			$ gh copilot -- --help
+			$ gm copilot -- --help
 		`),
 		DisableFlagParsing: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -187,7 +187,7 @@ func runCopilot(opts *CopilotOptions) error {
 			// We found a `copilot` binary but exec failed, possibly due to
 			// unusual characters in the path (see https://github.com/cli/cli/issues/13106).
 			// Suggest running copilot directly as a workaround.
-			return fmt.Errorf("%w\nFailed to run '%s', try running `copilot` directly without `gh`.", err, copilotPath)
+			return fmt.Errorf("%w\nFailed to run '%s', try running `copilot` directly without `gm`.", err, copilotPath)
 		}
 		return err
 	}
@@ -219,7 +219,7 @@ var findCopilotBinaryFunc = findCopilotBinary
 // findCopilotBinary returns the path to the Copilot CLI binary, if installed,
 // with the following order of precedence:
 //  1. `copilot` in the PATH
-//  2. `copilot` in gh's data directory
+//  2. `copilot` in gm's data directory
 //
 // If not installed, it returns an empty string.
 func findCopilotBinary() string {
@@ -447,7 +447,7 @@ func extractTarGz(r io.Reader, destDir string) error {
 
 func removeCopilot(installDir string) error {
 	if _, err := os.Stat(installDir); os.IsNotExist(err) {
-		return fmt.Errorf("failed to remove Copilot CLI: Copilot CLI not installed through `gh`")
+		return fmt.Errorf("failed to remove Copilot CLI: Copilot CLI not installed through `gm`")
 	}
 
 	if err := os.RemoveAll(installDir); err != nil {

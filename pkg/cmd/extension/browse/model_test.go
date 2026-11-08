@@ -165,7 +165,7 @@ func TestBrowseModelProvidesVisualHierarchyInWideLayout(t *testing.T) {
 	plainHeader := ansi.Strip(lines[0])
 
 	// Then the heading, selection, statuses, README, and key hints have distinct styling
-	assert.Equal(t, "browsing 2 gh extensions", strings.TrimSpace(plainHeader))
+	assert.Equal(t, "browsing 2 gm extensions", strings.TrimSpace(plainHeader))
 	assert.InDelta(t, strings.Index(plainHeader, "browsing"), len(plainHeader)-strings.LastIndex(plainHeader, "extensions")-len("extensions"), 1)
 	assert.Contains(t, view, "\x1b[7m")
 	assert.Regexp(t, `\x1b\[[0-9;]*33m\(official\)\x1b\[0m`, view)
@@ -816,7 +816,7 @@ func TestBrowseModelShowsCompleteMultilineInstallationError(t *testing.T) {
 		"",
 		"To request support for darwin-arm64, open an issue on the extension's repo by running the following command:",
 		"",
-		"\t`gh issue create -R justDeeevin/gh-jj --title \"Add support for the darwin-arm64 architecture\" --body \"This extension does not support the darwin-arm64 architecture.\"`",
+		"\t`gm issue create -R justDeeevin/gh-jj --title \"Add support for the darwin-arm64 architecture\" --body \"This extension does not support the darwin-arm64 architecture.\"`",
 	}, "\n")
 	model := newBrowseModel(ExtBrowseOpts{
 		Em: &extensions.ExtensionManagerMock{
@@ -836,7 +836,7 @@ func TestBrowseModelShowsCompleteMultilineInstallationError(t *testing.T) {
 	// Then the full guidance remains visible without exceeding the terminal
 	assert.Contains(t, view, "gh-jj unsupported for darwin-arm64.")
 	assert.Contains(t, view, "To request support for darwin-arm64")
-	assert.Contains(t, view, "gh issue create -R justDeeevin/gh-jj")
+	assert.Contains(t, view, "gm issue create -R justDeeevin/gh-jj")
 	var commandContinuation string
 	for line := range strings.SplitSeq(view, "\n") {
 		if strings.Contains(line, "not support the darwin-arm64 architecture") {

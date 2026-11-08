@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmd/auth/shared/gitcredentials"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -18,7 +18,7 @@ type gitCredentialsConfigurer interface {
 
 type SetupGitOptions struct {
 	IO                      *iostreams.IOStreams
-	Config                  func() (gh.Config, error)
+	Config                  func() (gm.Config, error)
 	Hostname                string
 	Force                   bool
 	CredentialsHelperConfig gitCredentialsConfigurer
@@ -46,10 +46,10 @@ func NewCmdSetupGit(f *cmdutil.Factory, runF func(*SetupGitOptions) error) *cobr
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Configure git to use GitHub CLI as the credential helper for all authenticated hosts
-			$ gh auth setup-git
+			$ gm auth setup-git
 
 			# Configure git to use GitHub CLI as the credential helper for enterprise.internal host
-			$ gh auth setup-git --hostname enterprise.internal
+			$ gm auth setup-git --hostname enterprise.internal
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts.CredentialsHelperConfig = &gitcredentials.HelperConfig{
@@ -88,7 +88,7 @@ func setupGitRun(opts *SetupGitOptions) error {
 		if !opts.Force && !has(opts.Hostname, hostnames) {
 			return fmt.Errorf("You are not logged into the GitHub host %q. Run %s to authenticate or provide `--force`",
 				opts.Hostname,
-				cs.Bold(fmt.Sprintf("gh auth login -h %s", opts.Hostname)),
+				cs.Bold(fmt.Sprintf("gm auth login -h %s", opts.Hostname)),
 			)
 		}
 
@@ -104,7 +104,7 @@ func setupGitRun(opts *SetupGitOptions) error {
 		fmt.Fprintf(
 			stderr,
 			"You are not logged into any GitHub hosts. Run %s to authenticate.\n",
-			cs.Bold("gh auth login"),
+			cs.Bold("gm auth login"),
 		)
 
 		return cmdutil.SilentError

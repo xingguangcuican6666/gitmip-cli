@@ -14,7 +14,7 @@ import (
 )
 
 // Gitea has no GraphQL API and no search endpoint that takes GitHub's query
-// language, so the three lists `gh pr status` prints are assembled from Gitea's
+// language, so the three lists `gm pr status` prints are assembled from Gitea's
 // own endpoints.
 //
 // GitHub answers the whole page in one aliased query. Here each list is its own
@@ -173,7 +173,7 @@ func pullRequestStatusGitea(httpClient *http.Client, repo ghrepo.Interface, opti
 	}, nil
 }
 
-// currentPullRequestGitea finds the pull request for the branch gh resolved.
+// currentPullRequestGitea finds the pull request for the branch gm resolved.
 //
 // Gitea's list filters by base branch, not by head, so the head has to be matched
 // locally. The first row whose head ref matches is the one reported, which is
@@ -226,7 +226,7 @@ func statusPullRequest(client *api.Client, repo ghrepo.Interface, number int, fi
 // preloadStatusFields fills the check rollup and the latest reviews, which Gitea
 // serves from their own endpoints.
 //
-// The caller's --json field list is what decides this, so a plain `gh pr status`
+// The caller's --json field list is what decides this, so a plain `gm pr status`
 // with no field selection loads neither and costs no extra requests.
 func preloadStatusFields(client *api.Client, repo ghrepo.Interface, pr *api.PullRequest, fields []string) error {
 	for _, f := range fields {

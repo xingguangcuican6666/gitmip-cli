@@ -44,7 +44,7 @@ func newSelectCmd(app *App) *cobra.Command {
 //
 // ```shell
 //
-//	gh codespace select
+//	gm codespace select
 //
 // ```
 //
@@ -52,7 +52,7 @@ func newSelectCmd(app *App) *cobra.Command {
 //
 // ```shell
 //
-//	gh codespace select --file /tmp/selected_codespace.txt
+//	gm codespace select --file /tmp/selected_codespace.txt
 //
 // ```
 func (a *App) Select(ctx context.Context, opts selectOptions) (err error) {

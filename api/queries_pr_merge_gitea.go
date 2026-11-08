@@ -16,8 +16,8 @@ import (
 // differs from GitHub's mergePullRequest input in the ways that matter here.
 //
 // The merge method is a string enum rather than a separate field per method.
-// Gitea offers more methods than gh exposes: rebase-merge and fast-forward-only
-// have no gh flag, and gh's three map onto merge, rebase and squash.
+// Gitea offers more methods than gm exposes: rebase-merge and fast-forward-only
+// have no gm flag, and gm's three map onto merge, rebase and squash.
 //
 // A merge is addressed by index rather than by node id, so callers pass the
 // number.
@@ -37,7 +37,7 @@ import (
 // decoded.
 
 // PullRequestMergeMethodGitea names the merge strategies Gitea's `do` field
-// accepts that gh can ask for.
+// accepts that gm can ask for.
 type PullRequestMergeMethodGitea string
 
 const (
@@ -48,7 +48,7 @@ const (
 	GiteaMergeMethodRebaseMerge     PullRequestMergeMethodGitea = "rebase-merge"
 )
 
-// MergePullRequestGiteaInput is what gh can express of Gitea's merge options.
+// MergePullRequestGiteaInput is what gm can express of Gitea's merge options.
 type MergePullRequestGiteaInput struct {
 	Method PullRequestMergeMethodGitea
 
@@ -83,7 +83,7 @@ type giteaMergePullRequestOption struct {
 
 // MergePullRequestGitea merges one pull request by index.
 //
-// force bypasses branch protection, which is Gitea's force_merge and what gh's
+// force bypasses branch protection, which is Gitea's force_merge and what gm's
 // --admin asks for. It is an argument rather than a field on the input because
 // nothing else in the input depends on privileges: a caller that is not an admin
 // passes false and Gitea answers 405 rather than merging.

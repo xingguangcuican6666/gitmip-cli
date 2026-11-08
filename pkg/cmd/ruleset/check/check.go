@@ -10,8 +10,8 @@ import (
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/git"
 	"github.com/cli/cli/v2/internal/browser"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/internal/text"
 	"github.com/cli/cli/v2/pkg/cmd/ruleset/shared"
@@ -23,7 +23,7 @@ import (
 type CheckOptions struct {
 	HttpClient func() (*http.Client, error)
 	IO         *iostreams.IOStreams
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 	BaseRepo   func() (ghrepo.Interface, error)
 	Git        *git.Client
 	Browser    browser.Browser
@@ -57,19 +57,19 @@ func NewCmdCheck(f *cmdutil.Factory, runF func(*CheckOptions) error) *cobra.Comm
 		`, "`"),
 		Example: heredoc.Doc(`
 			# View all rules that apply to the current branch
-			$ gh ruleset check
+			$ gm ruleset check
 
 			# View all rules that apply to a branch named "my-branch" in a different repository
-			$ gh ruleset check my-branch --repo owner/repo
+			$ gm ruleset check my-branch --repo owner/repo
 
 			# View all rules that apply to the default branch in a different repository
-			$ gh ruleset check --default --repo owner/repo
+			$ gm ruleset check --default --repo owner/repo
 
 			# View a ruleset configured in a different repository or any of its parents
-			$ gh ruleset view 23 --repo owner/repo
+			$ gm ruleset view 23 --repo owner/repo
 
 			# View an organization-level ruleset
-			$ gh ruleset view 23 --org my-org
+			$ gm ruleset view 23 --org my-org
 		`),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

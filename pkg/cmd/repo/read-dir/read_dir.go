@@ -40,7 +40,7 @@ type ReadDirOptions struct {
 	Ref  string
 }
 
-// NewCmdReadDir creates the `gh repo read-dir` command.
+// NewCmdReadDir creates the `gm repo read-dir` command.
 func NewCmdReadDir(f *cmdutil.Factory, runF func(*ReadDirOptions) error) *cobra.Command {
 	opts := &ReadDirOptions{
 		IO:         f.IOStreams,
@@ -62,16 +62,16 @@ func NewCmdReadDir(f *cmdutil.Factory, runF func(*ReadDirOptions) error) *cobra.
 		`, "`"),
 		Example: heredoc.Doc(`
 			# List the root of the default branch
-			$ gh repo read-dir --repo cli/cli
+			$ gm repo read-dir --repo cli/cli
 
 			# List a subdirectory
-			$ gh repo read-dir docs --repo cli/cli
+			$ gm repo read-dir docs --repo cli/cli
 
 			# List a directory at a specific ref
-			$ gh repo read-dir docs --repo cli/cli --ref v2.50.0
+			$ gm repo read-dir docs --repo cli/cli --ref v2.50.0
 
 			# Print selected fields as JSON
-			$ gh repo read-dir docs --repo cli/cli --json name,path,type,size
+			$ gm repo read-dir docs --repo cli/cli --json name,path,type,size
 		`),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

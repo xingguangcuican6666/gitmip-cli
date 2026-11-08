@@ -17,8 +17,8 @@ import (
 	"strings"
 
 	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmd/issue/shared"
 	issueShared "github.com/cli/cli/v2/pkg/cmd/issue/shared"
@@ -94,7 +94,7 @@ func fields() []string {
 
 type LockOptions struct {
 	HttpClient func() (*http.Client, error)
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 	IO         *iostreams.IOStreams
 	BaseRepo   func() (ghrepo.Interface, error)
 	Prompter   iprompter
@@ -248,7 +248,7 @@ func lockRun(state string, opts *LockOptions) error {
 		currentType := alias[parent.Typename]
 		correctType := alias[issuePr.Typename]
 
-		return fmt.Errorf("%s %s %s#%d not found, but found %s %s#%d.  Use `gh %s %s %d` instead",
+		return fmt.Errorf("%s %s %s#%d not found, but found %s %s#%d.  Use `gm %s %s %d` instead",
 			cs.FailureIconWithColor(cs.Red),
 			currentType.FullName, ghrepo.FullName(baseRepo), issuePr.Number,
 			strings.ToLower(correctType.FullName), ghrepo.FullName(baseRepo), issuePr.Number,

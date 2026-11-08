@@ -1,4 +1,4 @@
-// Package gh provides types that represent the domain of the CLI application.
+// Package gm provides types that represent the domain of the CLI application.
 //
 // For example, the CLI expects to be able to get and set user configuration in order to perform its functionality,
 // so the Config interface is defined here, though the concrete implementation lives elsewhere. Though the current
@@ -7,7 +7,7 @@
 //
 // Currently this package is in an early state but we could imagine other domain concepts living here for interacting
 // with git or GitHub.
-package gh
+package gm
 
 import (
 	"errors"
@@ -108,7 +108,7 @@ type Migration interface {
 }
 
 // TokenType is the kind of credential a token is, and its value is the prefix
-// that identifies it. The zero value covers a token gh does not recognise,
+// that identifies it. The zero value covers a token gm does not recognise,
 // including an empty one.
 //
 // See the [token formats] GitHub documents.
@@ -140,8 +140,8 @@ var TokenTypes = []TokenType{
 
 // RefreshStatus describes the outcome of attempting to refresh an authentication token.
 //
-// It is an alias for auth.RefreshStatus so the type is identical to the one gh exposes through the public auth package,
-// while existing gh.RefreshStatus references keep compiling.
+// It is an alias for auth.RefreshStatus so the type is identical to the one gm exposes through the public auth package,
+// while existing gm.RefreshStatus references keep compiling.
 type RefreshStatus = auth.RefreshStatus
 
 const (
@@ -159,7 +159,7 @@ const (
 	RefreshStatusUnnecessary = auth.RefreshStatusUnnecessary
 )
 
-// RefreshableCredential is an OAuth token pair that gh can renew, together with the expiration metadata returned by its
+// RefreshableCredential is an OAuth token pair that gm can renew, together with the expiration metadata returned by its
 // issuer. The expiration fields are optional because a server may issue a non-expiring credential. The ExpiresIn fields
 // carry the raw lifetime in seconds as returned by the issuer, alongside the absolute expiry times computed from them.
 //
@@ -179,15 +179,15 @@ type RefreshableCredential struct {
 // advance whether it is refreshable: Token and Source are always meaningful, while the refresh fields are zero for a
 // non-refreshable token.
 //
-// It is an alias for auth.Credential so the type is identical to the one gh exposes through the public auth package,
-// while existing gh.Credential references keep compiling.
+// It is an alias for auth.Credential so the type is identical to the one gm exposes through the public auth package,
+// while existing gm.Credential references keep compiling.
 type Credential = auth.Credential
 
-// Token source values name the origins that gh itself records in a Credential's Source. Tokens supplied through
+// Token source values name the origins that gm itself records in a Credential's Source. Tokens supplied through
 // environment variables are labeled dynamically by go-gh (for example GH_TOKEN) and are intentionally not enumerated
 // here.
 const (
-	// TokenSourceKeyring indicates the token was read from the system keyring, gh's secure storage.
+	// TokenSourceKeyring indicates the token was read from the system keyring, gm's secure storage.
 	TokenSourceKeyring = "keyring"
 	// TokenSourceOAuthToken indicates the token was read from the oauth_token entry in the config file.
 	TokenSourceOAuthToken = "oauth_token"
@@ -200,7 +200,7 @@ const (
 
 // ErrRefreshTokenInvalid is returned by a TokenRefresher when the OAuth server rejects the refresh token because it is
 // invalid, expired, or already used. Callers can test for it with errors.Is to distinguish an unusable refresh token,
-// which requires re-authenticating with 'gh auth login', from a transient failure that may succeed on a later retry.
+// which requires re-authenticating with 'gm auth login', from a transient failure that may succeed on a later retry.
 var ErrRefreshTokenInvalid = errors.New("refresh token is invalid or expired")
 
 // TokenRefresher performs the OAuth token refresh request. It knows nothing about when a refresh should happen or about
@@ -213,7 +213,7 @@ type TokenRefresher interface {
 	Refresh(refreshToken string, hostname string) (RefreshableCredential, error)
 }
 
-// AuthConfig is used for interacting with some persistent configuration for gh,
+// AuthConfig is used for interacting with some persistent configuration for gm,
 // with knowledge on how to access encrypted storage when necessary.
 // Behavior is scoped to authentication specific tasks.
 type AuthConfig interface {

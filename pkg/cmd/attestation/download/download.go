@@ -54,13 +54,13 @@ func NewDownloadCmd(f *cmdutil.Factory, runF func(*Options) error) *cobra.Comman
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Download attestations for a local artifact linked with an organization
-			$ gh attestation download example.bin -o github
+			$ gm attestation download example.bin -o github
 
 			# Download attestations for a local artifact linked with a repository
-			$ gh attestation download example.bin -R github/example
+			$ gm attestation download example.bin -R github/example
 
 			# Download attestations for an OCI image linked with an organization
-			$ gh attestation download oci://example.com/foo/bar:latest -o github
+			$ gm attestation download oci://example.com/foo/bar:latest -o github
 		`),
 		// PreRunE is used to validate flags before the command is run
 		// If an error is returned, its message will be printed to the terminal

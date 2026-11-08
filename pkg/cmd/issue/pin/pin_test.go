@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmd/issue/argparsetest"
 	"github.com/cli/cli/v2/pkg/httpmock"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -81,7 +81,7 @@ func TestPinRun(t *testing.T) {
 		ios.SetStdoutTTY(tt.tty)
 		tt.opts.IO = ios
 
-		tt.opts.Config = func() (gh.Config, error) {
+		tt.opts.Config = func() (gm.Config, error) {
 			return config.NewMockConfig(), nil
 		}
 

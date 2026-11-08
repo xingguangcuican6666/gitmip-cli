@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
-	ghmock "github.com/cli/cli/v2/internal/gh/mock"
+	"github.com/cli/cli/v2/internal/gm"
+	ghmock "github.com/cli/cli/v2/internal/gm/mock"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/httpmock"
 	"github.com/stretchr/testify/assert"
@@ -71,9 +71,9 @@ func TestCapiClientFuncResolvesURL(t *testing.T) {
 	)
 
 	f := &cmdutil.Factory{
-		Config: func() (gh.Config, error) {
+		Config: func() (gm.Config, error) {
 			return &ghmock.ConfigMock{
-				AuthenticationFunc: func() gh.AuthConfig {
+				AuthenticationFunc: func() gm.AuthConfig {
 					c := &config.AuthConfig{}
 					c.SetDefaultHost("github.com", "hosts")
 					c.SetActiveToken("gho_TOKEN", "oauth_token")

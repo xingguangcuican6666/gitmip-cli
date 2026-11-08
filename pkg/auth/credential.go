@@ -1,8 +1,8 @@
-// Package auth defines the public authentication credential types that gh exposes to consumers of the api package.
+// Package auth defines the public authentication credential types that gm exposes to consumers of the api package.
 //
 // These types describe a resolved token and, when the token is refreshable, its OAuth refresh metadata. They carry only
 // standard-library types so callers outside github.com/cli/cli/v2 can depend on them. The machinery that performs token
-// refresh remains internal to gh; this package deliberately exposes the credential shape alone.
+// refresh remains internal to gm; this package deliberately exposes the credential shape alone.
 package auth
 
 import "time"
@@ -32,7 +32,7 @@ const (
 type Credential struct {
 	// Source identifies where the token came from, such as an environment variable, the config file, or the keyring.
 	Source string
-	// Token is the token gh would present to the API. For a refreshable credential it is the current access token.
+	// Token is the token gm would present to the API. For a refreshable credential it is the current access token.
 	Token string
 	// RefreshToken is the OAuth refresh token, set only for a refreshable credential.
 	RefreshToken string
@@ -46,7 +46,7 @@ type Credential struct {
 	RefreshTokenExpiresAt *time.Time
 }
 
-// IsRefreshable reports whether the credential carries a refresh token and can therefore be renewed by gh.
+// IsRefreshable reports whether the credential carries a refresh token and can therefore be renewed by gm.
 func (c Credential) IsRefreshable() bool {
 	return c.RefreshToken != ""
 }

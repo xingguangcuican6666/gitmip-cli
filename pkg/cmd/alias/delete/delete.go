@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/spf13/cobra"
 )
 
 type DeleteOptions struct {
-	Config func() (gh.Config, error)
+	Config func() (gm.Config, error)
 	IO     *iostreams.IOStreams
 
 	Name string

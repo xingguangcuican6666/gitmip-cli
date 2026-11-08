@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/hashicorp/go-version"
 	"golang.org/x/sync/errgroup"
@@ -16,7 +16,7 @@ type Detector interface {
 	IssueFeatures() (IssueFeatures, error)
 	PullRequestFeatures() (PullRequestFeatures, error)
 	RepositoryFeatures() (RepositoryFeatures, error)
-	ProjectsV1() gh.ProjectsV1Support
+	ProjectsV1() gm.ProjectsV1Support
 	ProjectFeatures() (ProjectFeatures, error)
 	SearchFeatures() (SearchFeatures, error)
 	ReleaseFeatures() (ReleaseFeatures, error)
@@ -335,19 +335,19 @@ const (
 	enterpriseProjectsV1Removed = "3.17.0"
 )
 
-func (d *detector) ProjectsV1() gh.ProjectsV1Support {
+func (d *detector) ProjectsV1() gm.ProjectsV1Support {
 	if !ghauth.IsEnterprise(d.host) {
-		return gh.ProjectsV1Unsupported
+		return gm.ProjectsV1Unsupported
 	}
 
 	hostVersion, hostVersionErr := resolveEnterpriseVersion(d.httpClient, d.host)
 	v1ProjectCutoffVersion, v1ProjectCutoffVersionErr := version.NewVersion(enterpriseProjectsV1Removed)
 
 	if hostVersionErr == nil && v1ProjectCutoffVersionErr == nil && hostVersion.LessThan(v1ProjectCutoffVersion) {
-		return gh.ProjectsV1Supported
+		return gm.ProjectsV1Supported
 	}
 
-	return gh.ProjectsV1Unsupported
+	return gm.ProjectsV1Unsupported
 }
 
 func (d *detector) ProjectFeatures() (ProjectFeatures, error) {
@@ -391,7 +391,7 @@ func (d *detector) ProjectFeatures() (ProjectFeatures, error) {
 
 const (
 	// enterpriseAdvancedIssueSearchSupport is the minimum version of GHES that
-	// supports advanced issue search and gh should use it.
+	// supports advanced issue search and gm should use it.
 	//
 	// Note that advanced issue search is also available on GHES 3.17, but it's
 	// at the preview stage and is not as mature as it is on github.com or later

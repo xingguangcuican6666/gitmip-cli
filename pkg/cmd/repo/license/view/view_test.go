@@ -8,7 +8,7 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/internal/browser"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/httpmock"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -221,7 +221,7 @@ func TestViewRun(t *testing.T) {
 			errMsg: heredoc.Docf(`
 				'404' is not a valid license name or SPDX ID.
 
-				Run %[1]sgh repo license list%[1]s to see available commonly used licenses. For even more licenses, visit https://choosealicense.com/appendix`, "`"),
+				Run %[1]sgm repo license list%[1]s to see available commonly used licenses. For even more licenses, visit https://choosealicense.com/appendix`, "`"),
 			httpStubs: func(reg *httpmock.Registry) {
 				reg.Register(
 					httpmock.REST("GET", "licenses/404"),
@@ -279,7 +279,7 @@ func TestViewRun(t *testing.T) {
 		if tt.httpStubs != nil {
 			tt.httpStubs(reg)
 		}
-		tt.opts.Config = func() (gh.Config, error) {
+		tt.opts.Config = func() (gm.Config, error) {
 			return config.NewMockConfig(), nil
 		}
 		tt.opts.HTTPClient = func() (*http.Client, error) {

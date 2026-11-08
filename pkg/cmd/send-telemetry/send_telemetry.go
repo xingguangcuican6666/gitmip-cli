@@ -78,7 +78,7 @@ func runSendTelemetry(ctx context.Context, opts *SendTelemetryOptions) error {
 		Timeout: 2 * time.Second,
 		Transport: &userAgentTransport{
 			base:      handleUnixDomainSocket(opts.HTTPUnixSocket),
-			userAgent: fmt.Sprintf("GitHub CLI %s", build.Version),
+			userAgent: fmt.Sprintf("gitmip-cli %s", build.Version),
 		},
 	}
 

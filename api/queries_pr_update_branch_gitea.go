@@ -37,7 +37,7 @@ func UpdatePullRequestBranchGitea(client *Client, repo ghrepo.Interface, number 
 	return nil
 }
 
-// giteaCompare is the part of Gitea's Compare that gh reads.
+// giteaCompare is the part of Gitea's Compare that gm reads.
 type giteaCompare struct {
 	TotalCommits int `json:"total_commits"`
 }

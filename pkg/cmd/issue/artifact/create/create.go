@@ -14,8 +14,8 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/internal/attachments"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/internal/text"
 	"github.com/cli/cli/v2/pkg/cmd/issue/artifact/client"
 	"github.com/cli/cli/v2/pkg/cmd/issue/artifact/shared"
@@ -24,7 +24,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// CreateOptions holds the flags and dependencies of gh issue artifact create.
+// CreateOptions holds the flags and dependencies of gm issue artifact create.
 type CreateOptions struct {
 	IO         *iostreams.IOStreams
 	HttpClient func() (*http.Client, error)
@@ -65,7 +65,7 @@ type source struct {
 	// arg is the file path, URL or "-" as typed, which result lines show as
 	// the source. It is empty for --body.
 	arg string
-	// name is the name typed with #<name> or --name, or empty for the name gh
+	// name is the name typed with #<name> or --name, or empty for the name gm
 	// gives it.
 	name string
 	// body is --body's text.
@@ -95,7 +95,7 @@ func (s source) artifactType(typeFlag string) string {
 	return client.TypeGeneric
 }
 
-// NewCmdCreate creates the gh issue artifact create command.
+// NewCmdCreate creates the gm issue artifact create command.
 func NewCmdCreate(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder, runF func(*CreateOptions) error) *cobra.Command {
 	opts := &CreateOptions{
 		IO:         f.IOStreams,
@@ -125,22 +125,22 @@ func NewCmdCreate(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder, 
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Create a document from a file
-			$ gh issue artifact create 142 signin-plan.md
+			$ gm issue artifact create 142 signin-plan.md
 
 			# Create documents from two files, naming the first
-			$ gh issue artifact create 142 'docs/signin-plan.md#Sign-in plan' oauth-research.md
+			$ gm issue artifact create 142 'docs/signin-plan.md#Sign-in plan' oauth-research.md
 
 			# Create an HTML document from a file
-			$ gh issue artifact create 142 menu-prototype.html
+			$ gm issue artifact create 142 menu-prototype.html
 
 			# Create a link with a name
-			$ gh issue artifact create 142 https://github.com/monalisa/monas-cafe/wiki/OAuth-runbook --name 'Staging OAuth runbook'
+			$ gm issue artifact create 142 https://github.com/monalisa/monas-cafe/wiki/OAuth-runbook --name 'Staging OAuth runbook'
 
 			# Create a document from standard input
-			$ cat order-sync.log | gh issue artifact create 142 --body-file - --name 'Order sync log'
+			$ cat order-sync.log | gm issue artifact create 142 --body-file - --name 'Order sync log'
 
 			# Upload an image that the document references
-			$ gh issue artifact create 142 signin-plan.md --attach ./signin-flow.png
+			$ gm issue artifact create 142 signin-plan.md --attach ./signin-flow.png
 		`),
 		Aliases: []string{"new"},
 		Args:    cobra.MinimumNArgs(1),
@@ -151,7 +151,7 @@ func NewCmdCreate(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder, 
 				return cmdutil.FlagErrorWrap(err)
 			}
 
-			// An empty --body-file names no file, as in gh issue create.
+			// An empty --body-file names no file, as in gm issue create.
 			bodySet := cmd.Flags().Changed("body")
 			bodyFileSet := bodyFile != ""
 			nameSet := cmd.Flags().Changed("name")
@@ -411,7 +411,7 @@ func readSource(s source, stdin io.ReadCloser, typeFlag string) (artifact, error
 	return a, nil
 }
 
-// nameFromFile returns the name gh gives an artifact from a file: its base
+// nameFromFile returns the name gm gives an artifact from a file: its base
 // name, as typed rather than a symlink's target, cleaned up to fit the
 // server's rule for names, since the user didn't type it. Names may contain
 // letters, numbers, accent marks, spaces, ".", "-" and "_", and must start

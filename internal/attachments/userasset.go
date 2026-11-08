@@ -11,16 +11,16 @@ import (
 	"github.com/cli/cli/v2/internal/text"
 )
 
-// maxImageBytes is the largest image gh uploads.
+// maxImageBytes is the largest image gm uploads.
 const maxImageBytes int64 = 10 * 1024 * 1024
 
-// maxVideoBytes is the largest video gh uploads. The real limit depends on the
-// account plan, which gh cannot know before the request, so this is the
+// maxVideoBytes is the largest video gm uploads. The real limit depends on the
+// account plan, which gm cannot know before the request, so this is the
 // generous bound and the server refuses the rest.
 const maxVideoBytes int64 = 100 * 1024 * 1024
 
 // contentTypes maps every accepted extension to the content type the endpoint
-// expects, in the order gh lists them back to the user.
+// expects, in the order gm lists them back to the user.
 var contentTypes = []struct {
 	ext         string
 	contentType string
@@ -122,7 +122,7 @@ func newAsset(path, alt string) (UserAsset, error) {
 	fi, err := os.Stat(path)
 	if err != nil {
 		// Drop the syscall name so the message names the file, not the
-		// operation gh performed on it.
+		// operation gm performed on it.
 		if pathErr, ok := errors.AsType[*fs.PathError](err); ok {
 			return nil, fmt.Errorf("%s: %w", path, pathErr.Err)
 		}
@@ -167,7 +167,7 @@ func checkMaxSize(a asset, maxBytes int64, kind string) error {
 }
 
 // supportedContentType maps a file extension to the content type the endpoint
-// expects. The extension is all gh checks, since the endpoint accepts
+// expects. The extension is all gm checks, since the endpoint accepts
 // mislabeled bytes anyway.
 func supportedContentType(path string) (string, error) {
 	ext := strings.ToLower(filepath.Ext(path))

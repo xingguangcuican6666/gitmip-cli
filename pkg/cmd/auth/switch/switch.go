@@ -6,7 +6,7 @@ import (
 	"slices"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmd/auth/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -15,7 +15,7 @@ import (
 
 type SwitchOptions struct {
 	IO       *iostreams.IOStreams
-	Config   func() (gh.Config, error)
+	Config   func() (gm.Config, error)
 	Prompter shared.Prompt
 	Hostname string
 	Username string
@@ -42,14 +42,14 @@ func NewCmdSwitch(f *cmdutil.Factory, runF func(*SwitchOptions) error) *cobra.Co
 			automatically. If there are more than two accounts, disambiguation will be
 			required either through the %[1]s--user%[1]s flag or an interactive prompt.
 
-			For a list of authenticated accounts you can run %[1]sgh auth status%[1]s.
+			For a list of authenticated accounts you can run %[1]sgm auth status%[1]s.
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Select what host and account to switch to via a prompt
-			$ gh auth switch
+			$ gm auth switch
 
 			# Switch the active account on a specific host to a specific user
-			$ gh auth switch --hostname enterprise.internal --user monalisa
+			$ gm auth switch --hostname enterprise.internal --user monalisa
 		`),
 		RunE: func(c *cobra.Command, args []string) error {
 			if runF != nil {

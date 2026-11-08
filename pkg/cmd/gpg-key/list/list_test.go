@@ -10,7 +10,7 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/httpmock"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/stretchr/testify/assert"
@@ -184,7 +184,7 @@ func Test_listRun(t *testing.T) {
 			ios.SetStderrTTY(tt.isTTY)
 			opts := tt.opts
 			opts.IO = ios
-			opts.Config = func() (gh.Config, error) { return config.NewMockConfig(), nil }
+			opts.Config = func() (gm.Config, error) { return config.NewMockConfig(), nil }
 			err := listRun(&opts)
 			if tt.wantErr {
 				assert.Error(t, err)

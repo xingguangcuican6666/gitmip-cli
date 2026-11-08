@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/tableprinter"
 	"github.com/cli/cli/v2/internal/text"
 	"github.com/cli/cli/v2/pkg/cmd/gist/shared"
@@ -19,7 +19,7 @@ import (
 
 type ListOptions struct {
 	IO         *iostreams.IOStreams
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 	HttpClient func() (*http.Client, error)
 
 	Limit          int
@@ -52,7 +52,7 @@ func NewCmdList(f *cmdutil.Factory, runF func(*ListOptions) error) *cobra.Comman
 
 			Use %[1]s--include-content%[1]s to include content of files, noting that
 			this will be slower and increase the rate limit used. Instead of printing a table,
-			code will be printed with highlights similar to %[1]sgh search code%[1]s:
+			code will be printed with highlights similar to %[1]sgm search code%[1]s:
 
 				{{gist ID}} {{file name}}
 				    {{description}}
@@ -62,10 +62,10 @@ func NewCmdList(f *cmdutil.Factory, runF func(*ListOptions) error) *cobra.Comman
 		`, "`"),
 		Example: heredoc.Doc(`
 			# List all secret gists from your user account
-			$ gh gist list --secret
+			$ gm gist list --secret
 
 			# Find all gists from your user account mentioning "octo" anywhere
-			$ gh gist list --filter octo --include-content
+			$ gm gist list --filter octo --include-content
 		`),
 		Aliases: []string{"ls"},
 		Args:    cobra.NoArgs,
@@ -213,7 +213,7 @@ func printTable(io *iostreams.IOStreams, gists []shared.Gist, filter *regexp.Reg
 	return tp.Render()
 }
 
-// printContent prints a gist with optional description and content similar to `gh search code`
+// printContent prints a gist with optional description and content similar to `gm search code`
 // including highlighted matches in the form:
 //
 //	{{gist ID}} {{file name}}

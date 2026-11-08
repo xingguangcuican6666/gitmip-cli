@@ -22,7 +22,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// DownloadOptions holds the flags and dependencies of gh issue artifact
+// DownloadOptions holds the flags and dependencies of gm issue artifact
 // download.
 type DownloadOptions struct {
 	IO       *iostreams.IOStreams
@@ -46,7 +46,7 @@ type DownloadOptions struct {
 	Version int
 }
 
-// NewCmdDownload creates the gh issue artifact download command.
+// NewCmdDownload creates the gm issue artifact download command.
 func NewCmdDownload(f *cmdutil.Factory, runF func(*DownloadOptions) error) *cobra.Command {
 	opts := &DownloadOptions{
 		IO: f.IOStreams,
@@ -72,16 +72,16 @@ func NewCmdDownload(f *cmdutil.Factory, runF func(*DownloadOptions) error) *cobr
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Download every artifact on issue 142
-			$ gh issue artifact download 142
+			$ gm issue artifact download 142
 
 			# Download two artifacts into a folder
-			$ gh issue artifact download 142 2 5 --dir notes
+			$ gm issue artifact download 142 2 5 --dir notes
 
 			# Print one artifact's content
-			$ gh issue artifact download 142 2 --output -
+			$ gm issue artifact download 142 2 --output -
 
 			# Download an earlier version of one artifact
-			$ gh issue artifact download 142 2 --version 5
+			$ gm issue artifact download 142 2 --version 5
 		`),
 		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -248,7 +248,7 @@ func downloadAction(number int) string {
 }
 
 // selectVersion returns the name and body to download: the current
-// version's, or with --version, that version's. A type gh doesn't know is
+// version's, or with --version, that version's. A type gm doesn't know is
 // refused first, like view does.
 func selectVersion(a *client.ArtifactWithVersions, version int) (string, string, error) {
 	if err := shared.CheckType(a.Artifact); err != nil {
@@ -350,7 +350,7 @@ func (w *fileWriter) Close() error {
 }
 
 // path returns where an artifact's file goes: in Dir under its file name, or
-// at Output. Like gh repo read-file --output, an existing directory, or a path
+// at Output. Like gm repo read-file --output, an existing directory, or a path
 // ending in a separator, gets the file under its file name, and a symlink at
 // Output is never followed, even to a directory. path returns the symlink
 // itself, so write refuses it like any other symlink. Dir and the directories
@@ -391,9 +391,9 @@ var errAlreadyExists = errors.New("already exists (use `--clobber` to overwrite 
 var afterCheck = func() {}
 
 // write writes an artifact's file at path, and reports whether it skipped path
-// instead. It checks path first, as gh release download does before
+// instead. It checks path first, as gm release download does before
 // downloading: something already there fails unless skipExisting skips it, or
-// clobber overwrites it, which only works on a regular file. gh never writes
+// clobber overwrites it, which only works on a regular file. gm never writes
 // through a symlink at path, even with clobber, but the directory and its
 // parents may be symlinks, and missing ones are created.
 func (w *fileWriter) write(path string, a client.Artifact, body string) (bool, error) {
@@ -465,7 +465,7 @@ func (w *fileWriter) openDir(path string) (*safepaths.Root, error) {
 }
 
 // fileContent returns what an artifact's file holds: a document's body as it
-// is, or an Internet Shortcut for a link. gh never writes a shortcut for
+// is, or an Internet Shortcut for a link. gm never writes a shortcut for
 // anything but an http(s) URL.
 func fileContent(a client.Artifact, body string) ([]byte, error) {
 	if a.Type != client.TypeLink {

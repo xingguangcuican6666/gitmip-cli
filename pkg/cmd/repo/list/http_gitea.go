@@ -20,7 +20,7 @@ import (
 // repositories themselves. When no owner is given, the authenticated user's id
 // comes from GET /user.
 //
-// Gitea's search covers most of gh's filters server-side but not all of them.
+// Gitea's search covers most of gm's filters server-side but not all of them.
 // Language has no server-side filter, so it is applied to each page as it
 // arrives, and the loop keeps paging until the limit is met rather than
 // stopping at a page boundary. Several topics cannot be expressed either, since

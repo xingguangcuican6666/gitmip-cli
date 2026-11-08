@@ -52,13 +52,13 @@ func NewCmdVerifyAsset(f *cmdutil.Factory, runF func(*VerifyAssetConfig) error) 
 		Args: cobra.MaximumNArgs(2),
 		Example: heredoc.Doc(`
 			# Verify an asset from the latest release
-			$ gh release verify-asset ./dist/my-asset.zip
+			$ gm release verify-asset ./dist/my-asset.zip
 
 			# Verify an asset from a specific release tag
-			$ gh release verify-asset v1.2.3 ./dist/my-asset.zip
+			$ gm release verify-asset v1.2.3 ./dist/my-asset.zip
 
 			# Verify an asset from a specific release tag and output the attestation in JSON format
-			$ gh release verify-asset v1.2.3 ./dist/my-asset.zip --format json
+			$ gm release verify-asset v1.2.3 ./dist/my-asset.zip --format json
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 2 {

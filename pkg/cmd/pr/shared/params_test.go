@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/httpmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -472,7 +472,7 @@ func Test_WithPrAndIssueQueryParams(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := WithPrAndIssueQueryParams(nil, nil, tt.args.baseURL, tt.args.state, gh.ProjectsV1Supported)
+			got, err := WithPrAndIssueQueryParams(nil, nil, tt.args.baseURL, tt.args.state, gm.ProjectsV1Supported)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("WithPrAndIssueQueryParams() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -545,7 +545,7 @@ func TestWithPrAndIssueQueryParamsProjectsV1Deprecation(t *testing.T) {
 			IssueMetadataState{
 				ProjectTitles: []string{"Triage"},
 			},
-			gh.ProjectsV1Supported,
+			gm.ProjectsV1Supported,
 		)
 		require.NoError(t, err)
 
@@ -610,7 +610,7 @@ func TestWithPrAndIssueQueryParamsProjectsV1Deprecation(t *testing.T) {
 			IssueMetadataState{
 				ProjectTitles: []string{"TriageV2"},
 			},
-			gh.ProjectsV1Unsupported,
+			gm.ProjectsV1Unsupported,
 		)
 		require.NoError(t, err)
 

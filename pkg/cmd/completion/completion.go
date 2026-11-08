@@ -32,13 +32,13 @@ func NewCmdCompletion(io *iostreams.IOStreams) *cobra.Command {
 
 			After, add this to your %[1]s~/.bash_profile%[1]s:
 
-				eval "$(gh completion -s bash)"
+				eval "$(gm completion -s bash)"
 
 			### zsh
 
 			Generate a %[1]s_gh%[1]s completion script and put it somewhere in your %[1]s$fpath%[1]s:
 
-				gh completion -s zsh > /usr/local/share/zsh/site-functions/_gh
+				gm completion -s zsh > /usr/local/share/zsh/site-functions/_gh
 
 			Ensure that the following is present in your %[1]s~/.zshrc%[1]s:
 
@@ -49,9 +49,9 @@ func NewCmdCompletion(io *iostreams.IOStreams) *cobra.Command {
 
 			### fish
 
-			Generate a %[1]sgh.fish%[1]s completion script:
+			Generate a %[1]sgm.fish%[1]s completion script:
 
-				gh completion -s fish > ~/.config/fish/completions/gh.fish
+				gm completion -s fish > ~/.config/fish/completions/gm.fish
 
 			### PowerShell
 
@@ -62,7 +62,7 @@ func NewCmdCompletion(io *iostreams.IOStreams) *cobra.Command {
 
 			Add the line and save the file:
 
-				Invoke-Expression -Command $(gh completion -s powershell | Out-String)
+				Invoke-Expression -Command $(gm completion -s powershell | Out-String)
 		`, "`"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if shellType == "" {

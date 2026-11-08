@@ -12,8 +12,8 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmd/variable/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -28,7 +28,7 @@ type iprompter interface {
 type SetOptions struct {
 	HttpClient func() (*http.Client, error)
 	IO         *iostreams.IOStreams
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 	BaseRepo   func() (ghrepo.Interface, error)
 	Prompter   iprompter
 
@@ -63,25 +63,25 @@ func NewCmdSet(f *cmdutil.Factory, runF func(*SetOptions) error) *cobra.Command 
 		`),
 		Example: heredoc.Doc(`
 			# Add variable value for the current repository in an interactive prompt
-			$ gh variable set MYVARIABLE
+			$ gm variable set MYVARIABLE
 
 			# Read variable value from an environment variable
-			$ gh variable set MYVARIABLE --body "$ENV_VALUE"
+			$ gm variable set MYVARIABLE --body "$ENV_VALUE"
 
 			# Read variable value from a file
-			$ gh variable set MYVARIABLE < myfile.txt
+			$ gm variable set MYVARIABLE < myfile.txt
 
 			# Set variable for a deployment environment in the current repository
-			$ gh variable set MYVARIABLE --env myenvironment
+			$ gm variable set MYVARIABLE --env myenvironment
 
 			# Set organization-level variable visible to both public and private repositories
-			$ gh variable set MYVARIABLE --org myOrg --visibility all
+			$ gm variable set MYVARIABLE --org myOrg --visibility all
 
 			# Set organization-level variable visible to specific repositories
-			$ gh variable set MYVARIABLE --org myOrg --repos repo1,repo2,repo3
+			$ gm variable set MYVARIABLE --org myOrg --repos repo1,repo2,repo3
 
 			# Set multiple variables imported from the ".env" file
-			$ gh variable set -f .env
+			$ gm variable set -f .env
 		`),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

@@ -4,7 +4,7 @@ set -euo pipefail
 # Get the root directory of the repository
 rootDir="$(git rev-parse --show-toplevel)"
 
-ghBuildPath="$rootDir/bin/gh"
+ghBuildPath="$rootDir/bin/gm"
 
 artifactPath="$rootDir/pkg/cmd/attestation/test/data/sigstore-js-2.1.0.tgz"
 bundlePath="$rootDir/pkg/cmd/attestation/test/data/sigstore-js-2.1.0_with_2_bundles.jsonl"

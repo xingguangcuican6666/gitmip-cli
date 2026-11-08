@@ -54,13 +54,13 @@ func NewCmdVerify(f *cmdutil.Factory, runF func(config *VerifyConfig) error) *co
 		`),
 		Example: heredoc.Doc(`
 			# Verify the latest release
-			gh release verify
+			gm release verify
 			
 			# Verify a specific release by tag
-			gh release verify v1.2.3
+			gm release verify v1.2.3
 
 			# Verify a specific release by tag and output the attestation in JSON format
-			gh release verify v1.2.3 --format json
+			gm release verify v1.2.3 --format json
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 0 {

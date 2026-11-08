@@ -2,7 +2,7 @@ package pr
 
 import (
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	cmdLock "github.com/cli/cli/v2/pkg/cmd/issue/lock"
 	cmdCheckout "github.com/cli/cli/v2/pkg/cmd/pr/checkout"
 	cmdChecks "github.com/cli/cli/v2/pkg/cmd/pr/checks"
@@ -30,9 +30,9 @@ func NewCmdPR(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder) *cob
 		Short: "Manage pull requests",
 		Long:  "Work with GitHub pull requests.",
 		Example: heredoc.Doc(`
-			$ gh pr checkout 353
-			$ gh pr create --fill
-			$ gh pr view --web
+			$ gm pr checkout 353
+			$ gm pr create --fill
+			$ gm pr view --web
 		`),
 		Annotations: map[string]string{
 			"help:arguments": heredoc.Doc(`

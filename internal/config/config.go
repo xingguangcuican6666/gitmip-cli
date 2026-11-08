@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/keyring"
 	o "github.com/cli/cli/v2/pkg/option"
@@ -45,7 +45,7 @@ const (
 	versionKey             = "version"
 )
 
-func NewConfig() (gh.Config, error) {
+func NewConfig() (gm.Config, error) {
 	c, err := ghConfig.Read(fallbackConfig())
 	if err != nil {
 		return nil, err
@@ -77,27 +77,27 @@ func (c *cfg) get(hostname, key string) o.Option[string] {
 	return o.None[string]()
 }
 
-func (c *cfg) GetOrDefault(hostname, key string) o.Option[gh.ConfigEntry] {
+func (c *cfg) GetOrDefault(hostname, key string) o.Option[gm.ConfigEntry] {
 	if val := c.get(hostname, key); val.IsSome() {
-		// Map the Option[string] to Option[gh.ConfigEntry] with a source of ConfigUserProvided
-		return o.Map(val, toConfigEntry(gh.ConfigUserProvided))
+		// Map the Option[string] to Option[gm.ConfigEntry] with a source of ConfigUserProvided
+		return o.Map(val, toConfigEntry(gm.ConfigUserProvided))
 	}
 
 	if defaultVal := defaultFor(key); defaultVal.IsSome() {
-		// Map the Option[string] to Option[gh.ConfigEntry] with a source of ConfigDefaultProvided
-		return o.Map(defaultVal, toConfigEntry(gh.ConfigDefaultProvided))
+		// Map the Option[string] to Option[gm.ConfigEntry] with a source of ConfigDefaultProvided
+		return o.Map(defaultVal, toConfigEntry(gm.ConfigDefaultProvided))
 	}
 
-	return o.None[gh.ConfigEntry]()
+	return o.None[gm.ConfigEntry]()
 }
 
 // toConfigEntry is a helper function to convert a string value to a ConfigEntry with a given source.
 //
-// It's a bit of FP style but it allows us to map an Option[string] to Option[gh.ConfigEntry] without
+// It's a bit of FP style but it allows us to map an Option[string] to Option[gm.ConfigEntry] without
 // unwrapping the it and rewrapping it.
-func toConfigEntry(source gh.ConfigSource) func(val string) gh.ConfigEntry {
-	return func(val string) gh.ConfigEntry {
-		return gh.ConfigEntry{Value: val, Source: source}
+func toConfigEntry(source gm.ConfigSource) func(val string) gm.ConfigEntry {
+	return func(val string) gm.ConfigEntry {
+		return gm.ConfigEntry{Value: val, Source: source}
 	}
 }
 
@@ -118,86 +118,86 @@ func (c *cfg) Write() error {
 	return ghConfig.Write(c.cfg)
 }
 
-func (c *cfg) Aliases() gh.AliasConfig {
+func (c *cfg) Aliases() gm.AliasConfig {
 	return &AliasConfig{cfg: c.cfg}
 }
 
 // Authentication returns the single AuthConfig instance associated with this config. A single instance is returned so
 // that dependencies supplied after construction, such as the token refresher, remain visible to every caller. All of
 // its read methods are safe to share, and the few write methods are only used within the auth command set.
-func (c *cfg) Authentication() gh.AuthConfig {
+func (c *cfg) Authentication() gm.AuthConfig {
 	if c.auth == nil {
 		c.auth = &AuthConfig{cfg: c.cfg}
 	}
 	return c.auth
 }
 
-func (c *cfg) AccessibleColors(hostname string) gh.ConfigEntry {
+func (c *cfg) AccessibleColors(hostname string) gm.ConfigEntry {
 	// Intentionally panic if there is no user provided value or default value (which would be a programmer error)
 	return c.GetOrDefault(hostname, accessibleColorsKey).Unwrap()
 }
 
-func (c *cfg) AccessiblePrompter(hostname string) gh.ConfigEntry {
+func (c *cfg) AccessiblePrompter(hostname string) gm.ConfigEntry {
 	// Intentionally panic if there is no user provided value or default value (which would be a programmer error)
 	return c.GetOrDefault(hostname, accessiblePrompterKey).Unwrap()
 }
 
-func (c *cfg) Browser(hostname string) gh.ConfigEntry {
+func (c *cfg) Browser(hostname string) gm.ConfigEntry {
 	// Intentionally panic if there is no user provided value or default value (which would be a programmer error)
 	return c.GetOrDefault(hostname, browserKey).Unwrap()
 }
 
-func (c *cfg) Clipboard() gh.ConfigEntry {
+func (c *cfg) Clipboard() gm.ConfigEntry {
 	// Intentionally panic if there is no user provided value or default value (which would be a programmer error)
 	return c.GetOrDefault("", clipboardKey).Unwrap()
 }
 
-func (c *cfg) ColorLabels(hostname string) gh.ConfigEntry {
+func (c *cfg) ColorLabels(hostname string) gm.ConfigEntry {
 	// Intentionally panic if there is no user provided value or default value (which would be a programmer error)
 	return c.GetOrDefault(hostname, colorLabelsKey).Unwrap()
 }
 
-func (c *cfg) Editor(hostname string) gh.ConfigEntry {
+func (c *cfg) Editor(hostname string) gm.ConfigEntry {
 	// Intentionally panic if there is no user provided value or default value (which would be a programmer error)
 	return c.GetOrDefault(hostname, editorKey).Unwrap()
 }
 
-func (c *cfg) GitProtocol(hostname string) gh.ConfigEntry {
+func (c *cfg) GitProtocol(hostname string) gm.ConfigEntry {
 	// Intentionally panic if there is no user provided value or default value (which would be a programmer error)
 	return c.GetOrDefault(hostname, gitProtocolKey).Unwrap()
 }
 
-func (c *cfg) HTTPUnixSocket(hostname string) gh.ConfigEntry {
+func (c *cfg) HTTPUnixSocket(hostname string) gm.ConfigEntry {
 	// Intentionally panic if there is no user provided value or default value (which would be a programmer error)
 	return c.GetOrDefault(hostname, httpUnixSocketKey).Unwrap()
 }
 
-func (c *cfg) Pager(hostname string) gh.ConfigEntry {
+func (c *cfg) Pager(hostname string) gm.ConfigEntry {
 	// Intentionally panic if there is no user provided value or default value (which would be a programmer error)
 	return c.GetOrDefault(hostname, pagerKey).Unwrap()
 }
 
-func (c *cfg) Prompt(hostname string) gh.ConfigEntry {
+func (c *cfg) Prompt(hostname string) gm.ConfigEntry {
 	// Intentionally panic if there is no user provided value or default value (which would be a programmer error)
 	return c.GetOrDefault(hostname, promptKey).Unwrap()
 }
 
-func (c *cfg) PreferEditorPrompt(hostname string) gh.ConfigEntry {
+func (c *cfg) PreferEditorPrompt(hostname string) gm.ConfigEntry {
 	// Intentionally panic if there is no user provided value or default value (which would be a programmer error)
 	return c.GetOrDefault(hostname, preferEditorPromptKey).Unwrap()
 }
 
-func (c *cfg) ExpiringCredentials(hostname string) gh.ConfigEntry {
+func (c *cfg) ExpiringCredentials(hostname string) gm.ConfigEntry {
 	// Intentionally panic if there is no user provided value or default value (which would be a programmer error)
 	return c.GetOrDefault(hostname, expiringCredentialsKey).Unwrap()
 }
 
-func (c *cfg) Spinner(hostname string) gh.ConfigEntry {
+func (c *cfg) Spinner(hostname string) gm.ConfigEntry {
 	// Intentionally panic if there is no user provided value or default value (which would be a programmer error)
 	return c.GetOrDefault(hostname, spinnerKey).Unwrap()
 }
 
-func (c *cfg) Telemetry() gh.ConfigEntry {
+func (c *cfg) Telemetry() gm.ConfigEntry {
 	// Intentionally panic if there is no user provided value or default value (which would be a programmer error)
 	return c.GetOrDefault("", telemetryKey).Unwrap()
 }
@@ -206,7 +206,7 @@ func (c *cfg) Version() o.Option[string] {
 	return c.get("", versionKey)
 }
 
-func (c *cfg) Migrate(m gh.Migration) error {
+func (c *cfg) Migrate(m gm.Migration) error {
 	// If there is no version entry we must never have applied a migration, and the following conditional logic
 	// handles the version as an empty string correctly.
 	version := c.Version().UnwrapOrZero()
@@ -248,12 +248,12 @@ func defaultFor(key string) o.Option[string] {
 	return o.None[string]()
 }
 
-// AuthConfig is used for interacting with some persistent configuration for gh,
+// AuthConfig is used for interacting with some persistent configuration for gm,
 // with knowledge on how to access encrypted storage when neccesarry.
 // Behavior is scoped to authentication specific tasks.
 type AuthConfig struct {
 	cfg                 *ghConfig.Config
-	refresher           gh.TokenRefresher
+	refresher           gm.TokenRefresher
 	defaultHostOverride func() (string, string)
 	hostsOverride       func() []string
 	tokenOverride       func(string) (string, string)
@@ -266,50 +266,50 @@ type AuthConfig struct {
 	// from a string and a reload would discard it by reading the empty temp config dir.
 	reloadConfig func() error
 	// refreshMu serializes withFreshConfigForRefresh within this process. The cross-process flock guards against other
-	// gh processes but not against goroutines sharing this single AuthConfig instance, so this mutex provides the
+	// gm processes but not against goroutines sharing this single AuthConfig instance, so this mutex provides the
 	// in-process half of the mutual exclusion that keeps a rotating refresh token from being spent twice.
 	refreshMu sync.Mutex
 }
 
 // SetTokenRefresher supplies the refresher used to renew tokens. Because Authentication returns a single shared
 // AuthConfig, a refresher set once remains available to every later caller.
-func (c *AuthConfig) SetTokenRefresher(refresher gh.TokenRefresher) {
+func (c *AuthConfig) SetTokenRefresher(refresher gm.TokenRefresher) {
 	c.refresher = refresher
 }
 
 // ActiveTokenType reports what kind of credential the active token is, so a
 // caller that only needs to know that can avoid handling the token. It is
 // currently unused.
-func (c *AuthConfig) ActiveTokenType(hostname string) gh.TokenType {
+func (c *AuthConfig) ActiveTokenType(hostname string) gm.TokenType {
 	token := c.ActiveToken(hostname).Token
-	for _, tokenType := range gh.TokenTypes {
+	for _, tokenType := range gm.TokenTypes {
 		if strings.HasPrefix(token, string(tokenType)) {
 			return tokenType
 		}
 	}
-	return gh.TokenTypeUnknown
+	return gm.TokenTypeUnknown
 }
 
 // ActiveToken retrieves the active credential for the given hostname, searching environment variables, plain text
 // config, and lastly encrypted storage. It returns the last stored token as-is, including the current access token of
 // a refreshable credential, and never contacts the token endpoint to refresh it. Callers that need a token valid for
 // API calls should use ActiveTokenWithRefresh.
-func (c *AuthConfig) ActiveToken(hostname string) gh.Credential {
+func (c *AuthConfig) ActiveToken(hostname string) gm.Credential {
 	if c.tokenOverride != nil {
 		token, source := c.tokenOverride(hostname)
-		return gh.Credential{Source: source, Token: token}
+		return gm.Credential{Source: source, Token: token}
 	}
 
 	token, source := ghauth.TokenFromEnvOrConfig(hostname)
 	if token != "" {
-		return gh.Credential{Source: source, Token: token}
+		return gm.Credential{Source: source, Token: token}
 	}
 
-	// Intentional behavior change from older gh: the active-user lookup goes through TokenForUser, which also consults
+	// Intentional behavior change from older gm: the active-user lookup goes through TokenForUser, which also consults
 	// the per-user config oauth_token and the refreshable slot, rather than only the per-user keyring slot. This is
 	// groundwork for refreshable credentials and is the more correct result. The only observable difference is when a
 	// user has a per-user config oauth_token (or refreshable record) but no per-user keyring slot while an unkeyed
-	// keyring token also exists: older gh returned the unkeyed keyring token, whereas we now return the per-user
+	// keyring token also exists: older gm returned the unkeyed keyring token, whereas we now return the per-user
 	// credential. That state is rare because activateUser mirrors a per-user insecure token into the host-level
 	// oauth_token, which TokenFromEnvOrConfig resolves above before we reach here. This is accepted and pinned by
 	// TestActiveTokenPrefersPerUserConfigTokenOverUnkeyedKeyring.
@@ -322,25 +322,25 @@ func (c *AuthConfig) ActiveToken(hostname string) gh.Credential {
 	// We should generally be able to find a token for the active user, but in some cases such as if the keyring was
 	// set up in a very old version of the CLI, it may only have an unkeyed token, so fall back to it.
 	if token, err := c.TokenFromKeyring(hostname); err == nil {
-		return gh.Credential{Source: gh.TokenSourceKeyring, Token: token}
+		return gm.Credential{Source: gm.TokenSourceKeyring, Token: token}
 	}
 
-	return gh.Credential{Source: source, Token: token}
+	return gm.Credential{Source: source, Token: token}
 }
 
 // ActiveTokenWithRefresh retrieves the active credential for the given hostname and, when it is refreshable and its
 // access token is expiring, renews and persists it, returning the credential to use and the refresh outcome.
 // Non-refreshable credentials are returned unchanged with RefreshStatusInapplicable.
-func (c *AuthConfig) ActiveTokenWithRefresh(hostname string) (gh.Credential, gh.RefreshStatus, error) {
+func (c *AuthConfig) ActiveTokenWithRefresh(hostname string) (gm.Credential, gm.RefreshStatus, error) {
 	credential := c.ActiveToken(hostname)
 	if !credential.IsRefreshable() {
-		return credential, gh.RefreshStatusInapplicable, nil
+		return credential, gm.RefreshStatusInapplicable, nil
 	}
 	user, err := c.ActiveUser(hostname)
 	if err != nil {
 		// A refreshable active credential is always keyed by the active user, so this is unreachable in practice.
 		// If we somehow cannot identify the user, we have no key to refresh under, so return the credential as-is.
-		return credential, gh.RefreshStatusInapplicable, err
+		return credential, gm.RefreshStatusInapplicable, err
 	}
 	return c.refreshCredentialForUser(hostname, user, credential)
 }
@@ -429,7 +429,7 @@ func (c *AuthConfig) APIHostForHost(host string) (string, bool) {
 // reporting false when no host claims it.
 //
 // go-gh sends API requests for a host to that host's api_host, which is a
-// hostname gh is not otherwise logged in to. Callers that resolve credentials
+// hostname gm is not otherwise logged in to. Callers that resolve credentials
 // from a request URL need this to get back to the host the request is really
 // for. It answers only the mapping question; deciding whether a given lookup
 // should honour api_host at all is the caller's business, since api_host covers
@@ -552,9 +552,9 @@ func (c *AuthConfig) SwitchUser(hostname, user string) error {
 	}
 
 	previousSource := c.ActiveToken(hostname).Source
-	if previousSource != gh.TokenSourceKeyring &&
-		previousSource != gh.TokenSourceOAuthToken &&
-		previousSource != gh.TokenSourceRefreshableOAuthToken {
+	if previousSource != gm.TokenSourceKeyring &&
+		previousSource != gm.TokenSourceOAuthToken &&
+		previousSource != gm.TokenSourceRefreshableOAuthToken {
 		return fmt.Errorf("currently active token for %s is from %s", hostname, previousSource)
 	}
 
@@ -692,38 +692,44 @@ func (c *AuthConfig) UsersForHost(hostname string) []string {
 // rather than an extra miss on the refreshable slot on every request. This order is kept identical to
 // setActiveCredential so activation and resolution always agree on which credential is current, even in the mixed
 // state that should never occur because logging in with one kind removes the other.
-func (c *AuthConfig) TokenForUser(hostname, user string) (gh.Credential, error) {
+func (c *AuthConfig) TokenForUser(hostname, user string) (gm.Credential, error) {
 	if token, err := keyring.Get(keyringServiceName(hostname), user); err == nil {
-		return gh.Credential{Source: gh.TokenSourceKeyring, Token: token}, nil
+		return gm.Credential{Source: gm.TokenSourceKeyring, Token: token}, nil
 	}
 
 	if credential, _, err := c.refreshableForUser(hostname, user); err == nil {
 		return credential, nil
 	} else if !errors.Is(err, errRefreshableNotFound) {
-		return gh.Credential{}, err
+		return gm.Credential{}, err
 	}
 
 	if token, err := c.cfg.Get([]string{hostsKey, hostname, usersKey, user, oauthTokenKey}); err == nil {
-		return gh.Credential{Source: gh.TokenSourceOAuthToken, Token: token}, nil
+		return gm.Credential{Source: gm.TokenSourceOAuthToken, Token: token}, nil
 	}
 
-	return gh.Credential{Source: gh.TokenSourceDefault}, fmt.Errorf("no token found for '%s'", user)
+	return gm.Credential{Source: gm.TokenSourceDefault}, fmt.Errorf("no token found for '%s'", user)
 }
 
 // TokenForUserWithRefresh retrieves the credential for a specified user and hostname and, when it is refreshable and
 // its access token is expiring, renews and persists it, returning the credential to use and the refresh outcome.
 // Non-refreshable credentials are returned unchanged with RefreshStatusInapplicable.
-func (c *AuthConfig) TokenForUserWithRefresh(hostname, username string) (gh.Credential, gh.RefreshStatus, error) {
+func (c *AuthConfig) TokenForUserWithRefresh(hostname, username string) (gm.Credential, gm.RefreshStatus, error) {
 	credential, err := c.TokenForUser(hostname, username)
 	if err != nil {
-		return credential, gh.RefreshStatusInapplicable, err
+		return credential, gm.RefreshStatusInapplicable, err
 	}
 	if !credential.IsRefreshable() {
-		return credential, gh.RefreshStatusInapplicable, nil
+		return credential, gm.RefreshStatusInapplicable, nil
 	}
 	return c.refreshCredentialForUser(hostname, username, credential)
 }
 
+// keyringServiceName returns the keyring service name tokens are stored under.
+//
+// The prefix stays "gh:" even though this CLI is named gm: it is the storage
+// identifier existing credentials were saved under, and renaming it would orphan
+// every token already in the OS keyring with nothing gained, since the name is
+// not user-facing.
 func keyringServiceName(hostname string) string {
 	return "gh:" + hostname
 }
@@ -765,29 +771,29 @@ func fallbackConfig() *ghConfig.Config {
 // last migration we decided to run is. Therefore, if we run a new migration,
 // this should be bumped.
 const defaultConfigStr = `
-# The default config file, auto-generated by gh. Run 'gh environment' to learn more about
-# environment variables respected by gh and their precedence.
+# The default config file, auto-generated by gm. Run 'gm environment' to learn more about
+# environment variables respected by gm and their precedence.
 
 # The current version of the config schema
 version: 1
 # What protocol to use when performing git operations. Supported values: ssh, https
 git_protocol: https
-# What editor gh should run when creating issues, pull requests, etc. If blank, will refer to environment.
+# What editor gm should run when creating issues, pull requests, etc. If blank, will refer to environment.
 editor:
 # When to interactively prompt. This is a global config that cannot be overridden by hostname. Supported values: enabled, disabled
 prompt: enabled
 # Preference for editor-based interactive prompting. This is a global config that cannot be overridden by hostname. Supported values: enabled, disabled
 prefer_editor_prompt: disabled
-# Whether to prefer expiring credentials that gh refreshes automatically when logging in, without passing --expiring. Supported values: enabled, disabled
+# Whether to prefer expiring credentials that gm refreshes automatically when logging in, without passing --expiring. Supported values: enabled, disabled
 expiring_credentials: disabled
 # A pager program to send command output to, e.g. "less". If blank, will refer to environment. Set the value to "cat" to disable the pager.
 pager:
-# Aliases allow you to create nicknames for gh commands
+# Aliases allow you to create nicknames for gm commands
 aliases:
   co: pr checkout
 # The path to a unix socket through which to send HTTP connections. If blank, HTTP traffic will be handled by net/http.DefaultTransport.
 http_unix_socket:
-# What web browser gh should use when opening URLs. If blank, will refer to environment.
+# What web browser gm should use when opening URLs. If blank, will refer to environment.
 browser:
 # Whether to copy one-time OAuth device codes to the clipboard. Supported values: enabled, disabled
 clipboard: enabled
@@ -820,7 +826,7 @@ type ConfigOption struct {
 	DefaultValue  string
 	AllowedValues []string
 	Scope         ConfigScope
-	CurrentValue  func(c gh.Config, hostname string) string
+	CurrentValue  func(c gm.Config, hostname string) string
 }
 
 var Options = []ConfigOption{
@@ -829,7 +835,7 @@ var Options = []ConfigOption{
 		Description:  "experimental: the hostname to use when making API requests for a GitHub host. Note: this is not a security boundary and requests to the canonical host will remain authenticated",
 		DefaultValue: "",
 		Scope:        ConfigScopeHostOnly,
-		CurrentValue: func(c gh.Config, hostname string) string {
+		CurrentValue: func(c gm.Config, hostname string) string {
 			apiHost, _ := c.Authentication().APIHostForHost(hostname)
 			return apiHost
 		},
@@ -840,7 +846,7 @@ var Options = []ConfigOption{
 		DefaultValue:  "github",
 		AllowedValues: []string{string(hosttype.GitHub), string(hosttype.Gitea)},
 		Scope:         ConfigScopeHostOnly,
-		CurrentValue: func(c gh.Config, hostname string) string {
+		CurrentValue: func(c gm.Config, hostname string) string {
 			return c.GetOrDefault(hostname, hostTypeKey).UnwrapOrZero().Value
 		},
 	},
@@ -849,7 +855,7 @@ var Options = []ConfigOption{
 		Description:   "the protocol to use for git clone and push operations",
 		DefaultValue:  "https",
 		AllowedValues: []string{"https", "ssh"},
-		CurrentValue: func(c gh.Config, hostname string) string {
+		CurrentValue: func(c gm.Config, hostname string) string {
 			return c.GitProtocol(hostname).Value
 		},
 	},
@@ -857,7 +863,7 @@ var Options = []ConfigOption{
 		Key:          editorKey,
 		Description:  "the text editor program to use for authoring text",
 		DefaultValue: "",
-		CurrentValue: func(c gh.Config, hostname string) string {
+		CurrentValue: func(c gm.Config, hostname string) string {
 			return c.Editor(hostname).Value
 		},
 	},
@@ -866,7 +872,7 @@ var Options = []ConfigOption{
 		Description:   "toggle interactive prompting in the terminal",
 		DefaultValue:  "enabled",
 		AllowedValues: []string{"enabled", "disabled"},
-		CurrentValue: func(c gh.Config, hostname string) string {
+		CurrentValue: func(c gm.Config, hostname string) string {
 			return c.Prompt(hostname).Value
 		},
 	},
@@ -875,16 +881,16 @@ var Options = []ConfigOption{
 		Description:   "toggle preference for editor-based interactive prompting in the terminal",
 		DefaultValue:  "disabled",
 		AllowedValues: []string{"enabled", "disabled"},
-		CurrentValue: func(c gh.Config, hostname string) string {
+		CurrentValue: func(c gm.Config, hostname string) string {
 			return c.PreferEditorPrompt(hostname).Value
 		},
 	},
 	{
 		Key:           expiringCredentialsKey,
-		Description:   "toggle preference for expiring credentials that gh refreshes automatically when logging in",
+		Description:   "toggle preference for expiring credentials that gm refreshes automatically when logging in",
 		DefaultValue:  "disabled",
 		AllowedValues: []string{"enabled", "disabled"},
-		CurrentValue: func(c gh.Config, hostname string) string {
+		CurrentValue: func(c gm.Config, hostname string) string {
 			return c.ExpiringCredentials(hostname).Value
 		},
 	},
@@ -892,7 +898,7 @@ var Options = []ConfigOption{
 		Key:          pagerKey,
 		Description:  "the terminal pager program to send standard output to",
 		DefaultValue: "",
-		CurrentValue: func(c gh.Config, hostname string) string {
+		CurrentValue: func(c gm.Config, hostname string) string {
 			return c.Pager(hostname).Value
 		},
 	},
@@ -900,7 +906,7 @@ var Options = []ConfigOption{
 		Key:          httpUnixSocketKey,
 		Description:  "the path to a Unix socket through which to make an HTTP connection",
 		DefaultValue: "",
-		CurrentValue: func(c gh.Config, hostname string) string {
+		CurrentValue: func(c gm.Config, hostname string) string {
 			return c.HTTPUnixSocket(hostname).Value
 		},
 	},
@@ -908,7 +914,7 @@ var Options = []ConfigOption{
 		Key:          browserKey,
 		Description:  "the web browser to use for opening URLs",
 		DefaultValue: "",
-		CurrentValue: func(c gh.Config, hostname string) string {
+		CurrentValue: func(c gm.Config, hostname string) string {
 			return c.Browser(hostname).Value
 		},
 	},
@@ -918,7 +924,7 @@ var Options = []ConfigOption{
 		DefaultValue:  "enabled",
 		AllowedValues: []string{"enabled", "disabled"},
 		Scope:         ConfigScopeGlobalOnly,
-		CurrentValue: func(c gh.Config, hostname string) string {
+		CurrentValue: func(c gm.Config, hostname string) string {
 			return c.Clipboard().Value
 		},
 	},
@@ -927,7 +933,7 @@ var Options = []ConfigOption{
 		Description:   "whether to display labels using their RGB hex color codes in terminals that support truecolor",
 		DefaultValue:  "disabled",
 		AllowedValues: []string{"enabled", "disabled"},
-		CurrentValue: func(c gh.Config, hostname string) string {
+		CurrentValue: func(c gm.Config, hostname string) string {
 			return c.ColorLabels(hostname).Value
 		},
 	},
@@ -936,7 +942,7 @@ var Options = []ConfigOption{
 		Description:   "whether customizable, 4-bit accessible colors should be used",
 		DefaultValue:  "disabled",
 		AllowedValues: []string{"enabled", "disabled"},
-		CurrentValue: func(c gh.Config, hostname string) string {
+		CurrentValue: func(c gm.Config, hostname string) string {
 			return c.AccessibleColors(hostname).Value
 		},
 	},
@@ -945,7 +951,7 @@ var Options = []ConfigOption{
 		Description:   "whether an accessible prompter should be used",
 		DefaultValue:  "disabled",
 		AllowedValues: []string{"enabled", "disabled"},
-		CurrentValue: func(c gh.Config, hostname string) string {
+		CurrentValue: func(c gm.Config, hostname string) string {
 			return c.AccessiblePrompter(hostname).Value
 		},
 	},
@@ -954,7 +960,7 @@ var Options = []ConfigOption{
 		Description:   "whether to use an animated spinner as a progress indicator",
 		DefaultValue:  "enabled",
 		AllowedValues: []string{"enabled", "disabled"},
-		CurrentValue: func(c gh.Config, hostname string) string {
+		CurrentValue: func(c gm.Config, hostname string) string {
 			return c.Spinner(hostname).Value
 		},
 	},
@@ -963,7 +969,7 @@ var Options = []ConfigOption{
 		Description:   "whether telemetry is enabled, disabled, or logging",
 		DefaultValue:  "enabled",
 		AllowedValues: []string{"enabled", "disabled", "log"},
-		CurrentValue: func(c gh.Config, hostname string) string {
+		CurrentValue: func(c gm.Config, hostname string) string {
 			return c.Telemetry().Value
 		},
 	},

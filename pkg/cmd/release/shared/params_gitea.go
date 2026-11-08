@@ -7,7 +7,7 @@ import "fmt"
 //
 // CreateReleaseOption accepts tag_name, target_commitish, body, name, draft,
 // prerelease and tag_message. EditReleaseOption accepts the same minus
-// tag_message. Everything else gh can ask for has no counterpart, and Gitea
+// tag_message. Everything else gm can ask for has no counterpart, and Gitea
 // rejects a request carrying a field it does not know rather than ignoring it, so
 // the unsupported ones are refused here rather than dropped silently. Dropping
 // --latest or --discussion-category would create a release that is not the one
@@ -45,7 +45,7 @@ var giteaUnsupportedReleaseFields = map[string]string{
 
 // CheckGiteaReleaseParams reports the first parameter Gitea cannot accept.
 //
-// A parameter that is present but empty is not a problem: gh only sets the fields
+// A parameter that is present but empty is not a problem: gm only sets the fields
 // the caller asked for, so an empty value means the caller did not ask.
 func CheckGiteaReleaseParams(params map[string]any, allowed map[string]bool) error {
 	for key, value := range params {

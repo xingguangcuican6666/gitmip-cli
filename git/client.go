@@ -107,7 +107,7 @@ type CredentialPattern struct {
 	pattern     string
 }
 
-// AllMatchingCredentialsPattern allows for setting gh as credential helper for all hosts.
+// AllMatchingCredentialsPattern allows for setting gm as credential helper for all hosts.
 // However, we should endeavour to remove it as it's less secure.
 var AllMatchingCredentialsPattern = CredentialPattern{allMatching: true, pattern: ""}
 var disallowedCredentialPattern = CredentialPattern{allMatching: false, pattern: ""}
@@ -131,12 +131,12 @@ func CredentialPatternFromHost(host string) CredentialPattern {
 	}
 }
 
-// AuthenticatedCommand is a wrapper around Command that included configuration to use gh
+// AuthenticatedCommand is a wrapper around Command that included configuration to use gm
 // as the credential helper for git.
 func (c *Client) AuthenticatedCommand(ctx context.Context, credentialPattern CredentialPattern, args ...string) (*Command, error) {
 	if c.GhPath == "" {
-		// Assumes that gh is in PATH.
-		c.GhPath = "gh"
+		// Assumes that gm is in PATH.
+		c.GhPath = "gm"
 	}
 	credHelper := fmt.Sprintf("!%q auth git-credential", c.GhPath)
 
@@ -873,7 +873,7 @@ func (c *Client) AddRemote(ctx context.Context, name, urlStr string, trackingBra
 	return remote, nil
 }
 
-// Below are commands that make network calls and need authentication credentials supplied from gh.
+// Below are commands that make network calls and need authentication credentials supplied from gm.
 
 func (c *Client) Fetch(ctx context.Context, remote string, refspec string, mods ...CommandModifier) error {
 	args := []string{"fetch", remote}

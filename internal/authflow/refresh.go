@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghinstance"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/oauth"
 	oauthapi "github.com/cli/oauth/api"
 )
@@ -20,14 +20,14 @@ var timeNow = time.Now
 
 // TokenRefresher exchanges a refresh token for a renewed credential against a host's OAuth token endpoint. It performs
 // only the token endpoint request and response parsing; deciding when to refresh and serializing concurrent refreshes
-// are the caller's responsibility, per the gh.TokenRefresher contract.
+// are the caller's responsibility, per the gm.TokenRefresher contract.
 type TokenRefresher struct {
 	httpClient   *http.Client
 	clientID     string
 	clientSecret string
 }
 
-// NewTokenRefresher builds a TokenRefresher that renews credentials issued to gh's OAuth app. The provided HTTP client
+// NewTokenRefresher builds a TokenRefresher that renews credentials issued to gm's OAuth app. The provided HTTP client
 // should be a plain client that sets no auth or other headers, since the token endpoint is reached without an existing
 // token.
 func NewTokenRefresher(httpClient *http.Client) *TokenRefresher {
@@ -39,13 +39,13 @@ func NewTokenRefresher(httpClient *http.Client) *TokenRefresher {
 }
 
 // Refresh exchanges refreshToken for a renewed credential on hostname. A refresh token the server rejects surfaces as
-// an error wrapping gh.ErrRefreshTokenInvalid, so callers can distinguish an unusable refresh token from a transient
+// an error wrapping gm.ErrRefreshTokenInvalid, so callers can distinguish an unusable refresh token from a transient
 // failure without depending on the underlying OAuth library. When the server omits a new refresh token, the returned
 // credential keeps refreshToken, since RFC 6749 treats the previous refresh token as still valid in that case.
-func (r *TokenRefresher) Refresh(refreshToken, hostname string) (gh.RefreshableCredential, error) {
+func (r *TokenRefresher) Refresh(refreshToken, hostname string) (gm.RefreshableCredential, error) {
 	host, err := oauth.NewGitHubHost(ghinstance.HostPrefix(hostname))
 	if err != nil {
-		return gh.RefreshableCredential{}, err
+		return gm.RefreshableCredential{}, err
 	}
 
 	opts := oauth.RefreshOptions{
@@ -63,28 +63,28 @@ func (r *TokenRefresher) Refresh(refreshToken, hostname string) (gh.RefreshableC
 
 	// Anchor the token lifetime to the instant just before the exchange. The server reports expires_in relative to
 	// when it issues the token, which is at or after this point, so measuring from here never overestimates the
-	// expiry. Use UTC so the derived absolute expiry matches the canonical UTC form gh stores and displays.
+	// expiry. Use UTC so the derived absolute expiry matches the canonical UTC form gm stores and displays.
 	requestedAt := timeNow().UTC()
 	token, err := oauth.Refresh(opts)
 	if err != nil {
-		// Translate the library's rejection sentinel to gh's own so callers can classify a rejected refresh token
+		// Translate the library's rejection sentinel to gm's own so callers can classify a rejected refresh token
 		// without importing the OAuth library, while preserving the original error in the chain for debugging.
 		if errors.Is(err, oauth.ErrRefreshTokenInvalid) {
-			return gh.RefreshableCredential{}, fmt.Errorf("%w: %w", gh.ErrRefreshTokenInvalid, err)
+			return gm.RefreshableCredential{}, fmt.Errorf("%w: %w", gm.ErrRefreshTokenInvalid, err)
 		}
-		return gh.RefreshableCredential{}, err
+		return gm.RefreshableCredential{}, err
 	}
 
 	return refreshableCredentialFromAccessToken(token, requestedAt), nil
 }
 
-// refreshableCredentialFromAccessToken projects an OAuth access token onto gh.RefreshableCredential. It derives each
+// refreshableCredentialFromAccessToken projects an OAuth access token onto gm.RefreshableCredential. It derives each
 // absolute expiry by adding the server-reported lifetime (ExpiresIn) to requestedAt, the instant the exchange was
 // initiated, rather than trusting any absolute time from the OAuth library. Because requestedAt is at or before the
 // server issued the token, the derived expiry is never later than the true expiry. A zero lifetime maps to a nil
 // pointer so the refresh gating treats the credential as non-expiring rather than already expired.
-func refreshableCredentialFromAccessToken(token *oauthapi.AccessToken, requestedAt time.Time) gh.RefreshableCredential {
-	credential := gh.RefreshableCredential{
+func refreshableCredentialFromAccessToken(token *oauthapi.AccessToken, requestedAt time.Time) gm.RefreshableCredential {
+	credential := gm.RefreshableCredential{
 		AccessToken:           token.Token,
 		RefreshToken:          token.RefreshToken,
 		ExpiresIn:             int(token.ExpiresIn / time.Second),
@@ -99,13 +99,13 @@ func refreshableCredentialFromAccessToken(token *oauthapi.AccessToken, requested
 	return credential
 }
 
-// credentialFromAccessToken projects an OAuth access token onto gh.Credential, reusing
+// credentialFromAccessToken projects an OAuth access token onto gm.Credential, reusing
 // refreshableCredentialFromAccessToken so the expiry mapping lives in one place. requestedAt is the instant the
 // exchange was initiated, used to anchor the token lifetime. The runtime-only Source is left unset; the storage layer
 // drops it regardless.
-func credentialFromAccessToken(token *oauthapi.AccessToken, requestedAt time.Time) gh.Credential {
+func credentialFromAccessToken(token *oauthapi.AccessToken, requestedAt time.Time) gm.Credential {
 	rc := refreshableCredentialFromAccessToken(token, requestedAt)
-	return gh.Credential{
+	return gm.Credential{
 		Token:                 rc.AccessToken,
 		RefreshToken:          rc.RefreshToken,
 		ExpiresIn:             rc.ExpiresIn,

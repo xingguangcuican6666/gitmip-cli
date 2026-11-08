@@ -144,7 +144,7 @@ func TestExecuteLocalRepoSyncNonCurrentBranch(t *testing.T) {
 		// Assert on the directory name rather than the full path because git reports the
 		// symlink-resolved path, which differs from t.TempDir() on macOS.
 		require.ErrorContains(t, err, filepath.Base(worktreeDir))
-		require.ErrorContains(t, err, "tip: run `gh repo sync` from that worktree instead")
+		require.ErrorContains(t, err, "tip: run `gm repo sync` from that worktree instead")
 		require.Equal(t, originalBranch, runGit(t, repoDir, "rev-parse", "trunk"))
 		require.Empty(t, runGit(t, worktreeDir, "status", "--porcelain"))
 	})
@@ -430,7 +430,7 @@ func Test_SyncRun(t *testing.T) {
 				mgc.On("Worktrees").Return([]git.Worktree{{Path: "/path/to/worktree", Ref: "refs/heads/trunk"}}, nil).Once()
 			},
 			wantErr: true,
-			errMsg:  "can't sync \"trunk\" because it's checked out in another worktree at /path/to/worktree\ntip: run `gh repo sync` from that worktree instead",
+			errMsg:  "can't sync \"trunk\" because it's checked out in another worktree at /path/to/worktree\ntip: run `gm repo sync` from that worktree instead",
 		},
 		{
 			name: "sync local repo with parent - existing branch associated with prunable worktree",
@@ -675,7 +675,7 @@ func Test_SyncRun(t *testing.T) {
 					}{Message: "refusing to allow an OAuth App to create or update workflow `.github/workflows/unimportant.yml` without `workflow` scope"}))
 			},
 			wantErr: true,
-			errMsg:  "Upstream commits contain workflow changes, which require the `workflow` scope or permission to merge. To request it, run: gh auth refresh -s workflow",
+			errMsg:  "Upstream commits contain workflow changes, which require the `workflow` scope or permission to merge. To request it, run: gm auth refresh -s workflow",
 		},
 		{
 			name: "sync remote fork with missing workflow permission on GitHub App token",
@@ -693,7 +693,7 @@ func Test_SyncRun(t *testing.T) {
 					}{Message: "refusing to allow a GitHub App to create or update workflow `.github/workflows/unimportant.yml` without `workflows` permission"}))
 			},
 			wantErr: true,
-			errMsg:  "Upstream commits contain workflow changes, which require the `workflow` scope or permission to merge. To request it, run: gh auth refresh -s workflow",
+			errMsg:  "Upstream commits contain workflow changes, which require the `workflow` scope or permission to merge. To request it, run: gm auth refresh -s workflow",
 		},
 		{
 			name: "sync remote fork with missing workflow scope on personal access token",
@@ -711,7 +711,7 @@ func Test_SyncRun(t *testing.T) {
 					}{Message: "refusing to allow a Personal Access Token to create or update workflow `.github/workflows/unimportant.yml` without `workflow` scope"}))
 			},
 			wantErr: true,
-			errMsg:  "Upstream commits contain workflow changes, which require the `workflow` scope or permission to merge. To request it, run: gh auth refresh -s workflow",
+			errMsg:  "Upstream commits contain workflow changes, which require the `workflow` scope or permission to merge. To request it, run: gm auth refresh -s workflow",
 		},
 	}
 	for _, tt := range tests {

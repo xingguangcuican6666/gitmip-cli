@@ -3,7 +3,7 @@ package featuredetection
 import (
 	"net/http"
 
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/hosttype"
 )
 
@@ -14,7 +14,7 @@ import (
 // and does not offer, so a command that branches on capabilities takes the
 // right path without issuing a request that cannot succeed.
 //
-// Returning a detector rather than an error matters: gh asks these questions on
+// Returning a detector rather than an error matters: gm asks these questions on
 // paths that work fine on Gitea, such as listing repositories. A detection
 // failure would turn a supported command into a hard error.
 type giteaDetector struct {
@@ -51,13 +51,13 @@ func (d *giteaDetector) RepositoryFeatures() (RepositoryFeatures, error) {
 	return RepositoryFeatures{}, nil
 }
 
-func (d *giteaDetector) ProjectsV1() gh.ProjectsV1Support {
+func (d *giteaDetector) ProjectsV1() gm.ProjectsV1Support {
 	// Reported as unsupported even though Gitea has project boards. The flag
 	// gates GitHub's GraphQL projectCards field, which a Gitea host cannot
 	// serve; reporting support would send a query that fails rather than a
 	// request the host can answer. Gitea boards live at
 	// /repos/{owner}/{repo}/projects and are reached through their own path.
-	return gh.ProjectsV1Unsupported
+	return gm.ProjectsV1Unsupported
 }
 
 func (d *giteaDetector) ProjectFeatures() (ProjectFeatures, error) {

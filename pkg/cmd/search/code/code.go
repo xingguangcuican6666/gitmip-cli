@@ -6,7 +6,7 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/internal/browser"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/text"
 	"github.com/cli/cli/v2/pkg/cmd/search/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -18,7 +18,7 @@ import (
 
 type CodeOptions struct {
 	Browser  browser.Browser
-	Config   func() (gh.Config, error)
+	Config   func() (gm.Config, error)
 	Exporter cmdutil.Exporter
 	IO       *iostreams.IOStreams
 	Query    search.Query
@@ -47,29 +47,29 @@ func NewCmdCode(f *cmdutil.Factory, runF func(*CodeOptions) error) *cobra.Comman
 			The results might not match what is seen on %[1]sgithub.com%[1]s, and new features like regex search
 			are not yet available via the GitHub API.
 
-			For more information on handling search queries containing a hyphen, run %[1]sgh search --help%[1]s.
+			For more information on handling search queries containing a hyphen, run %[1]sgm search --help%[1]s.
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Search code matching "react" and "lifecycle"
-			$ gh search code react lifecycle
+			$ gm search code react lifecycle
 
 			# Search code matching "error handling"
-			$ gh search code "error handling"
+			$ gm search code "error handling"
 
 			# Search code using raw search qualifiers as separate arguments
-			$ gh search code panic path:pkg language:go
+			$ gm search code panic path:pkg language:go
 
 			# Search code matching "deque" in Python files
-			$ gh search code deque --language=python
+			$ gm search code deque --language=python
 
 			# Search code matching "cli" in repositories owned by microsoft organization
-			$ gh search code cli --owner=microsoft
+			$ gm search code cli --owner=microsoft
 
 			# Search code matching "panic" in the GitHub CLI repository
-			$ gh search code panic --repo cli/cli
+			$ gm search code panic --repo cli/cli
 
 			# Search code matching keyword "lint" in package.json files
-			$ gh search code lint --filename package.json
+			$ gm search code lint --filename package.json
 		`),
 		RunE: func(c *cobra.Command, args []string) error {
 			if len(args) == 0 && c.Flags().NFlag() == 0 {

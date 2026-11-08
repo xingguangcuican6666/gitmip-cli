@@ -7,14 +7,14 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/cli/cli/v2/internal/gh"
-	ghmock "github.com/cli/cli/v2/internal/gh/mock"
+	"github.com/cli/cli/v2/internal/gm"
+	ghmock "github.com/cli/cli/v2/internal/gm/mock"
 	"github.com/cli/cli/v2/internal/keyring"
 	o "github.com/cli/cli/v2/pkg/option"
 	ghConfig "github.com/cli/go-gh/v2/pkg/config"
 )
 
-// NewMockConfig returns a mock config populated with gh's default config file.
+// NewMockConfig returns a mock config populated with gm's default config file.
 // See NewMockConfigFromString for when to prefer a mock over NewIsolatedTestConfig.
 func NewMockConfig() *ghmock.ConfigMock {
 	return NewMockConfigFromString(defaultConfigStr)
@@ -33,7 +33,7 @@ func NewMockConfigFromString(cfgString string) *ghmock.ConfigMock {
 	c := ghConfig.ReadFromString(cfgString)
 	cfg := cfg{cfg: c}
 	mock := &ghmock.ConfigMock{}
-	mock.GetOrDefaultFunc = func(host, key string) o.Option[gh.ConfigEntry] {
+	mock.GetOrDefaultFunc = func(host, key string) o.Option[gm.ConfigEntry] {
 		return cfg.GetOrDefault(host, key)
 	}
 	mock.SetFunc = func(host, key, value string) {
@@ -42,13 +42,13 @@ func NewMockConfigFromString(cfgString string) *ghmock.ConfigMock {
 	mock.WriteFunc = func() error {
 		return cfg.Write()
 	}
-	mock.MigrateFunc = func(m gh.Migration) error {
+	mock.MigrateFunc = func(m gm.Migration) error {
 		return cfg.Migrate(m)
 	}
-	mock.AliasesFunc = func() gh.AliasConfig {
+	mock.AliasesFunc = func() gm.AliasConfig {
 		return &AliasConfig{cfg: c}
 	}
-	mock.AuthenticationFunc = func() gh.AuthConfig {
+	mock.AuthenticationFunc = func() gm.AuthConfig {
 		return &AuthConfig{
 			cfg: c,
 			// Neutralize the cross-process lock and disk reload so tests never take a real filesystem lock or read
@@ -72,46 +72,46 @@ func NewMockConfigFromString(cfgString string) *ghmock.ConfigMock {
 			},
 		}
 	}
-	mock.AccessibleColorsFunc = func(hostname string) gh.ConfigEntry {
+	mock.AccessibleColorsFunc = func(hostname string) gm.ConfigEntry {
 		return cfg.AccessibleColors(hostname)
 	}
-	mock.AccessiblePrompterFunc = func(hostname string) gh.ConfigEntry {
+	mock.AccessiblePrompterFunc = func(hostname string) gm.ConfigEntry {
 		return cfg.AccessiblePrompter(hostname)
 	}
-	mock.BrowserFunc = func(hostname string) gh.ConfigEntry {
+	mock.BrowserFunc = func(hostname string) gm.ConfigEntry {
 		return cfg.Browser(hostname)
 	}
-	mock.ClipboardFunc = func() gh.ConfigEntry {
+	mock.ClipboardFunc = func() gm.ConfigEntry {
 		return cfg.Clipboard()
 	}
-	mock.TelemetryFunc = func() gh.ConfigEntry {
+	mock.TelemetryFunc = func() gm.ConfigEntry {
 		return cfg.Telemetry()
 	}
-	mock.ColorLabelsFunc = func(hostname string) gh.ConfigEntry {
+	mock.ColorLabelsFunc = func(hostname string) gm.ConfigEntry {
 		return cfg.ColorLabels(hostname)
 	}
-	mock.EditorFunc = func(hostname string) gh.ConfigEntry {
+	mock.EditorFunc = func(hostname string) gm.ConfigEntry {
 		return cfg.Editor(hostname)
 	}
-	mock.GitProtocolFunc = func(hostname string) gh.ConfigEntry {
+	mock.GitProtocolFunc = func(hostname string) gm.ConfigEntry {
 		return cfg.GitProtocol(hostname)
 	}
-	mock.HTTPUnixSocketFunc = func(hostname string) gh.ConfigEntry {
+	mock.HTTPUnixSocketFunc = func(hostname string) gm.ConfigEntry {
 		return cfg.HTTPUnixSocket(hostname)
 	}
-	mock.PagerFunc = func(hostname string) gh.ConfigEntry {
+	mock.PagerFunc = func(hostname string) gm.ConfigEntry {
 		return cfg.Pager(hostname)
 	}
-	mock.PromptFunc = func(hostname string) gh.ConfigEntry {
+	mock.PromptFunc = func(hostname string) gm.ConfigEntry {
 		return cfg.Prompt(hostname)
 	}
-	mock.PreferEditorPromptFunc = func(hostname string) gh.ConfigEntry {
+	mock.PreferEditorPromptFunc = func(hostname string) gm.ConfigEntry {
 		return cfg.PreferEditorPrompt(hostname)
 	}
-	mock.ExpiringCredentialsFunc = func(hostname string) gh.ConfigEntry {
+	mock.ExpiringCredentialsFunc = func(hostname string) gm.ConfigEntry {
 		return cfg.ExpiringCredentials(hostname)
 	}
-	mock.SpinnerFunc = func(hostname string) gh.ConfigEntry {
+	mock.SpinnerFunc = func(hostname string) gm.ConfigEntry {
 		return cfg.Spinner(hostname)
 	}
 	mock.VersionFunc = func() o.Option[string] {

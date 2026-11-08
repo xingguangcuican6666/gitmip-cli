@@ -41,10 +41,10 @@ func NewCmdDelete(f *cmdutil.Factory, runF func(*DeleteOptions) error) *cobra.Co
 		Short: "Delete a workflow run",
 		Example: heredoc.Doc(`
 			# Interactively select a run to delete
-			$ gh run delete
+			$ gm run delete
 
 			# Delete a specific run
-			$ gh run delete 12345
+			$ gm run delete 12345
 		`),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

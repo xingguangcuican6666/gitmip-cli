@@ -32,7 +32,7 @@ func ClientFunc(f *cmdutil.Factory) func() (client.ArtifactClient, error) {
 }
 
 // ParseIssueArg reads an {<issue-number> | <issue-url>} argument the way other
-// gh issue commands do, and returns the issue number and the function that
+// gm issue commands do, and returns the issue number and the function that
 // resolves its repository. A URL names its own repository, so it works outside
 // any repository and wins over baseRepo. A number uses baseRepo, which is not
 // called here, so -R and GH_REPO still apply. Pull request URLs parse too, so
@@ -60,7 +60,7 @@ func ParseArtifactNumber(arg string) (int, error) {
 
 // MissingArtifactMessage is the usage error for a command that needs an
 // artifact when none is named: no arguments, or a lone argument that isn't an
-// artifact URL, such as an issue alone. It's worded like gh issue develop's
+// artifact URL, such as an issue alone. It's worded like gm issue develop's
 // "issue number or url is required".
 const MissingArtifactMessage = "artifact number or URL is required"
 
@@ -275,8 +275,8 @@ func pullRequestError(repo ghrepo.Interface, number int) error {
 	return fmt.Errorf("%s#%d is a pull request; artifacts are only supported on issues", ghrepo.FullName(repo), number)
 }
 
-// CheckType refuses an artifact whose type this version of gh doesn't know. A
-// new type can need handling gh doesn't have, so commands whose behavior
+// CheckType refuses an artifact whose type this version of gm doesn't know. A
+// new type can need handling gm doesn't have, so commands whose behavior
 // depends on the type refuse it instead of guessing. Commands that work the
 // same for every type, such as list, don't call it.
 func CheckType(a client.Artifact) error {
@@ -284,12 +284,12 @@ func CheckType(a client.Artifact) error {
 	case client.TypeGeneric, client.TypePlan, client.TypeLink, client.TypeEmbeddedHTML:
 		return nil
 	}
-	return fmt.Errorf("artifact %d has type %q, which this version of gh doesn't support; upgrade gh", a.Number, a.Type)
+	return fmt.Errorf("artifact %d has type %q, which this version of gm doesn't support; upgrade gm", a.Number, a.Type)
 }
 
 // SupportsAttachments reports whether an artifact of type artifactType can
 // take --attach files. Attachments go in Markdown, which only generic and plan
-// artifacts hold, so a type gh learns later supports them only once it's
+// artifacts hold, so a type gm learns later supports them only once it's
 // added here.
 func SupportsAttachments(artifactType string) bool {
 	switch artifactType {

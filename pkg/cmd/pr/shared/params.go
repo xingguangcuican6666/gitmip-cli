@@ -7,13 +7,13 @@ import (
 	"strings"
 
 	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/search"
 	"github.com/google/shlex"
 )
 
-func WithPrAndIssueQueryParams(client *api.Client, baseRepo ghrepo.Interface, baseURL string, state IssueMetadataState, projectsV1Support gh.ProjectsV1Support) (string, error) {
+func WithPrAndIssueQueryParams(client *api.Client, baseRepo ghrepo.Interface, baseURL string, state IssueMetadataState, projectsV1Support gm.ProjectsV1Support) (string, error) {
 	u, err := url.Parse(baseURL)
 	if err != nil {
 		return "", err
@@ -56,7 +56,7 @@ func ValidURL(urlStr string) bool {
 	return len(urlStr) < 8192
 }
 
-func AddMetadataToIssueParams(client *api.Client, baseRepo ghrepo.Interface, params map[string]any, tb *IssueMetadataState, projectV1Support gh.ProjectsV1Support) error {
+func AddMetadataToIssueParams(client *api.Client, baseRepo ghrepo.Interface, params map[string]any, tb *IssueMetadataState, projectV1Support gm.ProjectsV1Support) error {
 	if !tb.HasMetadata() {
 		return nil
 	}
@@ -78,7 +78,7 @@ func AddMetadataToIssueParams(client *api.Client, baseRepo ghrepo.Interface, par
 			}),
 			Assignees:  needAssigneeIDs,
 			Labels:     len(tb.Labels) > 0,
-			ProjectsV1: len(tb.ProjectTitles) > 0 && projectV1Support == gh.ProjectsV1Supported,
+			ProjectsV1: len(tb.ProjectTitles) > 0 && projectV1Support == gm.ProjectsV1Supported,
 			ProjectsV2: len(tb.ProjectTitles) > 0,
 			Milestones: len(tb.Milestones) > 0,
 		}

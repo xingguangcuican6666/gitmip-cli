@@ -21,7 +21,7 @@ import (
 //
 // head and base are branch names. Gitea also accepts the "owner:branch" form for
 // the head, which is how a cross-repository pull request is opened, so the caller
-// passes whatever gh resolved.
+// passes whatever gm resolved.
 //
 // Metadata travels with the create rather than in a follow-up update: assignees
 // and reviewers are logins, labels are numeric ids and the milestone is a numeric
@@ -33,7 +33,7 @@ import (
 // accept the flag at all, so a caller asking for --draft is refused rather than
 // silently given an ordinary pull request.
 
-// CreatePullRequestGiteaInput is what gh can express of Gitea's
+// CreatePullRequestGiteaInput is what gm can express of Gitea's
 // CreatePullRequestOption.
 type CreatePullRequestGiteaInput struct {
 	Title string
@@ -42,7 +42,7 @@ type CreatePullRequestGiteaInput struct {
 	Head  string
 
 	// Assignees and Reviewers are logins. Teams have no counterpart in this
-	// input beyond team_reviewers, which needs org teams gh cannot enumerate on
+	// input beyond team_reviewers, which needs org teams gm cannot enumerate on
 	// a Gitea host.
 	Assignees []string
 	Reviewers []string
@@ -55,7 +55,7 @@ type CreatePullRequestGiteaInput struct {
 }
 
 // giteaCreatePullRequestOption is Gitea's CreatePullRequestOption, with the
-// fields gh can set.
+// fields gm can set.
 type giteaCreatePullRequestOption struct {
 	Title               string   `json:"title"`
 	Body                string   `json:"body,omitempty"`

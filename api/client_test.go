@@ -227,7 +227,7 @@ func TestRESTWithNextError(t *testing.T) {
 	require.ErrorAs(t, err, &httpErr)
 	assert.Equal(t, http.StatusNotFound, httpErr.StatusCode)
 	assert.Contains(t, err.Error(), "HTTP 404")
-	assert.Equal(t, `This API operation needs the "repo" scope. To request it, run:  gh auth refresh -h github.com -s repo`, httpErr.ScopesSuggestion())
+	assert.Equal(t, `This API operation needs the "repo" scope. To request it, run:  gm auth refresh -h github.com -s repo`, httpErr.ScopesSuggestion())
 }
 
 func TestRESTAndRESTWithNextErrorTypeParity(t *testing.T) {
@@ -355,7 +355,7 @@ func TestHTTPError_ScopesSuggestion(t *testing.T) {
 		{
 			name: "missing a scope",
 			resp: makeResponse(404, "https://api.github.com/gists", "repo, read:org", "gist, delete_repo"),
-			want: `This API operation needs the "gist" scope. To request it, run:  gh auth refresh -h github.com -s gist`,
+			want: `This API operation needs the "gist" scope. To request it, run:  gm auth refresh -h github.com -s gist`,
 		},
 		{
 			name: "server error",
@@ -407,7 +407,7 @@ func TestHTTPHeaders(t *testing.T) {
 		"Accept":               "application/vnd.github.merge-info-preview+json, application/vnd.github.nebula-preview",
 		"Authorization":        "token MYTOKEN",
 		"Content-Type":         "application/json; charset=utf-8",
-		"User-Agent":           "GitHub CLI v1.2.3",
+		"User-Agent":           "gitmip-cli v1.2.3",
 		"X-GitHub-Api-Version": "2022-11-28",
 	}
 	for name, value := range wantHeader {

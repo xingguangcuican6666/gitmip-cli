@@ -104,7 +104,7 @@ func presentationCases(t *testing.T) {
 		source.Output.Timing = "realtime"
 		source.Command.Executable = "/selected/gh"
 		source.Command.Args = []string{"api", "$literal", "a'b", "", "two  spaces"}
-		want := `$ gh api '$literal' 'a'"'"'b' '' 'two  spaces'`
+		want := `$ gm api '$literal' 'a'"'"'b' '' 'two  spaces'`
 		lines, err := raster.commandLines(source, top.Bounds().Dx())
 		require.NoError(t, err)
 		require.Equal(t, want, strings.Join(lines, ""), "soft wrapping must not alter arguments or whitespace")

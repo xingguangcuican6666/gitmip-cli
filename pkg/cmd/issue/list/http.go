@@ -118,7 +118,7 @@ loop:
 
 func searchIssues(client *api.Client, detector fd.Detector, repo ghrepo.Interface, filters prShared.FilterOptions, limit int) (*api.IssuesAndTotalCount, error) {
 	if pullRequestSearchQualifierRE.MatchString(filters.Search) {
-		return nil, fmt.Errorf("cannot use pull request search qualifiers with `gh issue list`; use `gh pr list` instead")
+		return nil, fmt.Errorf("cannot use pull request search qualifiers with `gm issue list`; use `gm pr list` instead")
 	}
 
 	// TODO advancedIssueSearchCleanup

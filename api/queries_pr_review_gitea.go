@@ -18,17 +18,17 @@ import (
 // The pull request is addressed by index rather than by node id.
 //
 // The verdict is the event field, whose vocabulary is Gitea's own:
-// APPROVED, COMMENT and REQUEST_CHANGES for the three things gh can ask for.
+// APPROVED, COMMENT and REQUEST_CHANGES for the three things gm can ask for.
 // Gitea also accepts PENDING and REQUEST_REVIEW, which are not reviews and are
 // never sent from here.
 //
 // Gitea takes one body for the review and a separate comments array for inline
-// comments. gh's review command only writes the body, so the array is left out.
+// comments. gm's review command only writes the body, so the array is left out.
 // An empty body is omitted rather than sent as an empty string, which Gitea
 // treats as a review with no text rather than as a missing field.
 
 // GiteaReviewEvent names the verdict values Gitea's review endpoint accepts that
-// gh can ask for.
+// gm can ask for.
 const (
 	GiteaReviewEventApproved       = "APPROVED"
 	GiteaReviewEventComment        = "COMMENT"
@@ -45,7 +45,7 @@ type giteaCreateReviewOption struct {
 // AddReviewGitea creates a review on a pull request.
 //
 // commitID pins the review to a commit; Gitea accepts it empty and then reviews
-// whatever the head is when the request arrives, which is what gh does by
+// whatever the head is when the request arrives, which is what gm does by
 // default.
 func AddReviewGitea(client *Client, repo ghrepo.Interface, number int, event, body, commitID string) error {
 	switch event {
@@ -74,7 +74,7 @@ func AddReviewGitea(client *Client, repo ghrepo.Interface, number int, event, bo
 	return nil
 }
 
-// GiteaReviewEventFor maps gh's review state onto Gitea's event vocabulary.
+// GiteaReviewEventFor maps gm's review state onto Gitea's event vocabulary.
 func GiteaReviewEventFor(state PullRequestReviewState) string {
 	switch state {
 	case ReviewApprove:

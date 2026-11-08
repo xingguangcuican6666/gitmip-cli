@@ -12,8 +12,8 @@ import (
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/browser"
 	fd "github.com/cli/cli/v2/internal/featuredetection"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/text"
 	issueShared "github.com/cli/cli/v2/pkg/cmd/issue/shared"
 	prShared "github.com/cli/cli/v2/pkg/cmd/pr/shared"
@@ -134,7 +134,7 @@ func viewRun(opts *ViewOptions) error {
 
 		lookupFields.Add("projectItems")
 		projectsV1Support := opts.Detector.ProjectsV1()
-		if projectsV1Support == gh.ProjectsV1Supported {
+		if projectsV1Support == gm.ProjectsV1Supported {
 			lookupFields.Add("projectCards")
 		}
 

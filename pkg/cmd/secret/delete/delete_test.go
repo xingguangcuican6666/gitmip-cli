@@ -9,8 +9,8 @@ import (
 	ghContext "github.com/cli/cli/v2/context"
 	"github.com/cli/cli/v2/git"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/pkg/cmd/secret/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -362,7 +362,7 @@ func Test_removeRun_repo(t *testing.T) {
 		tt.opts.HttpClient = func() (*http.Client, error) {
 			return &http.Client{Transport: reg}, nil
 		}
-		tt.opts.Config = func() (gh.Config, error) {
+		tt.opts.Config = func() (gm.Config, error) {
 			return config.NewMockConfig(), nil
 		}
 		tt.opts.BaseRepo = func() (ghrepo.Interface, error) {
@@ -423,7 +423,7 @@ func Test_removeRun_env(t *testing.T) {
 		tt.opts.HttpClient = func() (*http.Client, error) {
 			return &http.Client{Transport: reg}, nil
 		}
-		tt.opts.Config = func() (gh.Config, error) {
+		tt.opts.Config = func() (gm.Config, error) {
 			return config.NewMockConfig(), nil
 		}
 
@@ -481,7 +481,7 @@ func Test_removeRun_org(t *testing.T) {
 
 			ios, _, _, _ := iostreams.Test()
 
-			tt.opts.Config = func() (gh.Config, error) {
+			tt.opts.Config = func() (gm.Config, error) {
 				return config.NewMockConfig(), nil
 			}
 			tt.opts.BaseRepo = func() (ghrepo.Interface, error) {
@@ -515,7 +515,7 @@ func Test_removeRun_user(t *testing.T) {
 		HttpClient: func() (*http.Client, error) {
 			return &http.Client{Transport: reg}, nil
 		},
-		Config: func() (gh.Config, error) {
+		Config: func() (gm.Config, error) {
 			return config.NewMockConfig(), nil
 		},
 		SecretName:  "cool_secret",

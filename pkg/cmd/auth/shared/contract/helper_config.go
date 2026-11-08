@@ -18,7 +18,7 @@ type HelperConfig struct {
 }
 
 func (contract HelperConfig) Test(t *testing.T) {
-	t.Run("when there are no credential helpers, configures gh for repo and gist host", func(t *testing.T) {
+	t.Run("when there are no credential helpers, configures gm for repo and gist host", func(t *testing.T) {
 		hc := contract.NewHelperConfig(t)
 		require.NoError(t, hc.ConfigureOurs("github.com"))
 

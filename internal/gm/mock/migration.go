@@ -4,20 +4,20 @@
 package ghmock
 
 import (
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	ghConfig "github.com/cli/go-gh/v2/pkg/config"
 	"sync"
 )
 
-// Ensure, that MigrationMock does implement gh.Migration.
+// Ensure, that MigrationMock does implement gm.Migration.
 // If this is not the case, regenerate this file with moq.
-var _ gh.Migration = &MigrationMock{}
+var _ gm.Migration = &MigrationMock{}
 
-// MigrationMock is a mock implementation of gh.Migration.
+// MigrationMock is a mock implementation of gm.Migration.
 //
 //	func TestSomethingThatUsesMigration(t *testing.T) {
 //
-//		// make and configure a mocked gh.Migration
+//		// make and configure a mocked gm.Migration
 //		mockedMigration := &MigrationMock{
 //			DoFunc: func(config *ghConfig.Config) error {
 //				panic("mock out the Do method")
@@ -30,7 +30,7 @@ var _ gh.Migration = &MigrationMock{}
 //			},
 //		}
 //
-//		// use mockedMigration in code that requires gh.Migration
+//		// use mockedMigration in code that requires gm.Migration
 //		// and then make assertions.
 //
 //	}

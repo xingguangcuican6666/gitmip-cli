@@ -4,15 +4,15 @@ import (
 	"testing"
 
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
-	ghmock "github.com/cli/cli/v2/internal/gh/mock"
+	"github.com/cli/cli/v2/internal/gm"
+	ghmock "github.com/cli/cli/v2/internal/gm/mock"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/stretchr/testify/require"
 )
 
 // setupMockOAuthConfig configures a blank config with a default host and optional token behavior.
-func setupMockOAuthConfig(t *testing.T, tokenSource string) gh.Config {
+func setupMockOAuthConfig(t *testing.T, tokenSource string) gm.Config {
 	t.Helper()
 	c := config.NewMockConfig()
 	switch tokenSource {
@@ -36,7 +36,7 @@ func TestNewCmdAgentTask(t *testing.T) {
 	tests := []struct {
 		name            string
 		tokenSource     string
-		customConfig    func() (gh.Config, error)
+		customConfig    func() (gm.Config, error)
 		wantErr         bool
 		wantErrContains string
 		wantStdout      string
@@ -66,7 +66,7 @@ func TestNewCmdAgentTask(t *testing.T) {
 		},
 		{
 			name: "github.com oauth is accepted and enterprise token ignored",
-			customConfig: func() (gh.Config, error) {
+			customConfig: func() (gm.Config, error) {
 				c := config.NewMockConfig()
 				c.Set("something.ghes.com", "oauth_token", "ghe_ENTERPRISE123")
 				c.Set("github.com", "oauth_token", "gho_OAUTH123")
@@ -77,12 +77,12 @@ func TestNewCmdAgentTask(t *testing.T) {
 		},
 		{
 			name: "plaintext refreshable oauth token is accepted",
-			customConfig: func() (gh.Config, error) {
+			customConfig: func() (gm.Config, error) {
 				return &ghmock.ConfigMock{
-					AuthenticationFunc: func() gh.AuthConfig {
+					AuthenticationFunc: func() gm.AuthConfig {
 						c := &config.AuthConfig{}
 						c.SetDefaultHost("github.com", "default")
-						c.SetActiveToken("gho_REFRESH123", gh.TokenSourceRefreshableOAuthToken)
+						c.SetActiveToken("gho_REFRESH123", gm.TokenSourceRefreshableOAuthToken)
 						return c
 					},
 				}, nil
@@ -92,9 +92,9 @@ func TestNewCmdAgentTask(t *testing.T) {
 		},
 		{
 			name: "enterprise host is rejected",
-			customConfig: func() (gh.Config, error) {
+			customConfig: func() (gm.Config, error) {
 				return &ghmock.ConfigMock{
-					AuthenticationFunc: func() gh.AuthConfig {
+					AuthenticationFunc: func() gm.AuthConfig {
 						c := &config.AuthConfig{}
 						c.SetDefaultHost("something.ghes.com", "GH_HOST")
 						return c
@@ -106,9 +106,9 @@ func TestNewCmdAgentTask(t *testing.T) {
 		},
 		{
 			name: "empty host is rejected",
-			customConfig: func() (gh.Config, error) {
+			customConfig: func() (gm.Config, error) {
 				return &ghmock.ConfigMock{
-					AuthenticationFunc: func() gh.AuthConfig {
+					AuthenticationFunc: func() gm.AuthConfig {
 						c := &config.AuthConfig{}
 						c.SetDefaultHost("", "GH_HOST")
 						return c
@@ -133,7 +133,7 @@ func TestNewCmdAgentTask(t *testing.T) {
 			if tt.customConfig != nil {
 				f.Config = tt.customConfig
 			} else {
-				f.Config = func() (gh.Config, error) { return setupMockOAuthConfig(t, tt.tokenSource), nil }
+				f.Config = func() (gm.Config, error) { return setupMockOAuthConfig(t, tt.tokenSource), nil }
 			}
 
 			cmd := NewCmdAgentTask(f)
@@ -156,7 +156,7 @@ func TestAliasAreSet(t *testing.T) {
 	f := &cmdutil.Factory{}
 	ios, _, _, _ := iostreams.Test()
 	f.IOStreams = ios
-	f.Config = func() (gh.Config, error) { return setupMockOAuthConfig(t, "oauth_token"), nil }
+	f.Config = func() (gm.Config, error) { return setupMockOAuthConfig(t, "oauth_token"), nil }
 
 	cmd := NewCmdAgentTask(f)
 

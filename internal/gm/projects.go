@@ -1,4 +1,4 @@
-package gh
+package gm
 
 // ProjectsV1Support provides type safety and readability around whether or not Projects v1 is supported
 // by the targeted host.

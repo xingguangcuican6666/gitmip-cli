@@ -83,7 +83,7 @@ rm -f "$LOG" "$WORK/ready"
 heading "Building gh and the gateway"
 # The repository may be mounted from a git worktree, whose .git file points
 # outside the mount, so VCS stamping cannot work here.
-(cd "$REPO" && go build -buildvcs=false -o "$WORK/gh" ./cmd/gh) || die "building gh"
+(cd "$REPO" && go build -buildvcs=false -o "$WORK/gm" ./cmd/gm) || die "building gm"
 (cd "$REPO" && go build -buildvcs=false -o "$WORK/gateway" ./script/api-host-gateway/gateway) || die "building the gateway"
 
 # Resolve the upstream before the blackhole goes in, so the gateway can keep

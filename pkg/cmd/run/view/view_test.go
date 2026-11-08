@@ -14,8 +14,8 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/internal/browser"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/pkg/cmd/run/shared"
 	workflowShared "github.com/cli/cli/v2/pkg/cmd/workflow/shared"
@@ -140,7 +140,7 @@ func TestNewCmdView(t *testing.T) {
 
 			f := &cmdutil.Factory{
 				IOStreams: ios,
-				Config: func() (gh.Config, error) {
+				Config: func() (gm.Config, error) {
 					return config.NewMockConfig(), nil
 				},
 			}
@@ -287,7 +287,7 @@ func TestViewRun(t *testing.T) {
 					httpmock.REST("GET", "repos/OWNER/REPO/check-runs/10/annotations"),
 					httpmock.JSONResponse([]shared.Annotation{}))
 			},
-			wantOut: "\n✓ trunk CI OWNER/REPO#2898 · 3\nTriggered via push about 59 minutes ago\n\nJOBS\n✓ cool job in 4m34s (ID 10)\n\nFor more information about the job, try: gh run view --job=10\nView this run on GitHub: https://github.com/runs/3\n",
+			wantOut: "\n✓ trunk CI OWNER/REPO#2898 · 3\nTriggered via push about 59 minutes ago\n\nJOBS\n✓ cool job in 4m34s (ID 10)\n\nFor more information about the job, try: gm run view --job=10\nView this run on GitHub: https://github.com/runs/3\n",
 		},
 		{
 			name: "associate with PR with attempt",
@@ -331,7 +331,7 @@ func TestViewRun(t *testing.T) {
 					httpmock.REST("GET", "repos/OWNER/REPO/check-runs/10/annotations"),
 					httpmock.JSONResponse([]shared.Annotation{}))
 			},
-			wantOut: "\n✓ trunk CI OWNER/REPO#2898 · 3 (Attempt #3)\nTriggered via push about 59 minutes ago\n\nJOBS\n✓ cool job in 4m34s (ID 10)\n\nFor more information about the job, try: gh run view --job=10\nView this run on GitHub: https://github.com/runs/3/attempts/3\n",
+			wantOut: "\n✓ trunk CI OWNER/REPO#2898 · 3 (Attempt #3)\nTriggered via push about 59 minutes ago\n\nJOBS\n✓ cool job in 4m34s (ID 10)\n\nFor more information about the job, try: gm run view --job=10\nView this run on GitHub: https://github.com/runs/3/attempts/3\n",
 		},
 		{
 			name: "exit status, failed run",
@@ -363,7 +363,7 @@ func TestViewRun(t *testing.T) {
 					httpmock.REST("GET", "repos/OWNER/REPO/check-runs/20/annotations"),
 					httpmock.JSONResponse(shared.FailedJobAnnotations))
 			},
-			wantOut: "\nX trunk CI · 1234\nTriggered via push about 59 minutes ago\n\nJOBS\nX sad job in 4m34s (ID 20)\n  ✓ barf the quux\n  X quux the barf\n\nANNOTATIONS\nX the job is sad\nsad job: blaze.py#420\n\n\nTo see what failed, try: gh run view 1234 --log-failed\nView this run on GitHub: https://github.com/runs/1234\n",
+			wantOut: "\nX trunk CI · 1234\nTriggered via push about 59 minutes ago\n\nJOBS\nX sad job in 4m34s (ID 20)\n  ✓ barf the quux\n  X quux the barf\n\nANNOTATIONS\nX the job is sad\nsad job: blaze.py#420\n\n\nTo see what failed, try: gm run view 1234 --log-failed\nView this run on GitHub: https://github.com/runs/1234\n",
 			wantErr: true,
 		},
 		{
@@ -407,7 +407,7 @@ func TestViewRun(t *testing.T) {
 				artifact-2 (expired)
 				artifact-3
 
-				For more information about a job, try: gh run view --job=<job-id>
+				For more information about a job, try: gm run view --job=<job-id>
 				View this run on GitHub: https://github.com/runs/3
 			`),
 		},
@@ -453,7 +453,7 @@ func TestViewRun(t *testing.T) {
 				artifact-2 (expired)
 				artifact-3
 
-				For more information about a job, try: gh run view --job=<job-id>
+				For more information about a job, try: gm run view --job=<job-id>
 				View this run on GitHub: https://github.com/runs/3/attempts/3
 			`),
 		},
@@ -487,7 +487,7 @@ func TestViewRun(t *testing.T) {
 					httpmock.REST("GET", "repos/OWNER/REPO/actions/workflows/123"),
 					httpmock.JSONResponse(shared.TestWorkflow))
 			},
-			wantOut: "\n✓ trunk CI · 3\nTriggered via push about 59 minutes ago\n\nJOBS\n✓ cool job in 4m34s (ID 10)\n\nFor more information about the job, try: gh run view --job=10\nView this run on GitHub: https://github.com/runs/3\n",
+			wantOut: "\n✓ trunk CI · 3\nTriggered via push about 59 minutes ago\n\nJOBS\n✓ cool job in 4m34s (ID 10)\n\nFor more information about the job, try: gm run view --job=10\nView this run on GitHub: https://github.com/runs/3\n",
 		},
 		{
 			name: "exit status, successful run, with attempt",
@@ -520,7 +520,7 @@ func TestViewRun(t *testing.T) {
 					httpmock.REST("GET", "repos/OWNER/REPO/actions/workflows/123"),
 					httpmock.JSONResponse(shared.TestWorkflow))
 			},
-			wantOut: "\n✓ trunk CI · 3 (Attempt #3)\nTriggered via push about 59 minutes ago\n\nJOBS\n✓ cool job in 4m34s (ID 10)\n\nFor more information about the job, try: gh run view --job=10\nView this run on GitHub: https://github.com/runs/3/attempts/3\n",
+			wantOut: "\n✓ trunk CI · 3 (Attempt #3)\nTriggered via push about 59 minutes ago\n\nJOBS\n✓ cool job in 4m34s (ID 10)\n\nFor more information about the job, try: gm run view --job=10\nView this run on GitHub: https://github.com/runs/3/attempts/3\n",
 		},
 		{
 			name: "verbose",
@@ -558,7 +558,7 @@ func TestViewRun(t *testing.T) {
 					httpmock.REST("GET", "repos/OWNER/REPO/actions/workflows/123"),
 					httpmock.JSONResponse(shared.TestWorkflow))
 			},
-			wantOut: "\nX trunk CI · 1234\nTriggered via push about 59 minutes ago\n\nJOBS\n✓ cool job in 4m34s (ID 10)\n  ✓ fob the barz\n  ✓ barz the fob\nX sad job in 4m34s (ID 20)\n  ✓ barf the quux\n  X quux the barf\n\nANNOTATIONS\nX the job is sad\nsad job: blaze.py#420\n\n\nTo see what failed, try: gh run view 1234 --log-failed\nView this run on GitHub: https://github.com/runs/1234\n",
+			wantOut: "\nX trunk CI · 1234\nTriggered via push about 59 minutes ago\n\nJOBS\n✓ cool job in 4m34s (ID 10)\n  ✓ fob the barz\n  ✓ barz the fob\nX sad job in 4m34s (ID 20)\n  ✓ barf the quux\n  X quux the barf\n\nANNOTATIONS\nX the job is sad\nsad job: blaze.py#420\n\n\nTo see what failed, try: gm run view 1234 --log-failed\nView this run on GitHub: https://github.com/runs/1234\n",
 		},
 		{
 			name: "prompts for choice, one job",
@@ -609,7 +609,7 @@ func TestViewRun(t *testing.T) {
 			opts: &ViewOptions{
 				Prompt: true,
 			},
-			wantOut: "\n✓ trunk CI · 3\nTriggered via push about 59 minutes ago\n\nJOBS\n✓ cool job in 4m34s (ID 10)\n\nFor more information about the job, try: gh run view --job=10\nView this run on GitHub: https://github.com/runs/3\n",
+			wantOut: "\n✓ trunk CI · 3\nTriggered via push about 59 minutes ago\n\nJOBS\n✓ cool job in 4m34s (ID 10)\n\nFor more information about the job, try: gm run view --job=10\nView this run on GitHub: https://github.com/runs/3\n",
 		},
 		{
 			name: "interactive with log",
@@ -2354,7 +2354,7 @@ func TestViewRun(t *testing.T) {
 					httpmock.REST("GET", "repos/OWNER/REPO/actions/workflows/123"),
 					httpmock.JSONResponse(shared.TestWorkflow))
 			},
-			wantOut: "\n✓ trunk CI · 3\nTriggered via push about 59 minutes ago\n\n✓ cool job in 4m34s (ID 10)\n  ✓ fob the barz\n  ✓ barz the fob\n\nTo see the full job log, try: gh run view --log --job=10\nView this run on GitHub: https://github.com/runs/3\n",
+			wantOut: "\n✓ trunk CI · 3\nTriggered via push about 59 minutes ago\n\n✓ cool job in 4m34s (ID 10)\n  ✓ fob the barz\n  ✓ barz the fob\n\nTo see the full job log, try: gm run view --log --job=10\nView this run on GitHub: https://github.com/runs/3\n",
 		},
 		{
 			name: "interactive, multiple jobs, choose all jobs",
@@ -2411,7 +2411,7 @@ func TestViewRun(t *testing.T) {
 						return prompter.IndexFor(opts, "View all jobs in this run")
 					})
 			},
-			wantOut: "\n✓ trunk CI · 3\nTriggered via push about 59 minutes ago\n\nJOBS\n✓ cool job in 4m34s (ID 10)\nX sad job in 4m34s (ID 20)\n  ✓ barf the quux\n  X quux the barf\n\nANNOTATIONS\nX the job is sad\nsad job: blaze.py#420\n\n\nFor more information about a job, try: gh run view --job=<job-id>\nView this run on GitHub: https://github.com/runs/3\n",
+			wantOut: "\n✓ trunk CI · 3\nTriggered via push about 59 minutes ago\n\nJOBS\n✓ cool job in 4m34s (ID 10)\nX sad job in 4m34s (ID 20)\n  ✓ barf the quux\n  X quux the barf\n\nANNOTATIONS\nX the job is sad\nsad job: blaze.py#420\n\n\nFor more information about a job, try: gm run view --job=<job-id>\nView this run on GitHub: https://github.com/runs/3\n",
 		},
 		{
 			name: "interactive, multiple jobs, choose specific jobs",
@@ -2462,7 +2462,7 @@ func TestViewRun(t *testing.T) {
 						return prompter.IndexFor(opts, "✓ cool job")
 					})
 			},
-			wantOut: "\n✓ trunk CI · 3\nTriggered via push about 59 minutes ago\n\n✓ cool job in 4m34s (ID 10)\n  ✓ fob the barz\n  ✓ barz the fob\n\nTo see the full job log, try: gh run view --log --job=10\nView this run on GitHub: https://github.com/runs/3\n",
+			wantOut: "\n✓ trunk CI · 3\nTriggered via push about 59 minutes ago\n\n✓ cool job in 4m34s (ID 10)\n  ✓ fob the barz\n  ✓ barz the fob\n\nTo see the full job log, try: gm run view --log --job=10\nView this run on GitHub: https://github.com/runs/3\n",
 		},
 		{
 			name: "web run",
@@ -2647,7 +2647,7 @@ func TestViewRun(t *testing.T) {
 					httpmock.REST("GET", "repos/OWNER/REPO/check-runs/20/annotations"),
 					httpmock.StatusStringResponse(403, "Forbidden"))
 			},
-			wantOut: "\nX trunk CI · 1234\nTriggered via push about 59 minutes ago\n\nJOBS\nX sad job in 4m34s (ID 20)\n  ✓ barf the quux\n  X quux the barf\n\nANNOTATIONS\nrequesting annotations returned 403 Forbidden as the token does not have sufficient permissions. Note that it is not currently possible to create a fine-grained PAT with the `checks:read` permission.\n\nTo see what failed, try: gh run view 1234 --log-failed\nView this run on GitHub: https://github.com/runs/1234\n",
+			wantOut: "\nX trunk CI · 1234\nTriggered via push about 59 minutes ago\n\nJOBS\nX sad job in 4m34s (ID 20)\n  ✓ barf the quux\n  X quux the barf\n\nANNOTATIONS\nrequesting annotations returned 403 Forbidden as the token does not have sufficient permissions. Note that it is not currently possible to create a fine-grained PAT with the `checks:read` permission.\n\nTo see what failed, try: gm run view 1234 --log-failed\nView this run on GitHub: https://github.com/runs/1234\n",
 		},
 	}
 

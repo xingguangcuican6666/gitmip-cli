@@ -26,7 +26,7 @@ import (
 // avoids resolving ids for labels that were never fetched.
 //
 // Assignees are added and removed through two endpoints that take logins. Gitea
-// has no id-based assignee mutation, and the logins are what gh already has.
+// has no id-based assignee mutation, and the logins are what gm already has.
 //
 // A milestone is a numeric id on the wire. `--milestone ""` clears it, which
 // Gitea spells as milestone 0; leaving the field out would not clear anything,

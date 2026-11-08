@@ -13,7 +13,7 @@ func NewCmdOrg(f *cmdutil.Factory) *cobra.Command {
 		Short: "Manage organizations",
 		Long:  "Work with GitHub organizations.",
 		Example: heredoc.Doc(`
-			$ gh org list
+			$ gm org list
 		`),
 		GroupID: "core",
 	}

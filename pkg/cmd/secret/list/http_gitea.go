@@ -52,7 +52,7 @@ func getOrgSecretsGitea(client *http.Client, host, orgName string) ([]Secret, er
 	return getSecretsGitea(client, host, u)
 }
 
-// getSecretsGitea pages through a Gitea secret list and maps it onto gh's
+// getSecretsGitea pages through a Gitea secret list and maps it onto gm's
 // Secret type.
 func getSecretsGitea(client *http.Client, host string, u *safeurl.MutableSafeURL) ([]Secret, error) {
 	apiClient := api.NewClientFromHTTP(client)

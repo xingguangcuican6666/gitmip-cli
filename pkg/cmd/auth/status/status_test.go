@@ -13,8 +13,8 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
-	ghmock "github.com/cli/cli/v2/internal/gh/mock"
+	"github.com/cli/cli/v2/internal/gm"
+	ghmock "github.com/cli/cli/v2/internal/gm/mock"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/httpmock"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -111,7 +111,7 @@ func Test_statusRun(t *testing.T) {
 		env        map[string]string
 		now        time.Time
 		httpStubs  func(*httpmock.Registry)
-		cfgStubs   func(*testing.T, gh.Config)
+		cfgStubs   func(*testing.T, gm.Config)
 		wantErr    error
 		wantOut    string
 		wantErrOut string
@@ -121,7 +121,7 @@ func Test_statusRun(t *testing.T) {
 			opts: StatusOptions{
 				Hostname: "github.com",
 			},
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				login(t, c, "github.com", "monalisa", "abc123", "https")
 			},
 			httpStubs: func(reg *httpmock.Registry) {
@@ -142,7 +142,7 @@ func Test_statusRun(t *testing.T) {
 			opts: StatusOptions{
 				Hostname: "ghe.io",
 			},
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				login(t, c, "github.com", "monalisa", "gho_abc123", "https")
 				login(t, c, "ghe.io", "monalisa-ghe", "gho_abc123", "https")
 			},
@@ -162,7 +162,7 @@ func Test_statusRun(t *testing.T) {
 		{
 			name: "missing scope",
 			opts: StatusOptions{},
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				login(t, c, "ghe.io", "monalisa-ghe", "gho_abc123", "https")
 			},
 			httpStubs: func(reg *httpmock.Registry) {
@@ -177,13 +177,13 @@ func Test_statusRun(t *testing.T) {
 				  - Token: gho_******
 				  - Token scopes: 'repo'
 				  ! Missing required token scopes: 'read:org'
-				  - To request missing scopes, run: gh auth refresh -h ghe.io
+				  - To request missing scopes, run: gm auth refresh -h ghe.io
 			`),
 		},
 		{
 			name: "bad token",
 			opts: StatusOptions{},
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				login(t, c, "ghe.io", "monalisa-ghe", "gho_abc123", "https")
 			},
 			httpStubs: func(reg *httpmock.Registry) {
@@ -196,8 +196,8 @@ func Test_statusRun(t *testing.T) {
 				  X Failed to log in to ghe.io account monalisa-ghe (GH_CONFIG_DIR/hosts.yml)
 				  - Active account: true
 				  - The token in GH_CONFIG_DIR/hosts.yml is invalid.
-				  - To re-authenticate, run: gh auth refresh -h ghe.io
-				  - To forget about this account, run: gh auth logout -h ghe.io -u monalisa-ghe
+				  - To re-authenticate, run: gm auth refresh -h ghe.io
+				  - To forget about this account, run: gm auth logout -h ghe.io -u monalisa-ghe
 			`),
 		},
 		{
@@ -205,7 +205,7 @@ func Test_statusRun(t *testing.T) {
 			opts: StatusOptions{
 				Hostname: "ghe.io",
 			},
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				login(t, c, "github.com", "monalisa", "gho_abc123", "https")
 				login(t, c, "ghe.io", "monalisa-ghe", "gho_abc123", "https")
 			},
@@ -227,7 +227,7 @@ func Test_statusRun(t *testing.T) {
 			opts: StatusOptions{
 				Hostname: "ghe.io",
 			},
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				login(t, c, "github.com", "monalisa", "gho_abc123", "https")
 				login(t, c, "ghe.io", "monalisa-ghe", "gho_abc123", "https")
 			},
@@ -241,14 +241,14 @@ func Test_statusRun(t *testing.T) {
 				  X Failed to log in to ghe.io account monalisa-ghe (GH_CONFIG_DIR/hosts.yml)
 				  - Active account: true
 				  - The token in GH_CONFIG_DIR/hosts.yml is invalid.
-				  - To re-authenticate, run: gh auth refresh -h ghe.io
-				  - To forget about this account, run: gh auth logout -h ghe.io -u monalisa-ghe
+				  - To re-authenticate, run: gm auth refresh -h ghe.io
+				  - To forget about this account, run: gm auth logout -h ghe.io -u monalisa-ghe
 			`),
 		},
 		{
 			name: "all good",
 			opts: StatusOptions{},
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				login(t, c, "github.com", "monalisa", "gho_abc123", "https")
 				login(t, c, "ghe.io", "monalisa-ghe", "gho_abc123", "ssh")
 			},
@@ -282,15 +282,15 @@ func Test_statusRun(t *testing.T) {
 			name: "refreshes an expiring token",
 			opts: StatusOptions{},
 			now:  time.Date(2099, 1, 1, 20, 4, 5, 0, time.UTC),
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				past := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
 				rtPast := time.Date(2000, 6, 1, 0, 0, 0, 0, time.UTC)
 				loginRefreshable(t, c, "github.com", "monalisa", "gho_stale", "ghr_abc", &past, &rtPast)
 				future := time.Date(2099, 1, 2, 3, 4, 5, 0, time.UTC)
 				rtFuture := time.Date(2099, 1, 11, 20, 4, 5, 0, time.UTC)
 				setRefresher(t, c, &ghmock.TokenRefresherMock{
-					RefreshFunc: func(string, string) (gh.RefreshableCredential, error) {
-						return gh.RefreshableCredential{
+					RefreshFunc: func(string, string) (gm.RefreshableCredential, error) {
+						return gm.RefreshableCredential{
 							AccessToken:           "gho_fresh",
 							RefreshToken:          "ghr_abc",
 							ExpiresAt:             &future,
@@ -310,7 +310,7 @@ func Test_statusRun(t *testing.T) {
 				  - Active account: true
 				  - Git operations protocol: https
 				  - Token: gho_*****
-				  - Expiring token that gh refreshes automatically
+				  - Expiring token that gm refreshes automatically
 				  - Token expires: 2099-01-02T03:04:05Z (in about 7 hours)
 				  - Refresh token expires: 2099-01-11T20:04:05Z (in about 10 days)
 				  - Token refreshed just now
@@ -321,14 +321,14 @@ func Test_statusRun(t *testing.T) {
 			name: "no-refresh leaves an expiring token untouched",
 			opts: StatusOptions{NoRefresh: true},
 			now:  time.Date(2000, 1, 3, 0, 0, 0, 0, time.UTC),
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				past := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
 				rtFuture := time.Date(2000, 1, 13, 0, 0, 0, 0, time.UTC)
 				loginRefreshable(t, c, "github.com", "monalisa", "gho_stale", "ghr_abc", &past, &rtFuture)
 				setRefresher(t, c, &ghmock.TokenRefresherMock{
-					RefreshFunc: func(string, string) (gh.RefreshableCredential, error) {
+					RefreshFunc: func(string, string) (gm.RefreshableCredential, error) {
 						t.Error("refresher must not be called when --no-refresh is set")
-						return gh.RefreshableCredential{}, nil
+						return gm.RefreshableCredential{}, nil
 					},
 				})
 			},
@@ -343,7 +343,7 @@ func Test_statusRun(t *testing.T) {
 				  - Active account: true
 				  - Git operations protocol: https
 				  - Token: gho_*****
-				  - Expiring token that gh refreshes automatically
+				  - Expiring token that gm refreshes automatically
 				  - Token expires: 2000-01-01T00:00:00Z (expired about 2 days ago)
 				  - Refresh token expires: 2000-01-13T00:00:00Z (in about 10 days)
 				  - Token scopes: 'repo', 'read:org'
@@ -353,7 +353,7 @@ func Test_statusRun(t *testing.T) {
 			name: "no-refresh hints at refreshing an expired expiring token",
 			opts: StatusOptions{NoRefresh: true},
 			now:  time.Date(2000, 1, 3, 0, 0, 0, 0, time.UTC),
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				past := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
 				rtFuture := time.Date(2000, 1, 13, 0, 0, 0, 0, time.UTC)
 				loginRefreshable(t, c, "github.com", "monalisa", "gho_stale", "ghr_abc", &past, &rtFuture)
@@ -366,17 +366,17 @@ func Test_statusRun(t *testing.T) {
 				github.com
 				  X Token for github.com account monalisa (GH_CONFIG_DIR/hosts.yml) has expired
 				  - Active account: true
-				  - Expiring token that gh refreshes automatically
+				  - Expiring token that gm refreshes automatically
 				  - Token expires: 2000-01-01T00:00:00Z (expired about 2 days ago)
 				  - Refresh token expires: 2000-01-13T00:00:00Z (in about 10 days)
-				  - To refresh it, run gh auth status (without --no-refresh)
+				  - To refresh it, run gm auth status (without --no-refresh)
 			`),
 		},
 		{
 			name: "no-refresh suggests logging in when the refresh token has also expired",
 			opts: StatusOptions{NoRefresh: true},
 			now:  time.Date(2000, 1, 3, 0, 0, 0, 0, time.UTC),
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				past := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
 				rtPast := time.Date(2000, 1, 2, 0, 0, 0, 0, time.UTC)
 				loginRefreshable(t, c, "github.com", "monalisa", "gho_stale", "ghr_abc", &past, &rtPast)
@@ -389,17 +389,17 @@ func Test_statusRun(t *testing.T) {
 				github.com
 				  X Token for github.com account monalisa (GH_CONFIG_DIR/hosts.yml) has expired
 				  - Active account: true
-				  - Expiring token that gh refreshes automatically
+				  - Expiring token that gm refreshes automatically
 				  - Token expires: 2000-01-01T00:00:00Z (expired about 2 days ago)
 				  - Refresh token expires: 2000-01-02T00:00:00Z (expired about 1 day ago)
-				  - To re-authenticate, run: gh auth login -h github.com
+				  - To re-authenticate, run: gm auth login -h github.com
 			`),
 		},
 		{
 			name: "no-refresh does not hint at expiry for an expired expiring token that fails with a non-401 error",
 			opts: StatusOptions{NoRefresh: true},
 			now:  time.Date(2000, 1, 3, 0, 0, 0, 0, time.UTC),
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				past := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
 				rtFuture := time.Date(2000, 1, 13, 0, 0, 0, 0, time.UTC)
 				loginRefreshable(t, c, "github.com", "monalisa", "gho_stale", "ghr_abc", &past, &rtFuture)
@@ -413,15 +413,15 @@ func Test_statusRun(t *testing.T) {
 				  X Failed to log in to github.com account monalisa (GH_CONFIG_DIR/hosts.yml)
 				  - Active account: true
 				  - The token in GH_CONFIG_DIR/hosts.yml is invalid.
-				  - To re-authenticate, run: gh auth refresh -h github.com
-				  - To forget about this account, run: gh auth logout -h github.com -u monalisa
+				  - To re-authenticate, run: gm auth refresh -h github.com
+				  - To forget about this account, run: gm auth logout -h github.com -u monalisa
 			`),
 		},
 		{
 			name: "no-refresh reports an unexpired expiring token that fails as invalid",
 			opts: StatusOptions{NoRefresh: true},
 			now:  time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				future := time.Date(2000, 1, 1, 8, 0, 0, 0, time.UTC)
 				loginRefreshable(t, c, "github.com", "monalisa", "gho_revoked", "ghr_abc", &future, nil)
 			},
@@ -434,15 +434,15 @@ func Test_statusRun(t *testing.T) {
 				  X Failed to log in to github.com account monalisa (GH_CONFIG_DIR/hosts.yml)
 				  - Active account: true
 				  - The token in GH_CONFIG_DIR/hosts.yml is invalid.
-				  - To re-authenticate, run: gh auth refresh -h github.com
-				  - To forget about this account, run: gh auth logout -h github.com -u monalisa
+				  - To re-authenticate, run: gm auth refresh -h github.com
+				  - To forget about this account, run: gm auth logout -h github.com -u monalisa
 			`),
 		},
 		{
 			name: "omits the refresh token expiry line when its lifetime is unknown",
 			opts: StatusOptions{NoRefresh: true},
 			now:  time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC),
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				future := time.Date(2000, 1, 1, 8, 0, 0, 0, time.UTC)
 				loginRefreshable(t, c, "github.com", "monalisa", "gho_fresh", "ghr_abc", &future, nil)
 			},
@@ -457,7 +457,7 @@ func Test_statusRun(t *testing.T) {
 				  - Active account: true
 				  - Git operations protocol: https
 				  - Token: gho_*****
-				  - Expiring token that gh refreshes automatically
+				  - Expiring token that gm refreshes automatically
 				  - Token expires: 2000-01-01T08:00:00Z (in about 8 hours)
 				  - Token scopes: 'repo', 'read:org'
 			`),
@@ -465,12 +465,12 @@ func Test_statusRun(t *testing.T) {
 		{
 			name: "rejected refresh token surfaces a clear error without a scope request",
 			opts: StatusOptions{},
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				past := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
 				loginRefreshable(t, c, "github.com", "monalisa", "gho_stale", "ghr_abc", &past, nil)
 				setRefresher(t, c, &ghmock.TokenRefresherMock{
-					RefreshFunc: func(string, string) (gh.RefreshableCredential, error) {
-						return gh.RefreshableCredential{}, fmt.Errorf("server rejected token: %w", gh.ErrRefreshTokenInvalid)
+					RefreshFunc: func(string, string) (gm.RefreshableCredential, error) {
+						return gm.RefreshableCredential{}, fmt.Errorf("server rejected token: %w", gm.ErrRefreshTokenInvalid)
 					},
 				})
 			},
@@ -480,14 +480,14 @@ func Test_statusRun(t *testing.T) {
 				  X Refresh token for github.com account monalisa was rejected
 				  - Active account: true
 				  - The stored expiring credential was removed because its refresh token is no longer valid.
-				  - To re-authenticate, run: gh auth login -h github.com
+				  - To re-authenticate, run: gm auth login -h github.com
 			`),
 		},
 		{
 			name:     "token from env",
 			opts:     StatusOptions{},
 			env:      map[string]string{"GH_TOKEN": "gho_abc123"},
-			cfgStubs: func(t *testing.T, c gh.Config) {},
+			cfgStubs: func(t *testing.T, c gm.Config) {},
 			httpStubs: func(reg *httpmock.Registry) {
 				reg.Register(
 					httpmock.REST("GET", ""),
@@ -508,7 +508,7 @@ func Test_statusRun(t *testing.T) {
 		{
 			name: "server-to-server token",
 			opts: StatusOptions{},
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				login(t, c, "github.com", "monalisa", "ghs_abc123", "https")
 			},
 			httpStubs: func(reg *httpmock.Registry) {
@@ -528,7 +528,7 @@ func Test_statusRun(t *testing.T) {
 		{
 			name: "PAT V2 token",
 			opts: StatusOptions{},
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				login(t, c, "github.com", "monalisa", "github_pat_abc_123456", "https")
 			},
 			httpStubs: func(reg *httpmock.Registry) {
@@ -550,7 +550,7 @@ func Test_statusRun(t *testing.T) {
 			opts: StatusOptions{
 				ShowToken: true,
 			},
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				login(t, c, "github.com", "monalisa", "gho_abc123", "https")
 				login(t, c, "ghe.io", "monalisa-ghe", "gho_xyz456", "https")
 			},
@@ -581,7 +581,7 @@ func Test_statusRun(t *testing.T) {
 			opts: StatusOptions{
 				Hostname: "github.example.com",
 			},
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				login(t, c, "github.com", "monalisa", "abc123", "https")
 			},
 			httpStubs:  func(reg *httpmock.Registry) {},
@@ -591,7 +591,7 @@ func Test_statusRun(t *testing.T) {
 		{
 			name: "multiple accounts on a host",
 			opts: StatusOptions{},
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				login(t, c, "github.com", "monalisa", "gho_abc123", "https")
 				login(t, c, "github.com", "monalisa-2", "gho_abc123", "https")
 			},
@@ -618,7 +618,7 @@ func Test_statusRun(t *testing.T) {
 			name: "multiple hosts with multiple accounts with environment tokens and with errors",
 			opts: StatusOptions{},
 			env:  map[string]string{"GH_ENTERPRISE_TOKEN": "gho_abc123"}, // monalisa-ghe-2
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				login(t, c, "github.com", "monalisa", "gho_def456", "https")
 				login(t, c, "github.com", "monalisa-2", "gho_ghi789", "https")
 				login(t, c, "ghe.io", "monalisa-ghe", "gho_xyz123", "ssh")
@@ -652,7 +652,7 @@ func Test_statusRun(t *testing.T) {
 				  - Token: gho_******
 				  - Token scopes: 'repo'
 				  ! Missing required token scopes: 'read:org'
-				  - To request missing scopes, run: gh auth refresh -h github.com
+				  - To request missing scopes, run: gm auth refresh -h github.com
 
 				ghe.io
 				  ✓ Logged in to ghe.io account monalisa-ghe-2 (GH_ENTERPRISE_TOKEN)
@@ -664,8 +664,8 @@ func Test_statusRun(t *testing.T) {
 				  X Failed to log in to ghe.io account monalisa-ghe (GH_CONFIG_DIR/hosts.yml)
 				  - Active account: false
 				  - The token in GH_CONFIG_DIR/hosts.yml is invalid.
-				  - To re-authenticate, run: gh auth refresh -h ghe.io
-				  - To forget about this account, run: gh auth logout -h ghe.io -u monalisa-ghe
+				  - To re-authenticate, run: gm auth refresh -h ghe.io
+				  - To forget about this account, run: gm auth logout -h ghe.io -u monalisa-ghe
 			`),
 		},
 		{
@@ -673,7 +673,7 @@ func Test_statusRun(t *testing.T) {
 			opts: StatusOptions{
 				Active: true,
 			},
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				login(t, c, "github.com", "monalisa", "gho_abc123", "https")
 				login(t, c, "github.com", "monalisa-2", "gho_abc123", "https")
 			},
@@ -694,7 +694,7 @@ func Test_statusRun(t *testing.T) {
 			opts: StatusOptions{
 				Active: true,
 			},
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				login(t, c, "github.com", "monalisa", "gho_abc123", "https")
 				login(t, c, "github.com", "monalisa-2", "gho_abc123", "https")
 				login(t, c, "ghe.io", "monalisa-ghe", "gho_abc123", "ssh")
@@ -727,7 +727,7 @@ func Test_statusRun(t *testing.T) {
 			opts: StatusOptions{
 				Active: true,
 			},
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				login(t, c, "github.com", "monalisa", "gho_abc123", "https")
 				login(t, c, "github.com", "monalisa-2", "gho_abc123", "https")
 				login(t, c, "ghe.io", "monalisa-ghe", "gho_abc123", "ssh")
@@ -752,8 +752,8 @@ func Test_statusRun(t *testing.T) {
 				  X Failed to log in to ghe.io account monalisa-ghe-2 (GH_CONFIG_DIR/hosts.yml)
 				  - Active account: true
 				  - The token in GH_CONFIG_DIR/hosts.yml is invalid.
-				  - To re-authenticate, run: gh auth refresh -h ghe.io
-				  - To forget about this account, run: gh auth logout -h ghe.io -u monalisa-ghe-2
+				  - To re-authenticate, run: gm auth refresh -h ghe.io
+				  - To forget about this account, run: gm auth logout -h ghe.io -u monalisa-ghe-2
 			`),
 		},
 		{
@@ -761,7 +761,7 @@ func Test_statusRun(t *testing.T) {
 			opts:       StatusOptions{},
 			jsonFields: []string{"hosts"},
 			wantOut:    "{\"hosts\":{}}\n",
-			wantErrOut: "You are not logged into any GitHub hosts. To log in, run: gh auth login\n",
+			wantErrOut: "You are not logged into any GitHub hosts. To log in, run: gm auth login\n",
 			wantErr:    nil, // should not return error in machine-readable mode
 		},
 		{
@@ -770,7 +770,7 @@ func Test_statusRun(t *testing.T) {
 				Hostname: "foo.com",
 			},
 			jsonFields: []string{"hosts"},
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				login(t, c, "github.com", "monalisa", "gho_abc123", "https")
 			},
 			wantOut:    "{\"hosts\":{}}\n",
@@ -781,7 +781,7 @@ func Test_statusRun(t *testing.T) {
 			name:       "json, all valid tokens",
 			opts:       StatusOptions{},
 			jsonFields: []string{"hosts"},
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				login(t, c, "github.com", "monalisa", "gho_abc123", "https")
 				login(t, c, "github.com", "monalisa2", "gho_abc123", "https")
 				login(t, c, "ghe.io", "monalisa-ghe", "gho_abc123", "https")
@@ -806,11 +806,11 @@ func Test_statusRun(t *testing.T) {
 			name:       "json, refreshable token",
 			opts:       StatusOptions{},
 			jsonFields: []string{"hosts"},
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				future := time.Date(2099, 1, 2, 3, 4, 5, 0, time.UTC)
 				rtFuture := time.Date(2099, 6, 7, 8, 9, 10, 0, time.UTC)
 				authCfg := c.Authentication().(*config.AuthConfig)
-				_, err := authCfg.LoginRefreshable("github.com", "monalisa", gh.Credential{
+				_, err := authCfg.LoginRefreshable("github.com", "monalisa", gm.Credential{
 					Token:                 "gho_abc123",
 					RefreshToken:          "ghr_abc",
 					ExpiresAt:             &future,
@@ -829,7 +829,7 @@ func Test_statusRun(t *testing.T) {
 			name:       "json, refreshable token with unknown refresh token expiry",
 			opts:       StatusOptions{},
 			jsonFields: []string{"hosts"},
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				future := time.Date(2099, 1, 2, 3, 4, 5, 0, time.UTC)
 				loginRefreshable(t, c, "github.com", "monalisa", "gho_abc123", "ghr_abc", &future, nil)
 			},
@@ -846,7 +846,7 @@ func Test_statusRun(t *testing.T) {
 				Hostname: "github.com",
 			},
 			jsonFields: []string{"hosts"},
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				login(t, c, "github.com", "monalisa", "gho_abc123", "https")
 				login(t, c, "github.com", "monalisa2", "gho_abc123", "https")
 				login(t, c, "ghe.io", "monalisa-ghe", "gho_abc123", "https")
@@ -868,7 +868,7 @@ func Test_statusRun(t *testing.T) {
 				Active: true,
 			},
 			jsonFields: []string{"hosts"},
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				login(t, c, "github.com", "monalisa", "gho_abc123", "https")
 				login(t, c, "github.com", "monalisa2", "gho_abc123", "https")
 				login(t, c, "ghe.io", "monalisa-ghe", "gho_abc123", "https")
@@ -903,7 +903,7 @@ func Test_statusRun(t *testing.T) {
 			name:       "json, bad token",
 			opts:       StatusOptions{},
 			jsonFields: []string{"hosts"},
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				login(t, c, "ghe.io", "monalisa-ghe", "gho_abc123", "https")
 			},
 			httpStubs: func(reg *httpmock.Registry) {
@@ -933,7 +933,7 @@ func Test_statusRun(t *testing.T) {
 				Hostname: "github.com",
 			},
 			jsonFields: []string{"hosts"},
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				login(t, c, "github.com", "monalisa", "abc123", "https")
 			},
 			httpStubs: func(reg *httpmock.Registry) {
@@ -951,12 +951,12 @@ func Test_statusRun(t *testing.T) {
 				Hostname: "github.com",
 			},
 			jsonFields: []string{"hosts"},
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				past := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
 				loginRefreshable(t, c, "github.com", "monalisa", "gho_stale", "ghr_abc", &past, nil)
 				setRefresher(t, c, &ghmock.TokenRefresherMock{
-					RefreshFunc: func(string, string) (gh.RefreshableCredential, error) {
-						return gh.RefreshableCredential{}, fmt.Errorf("server rejected token: %w", gh.ErrRefreshTokenInvalid)
+					RefreshFunc: func(string, string) (gm.RefreshableCredential, error) {
+						return gm.RefreshableCredential{}, fmt.Errorf("server rejected token: %w", gm.ErrRefreshTokenInvalid)
 					},
 				})
 			},
@@ -970,7 +970,7 @@ func Test_statusRun(t *testing.T) {
 				ShowToken: true,
 			},
 			jsonFields: []string{"hosts"},
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				login(t, c, "github.com", "monalisa", "abc123", "https")
 			},
 			httpStubs: func(reg *httpmock.Registry) {
@@ -999,7 +999,7 @@ func Test_statusRun(t *testing.T) {
 			if tt.cfgStubs != nil {
 				tt.cfgStubs(t, cfg)
 			}
-			tt.opts.Config = func() (gh.Config, error) {
+			tt.opts.Config = func() (gm.Config, error) {
 				return cfg, nil
 			}
 
@@ -1038,16 +1038,16 @@ func Test_statusRun(t *testing.T) {
 	}
 }
 
-func login(t *testing.T, c gh.Config, hostname, username, token, protocol string) {
+func login(t *testing.T, c gm.Config, hostname, username, token, protocol string) {
 	t.Helper()
 	_, err := c.Authentication().Login(hostname, username, token, protocol, false)
 	require.NoError(t, err)
 }
 
-func loginRefreshable(t *testing.T, c gh.Config, hostname, username, accessToken, refreshToken string, expiresAt, refreshTokenExpiresAt *time.Time) {
+func loginRefreshable(t *testing.T, c gm.Config, hostname, username, accessToken, refreshToken string, expiresAt, refreshTokenExpiresAt *time.Time) {
 	t.Helper()
 	authCfg := c.Authentication().(*config.AuthConfig)
-	_, err := authCfg.LoginRefreshable(hostname, username, gh.Credential{
+	_, err := authCfg.LoginRefreshable(hostname, username, gm.Credential{
 		Token:                 accessToken,
 		RefreshToken:          refreshToken,
 		ExpiresAt:             expiresAt,
@@ -1056,7 +1056,7 @@ func loginRefreshable(t *testing.T, c gh.Config, hostname, username, accessToken
 	require.NoError(t, err)
 }
 
-func setRefresher(t *testing.T, c gh.Config, r gh.TokenRefresher) {
+func setRefresher(t *testing.T, c gm.Config, r gm.TokenRefresher) {
 	t.Helper()
 	c.Authentication().(*config.AuthConfig).SetTokenRefresher(r)
 }

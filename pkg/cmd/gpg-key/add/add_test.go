@@ -8,7 +8,7 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/httpmock"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/stretchr/testify/assert"
@@ -152,7 +152,7 @@ func Test_runAdd(t *testing.T) {
 			wantStderr: heredoc.Doc(`
 				X Error: the GPG key you are trying to upload might not be in ASCII-armored format.
 				Find your GPG key ID with:    gpg --list-keys
-				Then add it to your account:  gpg --armor --export <ID> | gh gpg-key add -
+				Then add it to your account:  gpg --armor --export <ID> | gm gpg-key add -
 			`),
 			wantErrMsg: "SilentError",
 			opts:       AddOptions{KeyFile: "-"},
@@ -203,7 +203,7 @@ func Test_runAdd(t *testing.T) {
 		if tt.httpStubs != nil {
 			tt.httpStubs(reg)
 		}
-		tt.opts.Config = func() (gh.Config, error) {
+		tt.opts.Config = func() (gm.Config, error) {
 			return config.NewMockConfig(), nil
 		}
 

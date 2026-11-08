@@ -2,7 +2,7 @@
 
 package debug
 
-// Enabled reports whether gh was built with the ghdebug build tag.
+// Enabled reports whether gm was built with the ghdebug build tag.
 const Enabled = false
 
 // Config reads internal debug overrides from the environment.

@@ -455,7 +455,7 @@ func Test_deleteRun(t *testing.T) {
 			opts:                 &DeleteOptions{RepoArg: "OWNER/REPO", Confirmed: true},
 			wantErr:              true,
 			errMsg:               "HTTP 404: Not Found (https://api.github.com/repos/OWNER/REPO)",
-			wantScopesSuggestion: `This API operation needs the "delete_repo" scope. To request it, run:  gh auth refresh -h github.com -s delete_repo`,
+			wantScopesSuggestion: `This API operation needs the "delete_repo" scope. To request it, run:  gm auth refresh -h github.com -s delete_repo`,
 			httpStubs: func(reg *httpmock.Registry) {
 				reg.Register(
 					httpmock.REST("GET", "repos/OWNER/REPO"),

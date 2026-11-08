@@ -14,19 +14,19 @@ func Test_run(t *testing.T) {
 		t.Fatalf("got error: %v", err)
 	}
 
-	manPage, err := os.ReadFile(dir + "/gh-issue-create.1")
+	manPage, err := os.ReadFile(dir + "/gm-issue-create.1")
 	if err != nil {
-		t.Fatalf("error reading `gh-issue-create.1`: %v", err)
+		t.Fatalf("error reading `gm-issue-create.1`: %v", err)
 	}
-	if !strings.Contains(string(manPage), `\fBgh issue create`) {
+	if !strings.Contains(string(manPage), `\fBgm issue create`) {
 		t.Fatal("man page corrupted")
 	}
 
-	markdownPage, err := os.ReadFile(dir + "/gh_issue_create.md")
+	markdownPage, err := os.ReadFile(dir + "/gm_issue_create.md")
 	if err != nil {
-		t.Fatalf("error reading `gh_issue_create.md`: %v", err)
+		t.Fatalf("error reading `gm_issue_create.md`: %v", err)
 	}
-	if !strings.Contains(string(markdownPage), `## gh issue create`) {
+	if !strings.Contains(string(markdownPage), `## gm issue create`) {
 		t.Fatal("markdown page corrupted")
 	}
 }

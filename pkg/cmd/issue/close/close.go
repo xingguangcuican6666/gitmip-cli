@@ -38,16 +38,16 @@ func NewCmdClose(f *cmdutil.Factory, runF func(*CloseOptions) error) *cobra.Comm
 		Short: "Close issue",
 		Example: heredoc.Doc(`
 			# Close issue
-			$ gh issue close 123
+			$ gm issue close 123
 
 			# Close issue and add a closing comment
-			$ gh issue close 123 --comment "Closing this issue"
+			$ gm issue close 123 --comment "Closing this issue"
 
 			# Close issue as a duplicate of issue #456
-			$ gh issue close 123 --duplicate-of 456
+			$ gm issue close 123 --duplicate-of 456
 
 			# Close issue as not planned
-			$ gh issue close 123 --reason "not planned"
+			$ gm issue close 123 --reason "not planned"
 		`),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

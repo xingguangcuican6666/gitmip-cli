@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/spf13/cobra"
@@ -16,7 +16,7 @@ import (
 
 type AddOptions struct {
 	IO         *iostreams.IOStreams
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 	HTTPClient func() (*http.Client, error)
 
 	KeyFile string
@@ -86,7 +86,7 @@ func runAdd(opts *AddOptions) error {
 		cs := opts.IO.ColorScheme()
 		if errors.Is(err, errScopesMissing) {
 			fmt.Fprint(opts.IO.ErrOut, "Error: insufficient OAuth scopes to list GPG keys\n")
-			fmt.Fprintf(opts.IO.ErrOut, "Run the following to grant scopes: %s\n", cs.Bold("gh auth refresh -s write:gpg_key"))
+			fmt.Fprintf(opts.IO.ErrOut, "Run the following to grant scopes: %s\n", cs.Bold("gm auth refresh -s write:gpg_key"))
 			return cmdutil.SilentError
 		}
 		if errors.Is(err, errDuplicateKey) {
@@ -98,7 +98,7 @@ func runAdd(opts *AddOptions) error {
 				%s Error: the GPG key you are trying to upload might not be in ASCII-armored format.
 				Find your GPG key ID with:    %s
 				Then add it to your account:  %s
-			`, cs.FailureIcon(), cs.Bold("gpg --list-keys"), cs.Bold("gpg --armor --export <ID> | gh gpg-key add -")))
+			`, cs.FailureIcon(), cs.Bold("gpg --list-keys"), cs.Bold("gpg --armor --export <ID> | gm gpg-key add -")))
 			return cmdutil.SilentError
 		}
 		return err

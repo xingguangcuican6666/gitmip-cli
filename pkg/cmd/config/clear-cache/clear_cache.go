@@ -27,7 +27,7 @@ func NewCmdConfigClearCache(f *cmdutil.Factory, runF func(*ClearCacheOptions) er
 		Short: "Clear the cli cache",
 		Example: heredoc.Doc(`
 			# Clear the cli cache
-			$ gh config clear-cache
+			$ gm config clear-cache
 		`),
 		Args: cobra.ExactArgs(0),
 		RunE: func(_ *cobra.Command, _ []string) error {

@@ -12,8 +12,8 @@ import (
 	"github.com/cli/cli/v2/internal/authflow"
 	"github.com/cli/cli/v2/internal/browser"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
+	"github.com/cli/cli/v2/internal/gm"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/internal/run"
 	"github.com/cli/cli/v2/internal/telemetry"
@@ -35,7 +35,7 @@ func (c tinyConfig) Login(host, username, token, gitProtocol string, encrypt boo
 	return false, nil
 }
 
-func (c tinyConfig) LoginRefreshable(host, username string, credential gh.Credential, gitProtocol string, encrypt bool) (bool, error) {
+func (c tinyConfig) LoginRefreshable(host, username string, credential gm.Credential, gitProtocol string, encrypt bool) (bool, error) {
 	c[fmt.Sprintf("%s:%s", host, "user")] = username
 	c[fmt.Sprintf("%s:%s", host, "oauth_token")] = credential.Token
 	c[fmt.Sprintf("%s:%s", host, "refresh_token")] = credential.RefreshToken
@@ -54,7 +54,7 @@ func (failingStorageConfig) Login(string, string, string, string, bool) (bool, e
 	return false, errors.New("storage failed")
 }
 
-func (failingStorageConfig) LoginRefreshable(string, string, gh.Credential, string, bool) (bool, error) {
+func (failingStorageConfig) LoginRefreshable(string, string, gm.Credential, string, bool) (bool, error) {
 	return false, errors.New("storage failed")
 }
 
@@ -239,7 +239,7 @@ func TestLogin(t *testing.T) {
 				assert.Equal(t, heredoc.Docf(`
 				Tip: you can generate a Personal Access Token here https://example.com/settings/tokens
 				The minimum required scopes are 'repo', 'read:org', 'admin:public_key'.
-				- gh config set -h example.com git_protocol ssh
+				- gm config set -h example.com git_protocol ssh
 				✓ Configured git protocol
 				✓ Uploaded the SSH key to your GitHub account: %s
 				✓ Logged in as monalisa
@@ -319,7 +319,7 @@ func TestLogin(t *testing.T) {
 				assert.Equal(t, heredoc.Docf(`
 				Tip: you can generate a Personal Access Token here https://example.com/settings/tokens
 				The minimum required scopes are 'repo', 'read:org', 'admin:public_key'.
-				- gh config set -h example.com git_protocol ssh
+				- gm config set -h example.com git_protocol ssh
 				✓ Configured git protocol
 				✓ Uploaded the SSH key to your GitHub account: %s
 				✓ Logged in as monalisa
@@ -362,7 +362,7 @@ func TestLogin(t *testing.T) {
 			stderr: heredoc.Doc(`
 				Tip: you can generate a Personal Access Token here https://example.com/settings/tokens
 				The minimum required scopes are 'repo', 'read:org'.
-				- gh config set -h example.com git_protocol ssh
+				- gm config set -h example.com git_protocol ssh
 				✓ Configured git protocol
 				✓ Logged in as monalisa
 			`),
@@ -380,7 +380,7 @@ func TestLogin(t *testing.T) {
 					return &authflow.AuthResult{
 						Token:       "gho_access",
 						Username:    "monalisa",
-						Refreshable: &gh.Credential{Token: "gho_access", RefreshToken: "ghr_refresh"},
+						Refreshable: &gm.Credential{Token: "gho_access", RefreshToken: "ghr_refresh"},
 					}, nil
 				},
 			},
@@ -407,7 +407,7 @@ func TestLogin(t *testing.T) {
 					return &authflow.AuthResult{
 						Token:       "gho_access",
 						Username:    "monalisa",
-						Refreshable: &gh.Credential{Token: "gho_access", RefreshToken: "ghr_refresh"},
+						Refreshable: &gm.Credential{Token: "gho_access", RefreshToken: "ghr_refresh"},
 					}, nil
 				},
 			},
@@ -483,7 +483,7 @@ func TestLogin(t *testing.T) {
 					return &authflow.AuthResult{
 						Token:       "gho_access",
 						Username:    "monalisa",
-						Refreshable: &gh.Credential{Token: "gho_access", RefreshToken: "ghr_refresh"},
+						Refreshable: &gm.Credential{Token: "gho_access", RefreshToken: "ghr_refresh"},
 					}, nil
 				},
 			},
@@ -524,7 +524,7 @@ func TestLogin(t *testing.T) {
 					return &authflow.AuthResult{
 						Token:       "gho_access",
 						Username:    "monalisa",
-						Refreshable: &gh.Credential{Token: "gho_access", RefreshToken: "ghr_refresh"},
+						Refreshable: &gm.Credential{Token: "gho_access", RefreshToken: "ghr_refresh"},
 					}, nil
 				},
 			},
@@ -559,7 +559,7 @@ func TestLogin(t *testing.T) {
 				// Helper detection now runs for every sign-in, including the non-interactive and SSH cases in this
 				// table, so provide a fake helper config to keep the read hermetic instead of shelling out to git.
 				HelperConfig: &gitcredentials.FakeHelperConfig{
-					SelfExecutablePath: "/path/to/gh",
+					SelfExecutablePath: "/path/to/gm",
 					Helpers:            map[string]gitcredentials.Helper{},
 				},
 			}
@@ -594,7 +594,7 @@ func TestAuthenticatingGitCredentials(t *testing.T) {
 	// Given we have no host or global credential helpers configured
 	// And given they have chosen https as their git protocol
 	// When they choose to authenticate git with their GitHub credentials
-	// Then gh is configured as their credential helper for that host
+	// Then gm is configured as their credential helper for that host
 	ios, _, _, _ := iostreams.Test()
 
 	reg := &httpmock.Registry{}
@@ -631,10 +631,10 @@ func TestAuthenticatingGitCredentials(t *testing.T) {
 				},
 			},
 			HelperConfig: &gitcredentials.FakeHelperConfig{
-				SelfExecutablePath: "/path/to/gh",
+				SelfExecutablePath: "/path/to/gm",
 				Helpers:            map[string]gitcredentials.Helper{},
 			},
-			// Updater not required for this test as we will be setting gh as the helper
+			// Updater not required for this test as we will be setting gm as the helper
 		},
 	}
 
@@ -642,7 +642,7 @@ func TestAuthenticatingGitCredentials(t *testing.T) {
 
 	helper, err := opts.CredentialFlow.HelperConfig.ConfiguredHelper("example.com")
 	require.NoError(t, err)
-	require.True(t, helper.IsOurs(), "expected gh to be the configured helper")
+	require.True(t, helper.IsOurs(), "expected gm to be the configured helper")
 }
 
 func TestLogin_pastedTokenIgnoresConfiguredExpiringPreference(t *testing.T) {
@@ -689,7 +689,7 @@ func TestLogin_pastedTokenIgnoresConfiguredExpiringPreference(t *testing.T) {
 				},
 			},
 			HelperConfig: &gitcredentials.FakeHelperConfig{
-				SelfExecutablePath: "/path/to/gh",
+				SelfExecutablePath: "/path/to/gm",
 				Helpers:            map[string]gitcredentials.Helper{},
 			},
 		},
@@ -704,7 +704,7 @@ func TestLogin_pastedTokenIgnoresConfiguredExpiringPreference(t *testing.T) {
 }
 
 func TestLogin_recordsAuthTelemetry(t *testing.T) {
-	// An interactive https login to github.com that configures gh as the credential helper should record a complete
+	// An interactive https login to github.com that configures gm as the credential helper should record a complete
 	// auth_invocation event.
 	ios, _, _, _ := iostreams.Test()
 	recorder := &telemetry.InvocationRecorderSpy{}
@@ -735,7 +735,7 @@ func TestLogin_recordsAuthTelemetry(t *testing.T) {
 				},
 			},
 			HelperConfig: &gitcredentials.FakeHelperConfig{
-				SelfExecutablePath: "/path/to/gh",
+				SelfExecutablePath: "/path/to/gm",
 				Helpers:            map[string]gitcredentials.Helper{},
 			},
 		},
@@ -830,7 +830,7 @@ func TestLogin_recordsAuthTelemetryOnFailure(t *testing.T) {
 					return &authflow.AuthResult{
 						Token:       "ATOKEN",
 						Username:    "monalisa",
-						Refreshable: &gh.Credential{Token: "ATOKEN", RefreshToken: "RTOKEN"},
+						Refreshable: &gm.Credential{Token: "ATOKEN", RefreshToken: "RTOKEN"},
 					}, nil
 				},
 				CredentialFlow: &GitCredentialFlow{
@@ -840,7 +840,7 @@ func TestLogin_recordsAuthTelemetryOnFailure(t *testing.T) {
 						},
 					},
 					HelperConfig: &gitcredentials.FakeHelperConfig{
-						SelfExecutablePath: "/path/to/gh",
+						SelfExecutablePath: "/path/to/gm",
 						Helpers:            map[string]gitcredentials.Helper{},
 						ConfigureOursErr:   tt.helperErr,
 					},
@@ -890,7 +890,7 @@ func TestLogin_recordsExpiringSetupCancelled(t *testing.T) {
 				},
 			},
 			HelperConfig: &gitcredentials.FakeHelperConfig{
-				SelfExecutablePath: "/path/to/gh",
+				SelfExecutablePath: "/path/to/gm",
 				Helpers: map[string]gitcredentials.Helper{
 					"github.com": {Cmd: "osxkeychain"},
 				},
@@ -933,7 +933,7 @@ func TestLogin_doesNotRecordAuthTelemetryForEnterprise(t *testing.T) {
 				},
 			},
 			HelperConfig: &gitcredentials.FakeHelperConfig{
-				SelfExecutablePath: "/path/to/gh",
+				SelfExecutablePath: "/path/to/gm",
 				Helpers:            map[string]gitcredentials.Helper{},
 			},
 		},

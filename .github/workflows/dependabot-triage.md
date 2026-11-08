@@ -156,7 +156,7 @@ steps:
         "windows 386 1" "windows amd64 1" "windows arm64 1"; do
         # shellcheck disable=SC2086
         set -- $target
-        if ! GOOS="$1" GOARCH="$2" CGO_ENABLED="$3" go list -deps ./cmd/gh >> "$PKGS.tmp"; then
+        if ! GOOS="$1" GOARCH="$2" CGO_ENABLED="$3" go list -deps ./cmd/gm >> "$PKGS.tmp"; then
           echo "::warning::go list failed for GOOS=$1 GOARCH=$2; production package list is incomplete and will not be written."
           rm -f "$PKGS.tmp"
           exit 0

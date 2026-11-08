@@ -41,7 +41,7 @@ func NewCmdAddItem(f *cmdutil.Factory, runF func(config addItemConfig) error) *c
 		Use:   "item-add [<number>]",
 		Example: heredoc.Doc(`
 			# Add an item to monalisa's project "1"
-			$ gh project item-add 1 --owner monalisa --url https://github.com/monalisa/myproject/issues/23
+			$ gm project item-add 1 --owner monalisa --url https://github.com/monalisa/myproject/issues/23
 		`),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

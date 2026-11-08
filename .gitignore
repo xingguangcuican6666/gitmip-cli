@@ -17,7 +17,7 @@
 /build/macOS/resources
 
 # Windows resource files
-/cmd/gh/*.syso
+/cmd/gm/*.syso
 
 # Third-party licenses
 /internal/licenses/embed/*/*
@@ -40,7 +40,7 @@
 
 vendor/
 !.github/codeql/tests/**/vendor/
-/gh
+/gm
 
 # Test coverage artifacts
 coverage.out

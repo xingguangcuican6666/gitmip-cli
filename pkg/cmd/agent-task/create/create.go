@@ -11,8 +11,8 @@ import (
 	"github.com/cenkalti/backoff/v4"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/pkg/cmd/agent-task/capi"
 	"github.com/cli/cli/v2/pkg/cmd/agent-task/shared"
@@ -28,7 +28,7 @@ type CreateOptions struct {
 	IO         *iostreams.IOStreams
 	BaseRepo   func() (ghrepo.Interface, error)
 	CapiClient func() (capi.CapiClient, error)
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 
 	LogRenderer func() shared.LogRenderer
 	Sleep       func(d time.Duration)
@@ -85,28 +85,28 @@ func NewCmdCreate(f *cmdutil.Factory, runF func(*CreateOptions) error) *cobra.Co
 		},
 		Example: heredoc.Doc(`
 			# Create a task from an inline description
-			$ gh agent-task create "build me a new app"
+			$ gm agent-task create "build me a new app"
 
 			# Create a task from an inline description and follow logs
-			$ gh agent-task create "build me a new app" --follow
+			$ gm agent-task create "build me a new app" --follow
 
 			# Create a task from a file
-			$ gh agent-task create -F task-desc.md
+			$ gm agent-task create -F task-desc.md
 
 			# Create a task with problem statement from stdin
-			$ echo "build me a new app" | gh agent-task create -F -
+			$ echo "build me a new app" | gm agent-task create -F -
 
 			# Create a task with an editor
-			$ gh agent-task create
+			$ gm agent-task create
 
 			# Create a task with an editor and a file as a template
-			$ gh agent-task create -F task-desc.md
+			$ gm agent-task create -F task-desc.md
 
 			# Select a different base branch for the PR
-			$ gh agent-task create "fix errors" --base branch
+			$ gm agent-task create "fix errors" --base branch
 
 			# Create a task using the custom agent defined in '.github/agents/my-agent.md'
-			$ gh agent-task create "build me a new app" --custom-agent my-agent
+			$ gm agent-task create "build me a new app" --custom-agent my-agent
 		`),
 	}
 

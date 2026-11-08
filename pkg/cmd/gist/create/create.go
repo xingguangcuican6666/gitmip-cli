@@ -16,7 +16,7 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/browser"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/internal/text"
 	"github.com/cli/cli/v2/pkg/cmd/gist/shared"
@@ -34,7 +34,7 @@ type CreateOptions struct {
 	FilenameOverride string
 	WebMode          bool
 
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 	HttpClient func() (*http.Client, error)
 	Browser    browser.Browser
 }
@@ -60,22 +60,22 @@ func NewCmdCreate(f *cmdutil.Factory, runF func(*CreateOptions) error) *cobra.Co
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Publish file 'hello.py' as a public gist
-			$ gh gist create --public hello.py
+			$ gm gist create --public hello.py
 
 			# Create a gist with a description
-			$ gh gist create hello.py -d "my Hello-World program in Python"
+			$ gm gist create hello.py -d "my Hello-World program in Python"
 
 			# Create a gist containing several files
-			$ gh gist create hello.py world.py cool.txt
+			$ gm gist create hello.py world.py cool.txt
 
 			# Create a gist containing several files using patterns
-			$ gh gist create *.md *.txt artifact.*
+			$ gm gist create *.md *.txt artifact.*
 
 			# Read from standard input to create a gist
-			$ gh gist create -
+			$ gm gist create -
 
 			# Create a gist from output piped from another command
-			$ cat cool.txt | gh gist create
+			$ cat cool.txt | gm gist create
 		`),
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 0 {

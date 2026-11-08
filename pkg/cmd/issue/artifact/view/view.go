@@ -20,7 +20,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// ViewOptions holds the flags and dependencies of gh issue artifact view.
+// ViewOptions holds the flags and dependencies of gm issue artifact view.
 type ViewOptions struct {
 	IO       *iostreams.IOStreams
 	BaseRepo func() (ghrepo.Interface, error)
@@ -37,7 +37,7 @@ type ViewOptions struct {
 	WebMode bool
 }
 
-// NewCmdView creates the gh issue artifact view command.
+// NewCmdView creates the gm issue artifact view command.
 func NewCmdView(f *cmdutil.Factory, runF func(*ViewOptions) error) *cobra.Command {
 	opts := &ViewOptions{
 		IO:      f.IOStreams,
@@ -62,19 +62,19 @@ func NewCmdView(f *cmdutil.Factory, runF func(*ViewOptions) error) *cobra.Comman
 		`, "`"),
 		Example: heredoc.Doc(`
 			# View artifact 2 on issue 142
-			$ gh issue artifact view 142 2
+			$ gm issue artifact view 142 2
 
 			# View an earlier version
-			$ gh issue artifact view 142 2 --version 5
+			$ gm issue artifact view 142 2 --version 5
 
 			# View an artifact by its URL
-			$ gh issue artifact view https://github.com/monalisa/monas-cafe/issues/142/artifacts/3
+			$ gm issue artifact view https://github.com/monalisa/monas-cafe/issues/142/artifacts/3
 
 			# Open a link artifact in the browser
-			$ gh issue artifact view 142 3 --web
+			$ gm issue artifact view 142 3 --web
 
 			# Print an artifact's body
-			$ gh issue artifact view 142 2 --json body --jq .body
+			$ gm issue artifact view 142 2 --json body --jq .body
 		`),
 		Args: cmdutil.RangeArgs(1, 2, shared.MissingArtifactMessage),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -162,7 +162,7 @@ func viewRun(opts *ViewOptions) error {
 }
 
 // openInBrowser opens a document's page on GitHub, or a link's URL. The page
-// comes from the API, so the message shows it like gh issue view --web does.
+// comes from the API, so the message shows it like gm issue view --web does.
 // A link's URL is anything its author saved, so only an http(s) URL opens,
 // and the message shows the whole URL, where text.DisplayURL would hide its
 // port, query and fragment.
@@ -183,7 +183,7 @@ func openInBrowser(opts *ViewOptions, a client.Artifact) error {
 }
 
 // printRawArtifact prints key lines in a fixed order, then the body after a
-// "--" line, like gh issue view. Null values print as empty fields, so every
+// "--" line, like gm issue view. Null values print as empty fields, so every
 // artifact has the same lines. An earlier version replaces the name, version,
 // editor and body, while the creator and URL still describe the artifact.
 func printRawArtifact(out io.Writer, a *client.ArtifactWithVersions, viewing *client.Version) {
@@ -229,7 +229,7 @@ func printHumanArtifact(opts *ViewOptions, repo ghrepo.Interface, a *client.Arti
 	case client.TypeLink:
 		fmt.Fprintf(out, "\n  %s\n\n", strings.TrimSpace(body))
 	case client.TypeEmbeddedHTML:
-		// gh never renders HTML, so the source prints as stored, the way gh
+		// gm never renders HTML, so the source prints as stored, the way gm
 		// gist view prints a file that isn't Markdown. The API client has
 		// already turned any escape sequences into caret notation, so the
 		// source can't control the terminal.
@@ -316,7 +316,7 @@ func printEditHistory(ios *iostreams.IOStreams, now time.Time, versions []client
 }
 
 // displayName returns a user's login for the terminal. A null user shows as
-// ghost, like a deleted user in gh pr view, so callers use it only when the
+// ghost, like a deleted user in gm pr view, so callers use it only when the
 // user's action has a time.
 func displayName(u *client.Actor) string {
 	if u == nil {

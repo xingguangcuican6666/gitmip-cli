@@ -474,7 +474,7 @@ jobs:
 			wantOut: heredoc.Doc(`
 				✓ Created workflow_dispatch event for workflow.yml at trunk
 
-				To see runs for this workflow, try: gh run list --workflow="workflow.yml"
+				To see runs for this workflow, try: gm run list --workflow="workflow.yml"
 			`),
 		},
 		{
@@ -497,8 +497,8 @@ jobs:
 				✓ Created workflow_dispatch event for workflow.yml at trunk
 				https://github.com/OWNER/REPO/actions/runs/6789
 
-				To see the created workflow run, try: gh run view 6789
-				To see runs for this workflow, try: gh run list --workflow="workflow.yml"
+				To see the created workflow run, try: gm run view 6789
+				To see runs for this workflow, try: gm run list --workflow="workflow.yml"
 			`),
 		},
 		{
@@ -594,7 +594,7 @@ jobs:
 			wantOut: heredoc.Doc(`
 				✓ Created workflow_dispatch event for workflow.yml at good-branch
 
-				To see runs for this workflow, try: gh run list --workflow="workflow.yml"
+				To see runs for this workflow, try: gm run list --workflow="workflow.yml"
 			`),
 		},
 		{
@@ -618,8 +618,8 @@ jobs:
 				✓ Created workflow_dispatch event for workflow.yml at good-branch
 				https://github.com/OWNER/REPO/actions/runs/6789
 
-				To see the created workflow run, try: gh run view 6789
-				To see runs for this workflow, try: gh run list --workflow="workflow.yml"
+				To see the created workflow run, try: gm run view 6789
+				To see runs for this workflow, try: gm run list --workflow="workflow.yml"
 			`),
 		},
 		{
@@ -784,7 +784,7 @@ jobs:
 			wantOut: heredoc.Doc(`
 				✓ Created workflow_dispatch event for minimal.yml at trunk
 
-				To see runs for this workflow, try: gh run list --workflow="minimal.yml"
+				To see runs for this workflow, try: gm run list --workflow="minimal.yml"
 			`),
 		},
 		{
@@ -834,8 +834,8 @@ jobs:
 				✓ Created workflow_dispatch event for minimal.yml at trunk
 				https://github.com/OWNER/REPO/actions/runs/6789
 
-				To see the created workflow run, try: gh run view 6789
-				To see runs for this workflow, try: gh run list --workflow="minimal.yml"
+				To see the created workflow run, try: gm run view 6789
+				To see runs for this workflow, try: gm run list --workflow="minimal.yml"
 			`),
 		},
 		{
@@ -890,7 +890,7 @@ jobs:
 			wantOut: heredoc.Doc(`
 				✓ Created workflow_dispatch event for workflow.yml at trunk
 
-				To see runs for this workflow, try: gh run list --workflow="workflow.yml"
+				To see runs for this workflow, try: gm run list --workflow="workflow.yml"
 			`),
 		},
 		{
@@ -949,8 +949,8 @@ jobs:
 				✓ Created workflow_dispatch event for workflow.yml at trunk
 				https://github.com/OWNER/REPO/actions/runs/6789
 
-				To see the created workflow run, try: gh run view 6789
-				To see runs for this workflow, try: gh run list --workflow="workflow.yml"
+				To see the created workflow run, try: gm run view 6789
+				To see runs for this workflow, try: gm run list --workflow="workflow.yml"
 			`),
 		},
 		{
@@ -1006,7 +1006,7 @@ jobs:
 			wantOut: heredoc.Doc(`
 				✓ Created workflow_dispatch event for workflow.yml at trunk
 
-				To see runs for this workflow, try: gh run list --workflow="workflow.yml"
+				To see runs for this workflow, try: gm run list --workflow="workflow.yml"
 			`),
 		},
 		{
@@ -1066,8 +1066,8 @@ jobs:
 				✓ Created workflow_dispatch event for workflow.yml at trunk
 				https://github.com/OWNER/REPO/actions/runs/6789
 
-				To see the created workflow run, try: gh run view 6789
-				To see runs for this workflow, try: gh run list --workflow="workflow.yml"
+				To see the created workflow run, try: gm run view 6789
+				To see runs for this workflow, try: gm run list --workflow="workflow.yml"
 			`),
 		},
 		{

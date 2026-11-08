@@ -14,9 +14,9 @@ import (
 	"github.com/cli/cli/v2/internal/authflow"
 	"github.com/cli/cli/v2/internal/browser"
 	"github.com/cli/cli/v2/internal/debug"
-	"github.com/cli/cli/v2/internal/gh"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/pkg/cmd/extension"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -26,7 +26,7 @@ import (
 var ssoHeader string
 var ssoURLRE = regexp.MustCompile(`\burl=([^;]+)`)
 
-func New(appVersion string, invokingAgent string, cfgFunc func() (gh.Config, error), ios *iostreams.IOStreams, executablePath string, telemetryDisabler ghtelemetry.Disabler) *cmdutil.Factory {
+func New(appVersion string, invokingAgent string, cfgFunc func() (gm.Config, error), ios *iostreams.IOStreams, executablePath string, telemetryDisabler ghtelemetry.Disabler) *cmdutil.Factory {
 	// Inject the OAuth token refresher into the AuthConfig so refreshable credentials can be renewed during ordinary
 	// commands. It is wrapped around cfgFunc before anything else so every consumer resolves the same refresher-aware
 	// configuration.
@@ -117,11 +117,11 @@ func BaseRepoFunc(remotesFunc func() (ghContext.Remotes, error)) func() (ghrepo.
 // upstream        https://github.com/williammartin-test-org/test-repo.git (fetch)
 // upstream        https://github.com/williammartin-test-org/test-repo.git (push)
 //
-// ➜ gh pr list
+// ➜ gm pr list
 // X No default remote repository has been set for this directory.
 //
-// please run `gh repo set-default` to select a default remote repository.
-// ➜ gh pr list | cat
+// please run `gm repo set-default` to select a default remote repository.
+// ➜ gm pr list | cat
 // 3       test    williammartin-test-org:remote-push-default-feature      OPEN    2024-12-13T10:28:40Z
 //
 // Furthermore, when repositories have been renamed on the server and not on the local git remote, this causes
@@ -144,10 +144,10 @@ func BaseRepoFunc(remotesFunc func() (ghContext.Remotes, error)) func() (ghrepo.
 // origin  https://github.com/williammartin/test-repo.git (fetch)
 // origin  https://github.com/williammartin/test-repo.git (push)
 //
-// ➜ gh pr list
+// ➜ gm pr list
 // X No default remote repository has been set for this directory.
 //
-// please run `gh repo set-default` to select a default remote repository.
+// please run `gm repo set-default` to select a default remote repository.
 //
 // If no repos are returned from the API then we return the first remote from the original list. I'm not sure
 // why we do this rather than erroring, because it seems like almost every future step is going to fail when hitting
@@ -194,7 +194,7 @@ func remotesFunc(f *cmdutil.Factory) func() (ghContext.Remotes, error) {
 	return rr.Resolver()
 }
 
-func HttpClientFunc(cfgFunc func() (gh.Config, error), ios *iostreams.IOStreams, appVersion string, invokingAgent string, telemetryDisabler ghtelemetry.Disabler) func() (*http.Client, error) {
+func HttpClientFunc(cfgFunc func() (gm.Config, error), ios *iostreams.IOStreams, appVersion string, invokingAgent string, telemetryDisabler ghtelemetry.Disabler) func() (*http.Client, error) {
 	return func() (*http.Client, error) {
 		cfg, err := cfgFunc()
 		if err != nil {
@@ -266,9 +266,9 @@ func plainHttpClientFunc(ios *iostreams.IOStreams, appVersion string, invokingAg
 // refresher uses a plain HTTP client that sets no auth headers, since the token endpoint is reached without an
 // existing token. Injection runs once because Authentication returns a single shared AuthConfig; if the plain client
 // cannot be built, injection is skipped and token refresh simply stays inapplicable rather than failing the command.
-func configWithTokenRefresher(cfgFunc func() (gh.Config, error), plainClientFunc func() (*http.Client, error)) func() (gh.Config, error) {
+func configWithTokenRefresher(cfgFunc func() (gm.Config, error), plainClientFunc func() (*http.Client, error)) func() (gm.Config, error) {
 	var once sync.Once
-	return func() (gh.Config, error) {
+	return func() (gm.Config, error) {
 		cfg, err := cfgFunc()
 		if err != nil {
 			return nil, err

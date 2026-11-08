@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmd/alias/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -129,38 +129,38 @@ func TestSetRun(t *testing.T) {
 			tty:  true,
 			opts: &SetOptions{
 				Name:      "igrep",
-				Expansion: "!gh issue list | grep",
+				Expansion: "!gm issue list | grep",
 			},
-			wantExpansion: "!gh issue list | grep",
-			wantStderr:    "- Creating alias for igrep: !gh issue list | grep\n✓ Added alias igrep\n",
+			wantExpansion: "!gm issue list | grep",
+			wantStderr:    "- Creating alias for igrep: !gm issue list | grep\n✓ Added alias igrep\n",
 		},
 		{
 			name: "creates shell alias",
 			opts: &SetOptions{
 				Name:      "igrep",
-				Expansion: "!gh issue list | grep",
+				Expansion: "!gm issue list | grep",
 			},
-			wantExpansion: "!gh issue list | grep",
+			wantExpansion: "!gm issue list | grep",
 		},
 		{
 			name: "creates shell alias using flag tty",
 			tty:  true,
 			opts: &SetOptions{
 				Name:      "igrep",
-				Expansion: "gh issue list | grep",
+				Expansion: "gm issue list | grep",
 				IsShell:   true,
 			},
-			wantExpansion: "!gh issue list | grep",
-			wantStderr:    "- Creating alias for igrep: !gh issue list | grep\n✓ Added alias igrep\n",
+			wantExpansion: "!gm issue list | grep",
+			wantStderr:    "- Creating alias for igrep: !gm issue list | grep\n✓ Added alias igrep\n",
 		},
 		{
 			name: "creates shell alias using flag",
 			opts: &SetOptions{
 				Name:      "igrep",
-				Expansion: "gh issue list | grep",
+				Expansion: "gm issue list | grep",
 				IsShell:   true,
 			},
-			wantExpansion: "!gh issue list | grep",
+			wantExpansion: "!gm issue list | grep",
 		},
 		{
 			name: "creates alias where expansion has args tty",
@@ -247,7 +247,7 @@ func TestSetRun(t *testing.T) {
 				Name:      "foo",
 				Expansion: "baz",
 			},
-			wantErrMsg: "X Could not create alias foo: expansion does not correspond to a gh command, extension, or alias",
+			wantErrMsg: "X Could not create alias foo: expansion does not correspond to a gm command, extension, or alias",
 			wantStderr: "- Creating alias for foo: baz\n",
 		},
 		{
@@ -256,7 +256,7 @@ func TestSetRun(t *testing.T) {
 				Name:      "foo",
 				Expansion: "baz",
 			},
-			wantErrMsg: "X Could not create alias foo: expansion does not correspond to a gh command, extension, or alias",
+			wantErrMsg: "X Could not create alias foo: expansion does not correspond to a gm command, extension, or alias",
 		},
 	}
 	for _, tt := range tests {
@@ -285,7 +285,7 @@ func TestSetRun(t *testing.T) {
 			cfg.WriteFunc = func() error {
 				return nil
 			}
-			tt.opts.Config = func() (gh.Config, error) {
+			tt.opts.Config = func() (gm.Config, error) {
 				return cfg, nil
 			}
 

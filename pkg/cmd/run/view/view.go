@@ -115,10 +115,10 @@ func NewCmdView(f *cmdutil.Factory, runF func(*ViewOptions) error) *cobra.Comman
 		Long: heredoc.Docf(`
 			View a summary of a workflow run.
 
-			Due to platform limitations, %[1]sgh%[1]s may not always be able to associate jobs with their
+			Due to platform limitations, %[1]sgm%[1]s may not always be able to associate jobs with their
 			corresponding logs when using the primary method of fetching logs in zip format.
 
-			In such cases, %[1]sgh%[1]s will attempt to fetch logs for each job individually via the API.
+			In such cases, %[1]sgm%[1]s will attempt to fetch logs for each job individually via the API.
 			This fallback is slower and more resource-intensive. If more than 25 job logs are missing,
 			the operation will fail with an error.
 
@@ -129,22 +129,22 @@ func NewCmdView(f *cmdutil.Factory, runF func(*ViewOptions) error) *cobra.Comman
 		Args: cobra.MaximumNArgs(1),
 		Example: heredoc.Doc(`
 			# Interactively select a run to view, optionally selecting a single job
-			$ gh run view
+			$ gm run view
 
 			# View a specific run
-			$ gh run view 12345
+			$ gm run view 12345
 
 			# View a specific run with specific attempt number
-			$ gh run view 12345 --attempt 3
+			$ gm run view 12345 --attempt 3
 
 			# View a specific job within a run
-			$ gh run view --job 456789
+			$ gm run view --job 456789
 
 			# View the full log for a specific job
-			$ gh run view --log --job 456789
+			$ gm run view --log --job 456789
 
 			# Exit non-zero if a run failed
-			$ gh run view 0451 --exit-status && echo "run pending or passed"
+			$ gm run view 0451 --exit-status && echo "run pending or passed"
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// support `-R, --repo` override
@@ -428,11 +428,11 @@ func runView(opts *ViewOptions) error {
 
 		fmt.Fprintln(out)
 		if shared.IsFailureState(run.Conclusion) {
-			fmt.Fprintf(out, "To see what failed, try: gh run view %d --log-failed\n", run.ID)
+			fmt.Fprintf(out, "To see what failed, try: gm run view %d --log-failed\n", run.ID)
 		} else if len(jobs) == 1 {
-			fmt.Fprintf(out, "For more information about the job, try: gh run view --job=%d\n", jobs[0].ID)
+			fmt.Fprintf(out, "For more information about the job, try: gm run view --job=%d\n", jobs[0].ID)
 		} else {
-			fmt.Fprintf(out, "For more information about a job, try: gh run view --job=<job-id>\n")
+			fmt.Fprintf(out, "For more information about a job, try: gm run view --job=<job-id>\n")
 		}
 		fmt.Fprintln(out, cs.Mutedf("View this run on GitHub: %s", run.URL))
 
@@ -442,9 +442,9 @@ func runView(opts *ViewOptions) error {
 	} else {
 		fmt.Fprintln(out)
 		if shared.IsFailureState(selectedJob.Conclusion) {
-			fmt.Fprintf(out, "To see the logs for the failed steps, try: gh run view --log-failed --job=%d\n", selectedJob.ID)
+			fmt.Fprintf(out, "To see the logs for the failed steps, try: gm run view --log-failed --job=%d\n", selectedJob.ID)
 		} else {
-			fmt.Fprintf(out, "To see the full job log, try: gh run view --log --job=%d\n", selectedJob.ID)
+			fmt.Fprintf(out, "To see the full job log, try: gm run view --log --job=%d\n", selectedJob.ID)
 		}
 		fmt.Fprintln(out, cs.Mutedf("View this run on GitHub: %s", run.URL))
 

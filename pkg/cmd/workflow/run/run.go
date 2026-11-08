@@ -73,20 +73,20 @@ func NewCmdRun(f *cmdutil.Factory, runF func(*RunOptions) error) *cobra.Command 
 			The created workflow run URL will be returned if available.
 		`, "`"),
 		Example: heredoc.Doc(`
-			# Have gh prompt you for what workflow you'd like to run and interactively collect inputs
-			$ gh workflow run
+			# Have gm prompt you for what workflow you'd like to run and interactively collect inputs
+			$ gm workflow run
 
 			# Run the workflow file 'triage.yml' at the remote's default branch
-			$ gh workflow run triage.yml
+			$ gm workflow run triage.yml
 
 			# Run the workflow file 'triage.yml' at a specified ref
-			$ gh workflow run triage.yml --ref my-branch
+			$ gm workflow run triage.yml --ref my-branch
 
 			# Run the workflow file 'triage.yml' with command line inputs
-			$ gh workflow run triage.yml -f name=scully -f greeting=hello
+			$ gm workflow run triage.yml -f name=scully -f greeting=hello
 
 			# Run the workflow file 'triage.yml' with JSON via standard input
-			$ echo '{"name":"scully", "greeting":"hello"}' | gh workflow run triage.yml --json
+			$ echo '{"name":"scully", "greeting":"hello"}' | gm workflow run triage.yml --json
 		`),
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(opts.MagicFields)+len(opts.RawFields) > 0 && len(args) == 0 {
@@ -136,7 +136,7 @@ func NewCmdRun(f *cmdutil.Factory, runF func(*RunOptions) error) *cobra.Command 
 		},
 	}
 	cmd.Flags().StringVarP(&opts.Ref, "ref", "r", "", "Branch or tag name which contains the version of the workflow file you'd like to run")
-	cmd.Flags().StringArrayVarP(&opts.MagicFields, "field", "F", nil, "Add a string parameter in `key=value` format, respecting @ syntax (see \"gh help api\").")
+	cmd.Flags().StringArrayVarP(&opts.MagicFields, "field", "F", nil, "Add a string parameter in `key=value` format, respecting @ syntax (see \"gm help api\").")
 	cmd.Flags().StringArrayVarP(&opts.RawFields, "raw-field", "f", nil, "Add a string parameter in `key=value` format")
 	cmd.Flags().BoolVar(&opts.JSON, "json", false, "Read workflow inputs as JSON via STDIN")
 
@@ -145,7 +145,7 @@ func NewCmdRun(f *cmdutil.Factory, runF func(*RunOptions) error) *cobra.Command 
 	return cmd
 }
 
-// TODO copypasta from gh api
+// TODO copypasta from gm api
 func parseField(f string) (string, string, error) {
 	idx := strings.IndexRune(f, '=')
 	if idx == -1 {
@@ -154,7 +154,7 @@ func parseField(f string) (string, string, error) {
 	return f[0:idx], f[idx+1:], nil
 }
 
-// TODO MODIFIED copypasta from gh api
+// TODO MODIFIED copypasta from gm api
 func magicFieldValue(v string, opts RunOptions) (string, error) {
 	if strings.HasPrefix(v, "@") {
 		fileBytes, err := opts.IO.ReadUserFile(v[1:])
@@ -167,7 +167,7 @@ func magicFieldValue(v string, opts RunOptions) (string, error) {
 	return v, nil
 }
 
-// TODO copypasta from gh api
+// TODO copypasta from gm api
 func parseFields(opts RunOptions) (map[string]string, error) {
 	params := make(map[string]string)
 	for _, f := range opts.RawFields {
@@ -358,7 +358,7 @@ func runRun(opts *RunOptions) error {
 				fmt.Fprintln(opts.IO.Out, giteaResponse.HtmlURL)
 			}
 			if giteaResponse.WorkflowRunID != 0 {
-				fmt.Fprintf(opts.IO.Out, "\nTo view the run: %s\n", cs.Cyanf("gh run view %d", giteaResponse.WorkflowRunID))
+				fmt.Fprintf(opts.IO.Out, "\nTo view the run: %s\n", cs.Cyanf("gm run view %d", giteaResponse.WorkflowRunID))
 			}
 		}
 		return nil
@@ -419,11 +419,11 @@ func runRun(opts *RunOptions) error {
 
 		if response.WorkflowRunID != 0 {
 			fmt.Fprintf(opts.IO.Out, "To see the created workflow run, try: %s\n",
-				cs.Boldf("gh run view %d", response.WorkflowRunID))
+				cs.Boldf("gm run view %d", response.WorkflowRunID))
 		}
 
 		fmt.Fprintf(opts.IO.Out, "To see runs for this workflow, try: %s\n",
-			cs.Boldf("gh run list --workflow=%q", workflow.Base()))
+			cs.Boldf("gm run list --workflow=%q", workflow.Base()))
 	} else {
 		if response.HtmlURL != "" {
 			fmt.Fprintln(opts.IO.Out, response.HtmlURL)

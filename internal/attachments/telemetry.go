@@ -1,6 +1,6 @@
 package attachments
 
-import "github.com/cli/cli/v2/internal/gh/ghtelemetry"
+import "github.com/cli/cli/v2/internal/gm/ghtelemetry"
 
 // TelemetryEvent tracks attachment-specific facts in a pending telemetry event.
 // [ghtelemetry.Service.Finish] owns completion; later updates are ignored.

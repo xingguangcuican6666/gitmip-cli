@@ -4,7 +4,7 @@ set -euo pipefail
 # Get the root directory of the repository
 rootDir="$(git rev-parse --show-toplevel)"
 
-ghBuildPath="$rootDir/bin/gh"
+ghBuildPath="$rootDir/bin/gm"
 
 # Compute the package and attestation URLs
 labRatPackageName="sigstore"

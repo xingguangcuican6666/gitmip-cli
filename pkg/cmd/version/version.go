@@ -42,11 +42,13 @@ func format(version, buildDate string, debugBuild bool) string {
 		debugStr = " [debug build]"
 	}
 
-	return fmt.Sprintf("gh version %s%s%s\n%s\n", version, dateStr, debugStr, changelogURL(version))
+	return fmt.Sprintf("gm version %s%s%s\n%s\n", version, dateStr, debugStr, changelogURL(version))
 }
 
 func changelogURL(version string) string {
-	path := "https://github.com/cli/cli"
+	// This fork ships from its own repository, so the release link points there
+	// rather than at the upstream project it was forked from.
+	path := "https://github.com/xingguangcuican6666/gitmip-cli"
 	r := regexp.MustCompile(`^v?\d+\.\d+\.\d+(-[\w.]+)?$`)
 	if !r.MatchString(version) {
 		return fmt.Sprintf("%s/releases/latest", path)

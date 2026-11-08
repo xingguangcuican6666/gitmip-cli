@@ -20,9 +20,9 @@ import (
 	"github.com/cli/cli/v2/internal/browser"
 	"github.com/cli/cli/v2/internal/config"
 	fd "github.com/cli/cli/v2/internal/featuredetection"
-	"github.com/cli/cli/v2/internal/gh"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/internal/run"
 	"github.com/cli/cli/v2/internal/telemetry"
@@ -349,7 +349,7 @@ func TestNewCmdCreate(t *testing.T) {
 
 			f := &cmdutil.Factory{
 				IOStreams: ios,
-				Config: func() (gh.Config, error) {
+				Config: func() (gm.Config, error) {
 					if tt.config != "" {
 						return config.NewMockConfigFromString(tt.config), nil
 					}
@@ -844,7 +844,7 @@ func Test_createRun(t *testing.T) {
 				}
 			},
 			expectedOut:    "https://github.com/OWNER/REPO/pull/12\n",
-			expectedErrOut: "\nCreating pull request for monalisa:feature into master in OWNER/REPO\n\nChanged OWNER/REPO remote to \"upstream\"\nAdded monalisa/REPO as remote \"origin\"\n! Repository monalisa/REPO set as the default repository. To learn more about the default repository, run: gh repo set-default --help\n",
+			expectedErrOut: "\nCreating pull request for monalisa:feature into master in OWNER/REPO\n\nChanged OWNER/REPO remote to \"upstream\"\nAdded monalisa/REPO as remote \"origin\"\n! Repository monalisa/REPO set as the default repository. To learn more about the default repository, run: gm repo set-default --help\n",
 		},
 		{
 			name: "pushed to non base repo",
@@ -2017,7 +2017,7 @@ func Test_createRun(t *testing.T) {
 			opts.HttpClient = func() (*http.Client, error) {
 				return &http.Client{Transport: reg}, nil
 			}
-			opts.Config = func() (gh.Config, error) {
+			opts.Config = func() (gm.Config, error) {
 				return config.NewMockConfig(), nil
 			}
 			opts.Remotes = func() (context.Remotes, error) {
@@ -2047,7 +2047,7 @@ func Test_createRun(t *testing.T) {
 			// Given a pending event when operation counts are under test
 			attachmentRecorder := &telemetry.InvocationRecorderSpy{}
 			if tt.wantOperations != nil {
-				opts.AttachEvent = attachments.BeginTelemetry(attachmentRecorder, "gh test", len(opts.Assets))
+				opts.AttachEvent = attachments.BeginTelemetry(attachmentRecorder, "gm test", len(opts.Assets))
 			}
 
 			// All tests in this function use github.com behavior
@@ -2558,7 +2558,7 @@ func Test_createRun_GHES(t *testing.T) {
 			opts.HttpClient = func() (*http.Client, error) {
 				return &http.Client{Transport: reg}, nil
 			}
-			opts.Config = func() (gh.Config, error) {
+			opts.Config = func() (gm.Config, error) {
 				return config.NewMockConfig(), nil
 			}
 			opts.Remotes = func() (context.Remotes, error) {
@@ -2646,7 +2646,7 @@ func TestRemoteGuessing(t *testing.T) {
 		HttpClient: func() (*http.Client, error) {
 			return &http.Client{Transport: reg}, nil
 		},
-		Config: func() (gh.Config, error) {
+		Config: func() (gm.Config, error) {
 			return config.NewMockConfig(), nil
 		},
 		Browser:  &browser.Stub{},
@@ -2721,7 +2721,7 @@ func TestNoRepoCanBeDetermined(t *testing.T) {
 		HttpClient: func() (*http.Client, error) {
 			return &http.Client{Transport: reg}, nil
 		},
-		Config: func() (gh.Config, error) {
+		Config: func() (gm.Config, error) {
 			return config.NewMockConfig(), nil
 		},
 		Browser:  &browser.Stub{},
@@ -2775,7 +2775,7 @@ func Test_generateCompareURL(t *testing.T) {
 		ctx               CreateContext
 		state             shared.IssueMetadataState
 		httpStubs         func(*testing.T, *httpmock.Registry)
-		projectsV1Support gh.ProjectsV1Support
+		projectsV1Support gm.ProjectsV1Support
 		want              string
 		wantErr           bool
 	}{
@@ -2896,7 +2896,7 @@ func Test_generateCompareURL(t *testing.T) {
 			state: shared.IssueMetadataState{
 				ProjectTitles: []string{"ProjectTitle"},
 			},
-			projectsV1Support: gh.ProjectsV1Unsupported,
+			projectsV1Support: gm.ProjectsV1Unsupported,
 			want:              "https://github.com/OWNER/REPO/compare/main...feature?body=&expand=1&projects=OWNER%2FREPO%2F3",
 			wantErr:           false,
 		},
@@ -2958,7 +2958,7 @@ func Test_generateCompareURL(t *testing.T) {
 							} } } }
 							`))
 			},
-			projectsV1Support: gh.ProjectsV1Supported,
+			projectsV1Support: gm.ProjectsV1Supported,
 			want:              "https://github.com/OWNER/REPO/compare/main...feature?body=&expand=1&projects=OWNER%2FREPO%2F1",
 			wantErr:           false,
 		},
@@ -3229,7 +3229,7 @@ func TestProjectsV1Deprecation(t *testing.T) {
 				HttpClient: func() (*http.Client, error) {
 					return &http.Client{Transport: reg}, nil
 				},
-				Config: func() (gh.Config, error) {
+				Config: func() (gm.Config, error) {
 					return config.NewMockConfig(), nil
 				},
 				Browser:  &browser.Stub{},
@@ -3324,7 +3324,7 @@ func TestProjectsV1Deprecation(t *testing.T) {
 				HttpClient: func() (*http.Client, error) {
 					return &http.Client{Transport: reg}, nil
 				},
-				Config: func() (gh.Config, error) {
+				Config: func() (gm.Config, error) {
 					return config.NewMockConfig(), nil
 				},
 				Browser:  &browser.Stub{},

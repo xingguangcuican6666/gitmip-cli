@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/pkg/cmd/variable/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -278,7 +278,7 @@ func Test_listRun(t *testing.T) {
 			tt.opts.HttpClient = func() (*http.Client, error) {
 				return &http.Client{Transport: reg}, nil
 			}
-			tt.opts.Config = func() (gh.Config, error) {
+			tt.opts.Config = func() (gm.Config, error) {
 				return config.NewMockConfig(), nil
 			}
 			tt.opts.Now = func() time.Time {
@@ -400,7 +400,7 @@ func Test_listRun_populatesNumSelectedReposIfRequired(t *testing.T) {
 			opts.HttpClient = func() (*http.Client, error) {
 				return &http.Client{Transport: reg}, nil
 			}
-			opts.Config = func() (gh.Config, error) {
+			opts.Config = func() (gm.Config, error) {
 				return config.NewMockConfig(), nil
 			}
 			opts.Now = func() time.Time {

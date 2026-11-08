@@ -29,7 +29,7 @@ import (
 // here: a create that silently ignored them would look like it had worked.
 
 // IssueCreateGiteaInput is the set of fields Gitea's create endpoint accepts
-// that gh can fill.
+// that gm can fill.
 type IssueCreateGiteaInput struct {
 	Title       string
 	Body        string

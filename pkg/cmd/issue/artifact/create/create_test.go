@@ -12,8 +12,8 @@ import (
 
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/attachments"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/internal/telemetry"
 	"github.com/cli/cli/v2/pkg/cmd/issue/artifact/client"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -452,7 +452,7 @@ func TestNewCmdCreate(t *testing.T) {
 			wantFlagErr: true,
 		},
 		{
-			name:    "a --type gh doesn't know",
+			name:    "a --type gm doesn't know",
 			args:    "142 signin-plan.md --type bad-type",
 			wantErr: `invalid argument "bad-type" for "--type" flag: valid values are {generic|plan|embedded_html}`,
 		},
@@ -518,7 +518,7 @@ func TestNewCmdCreate(t *testing.T) {
 				gotOpts = opts
 				return nil
 			})
-			// gh issue adds -R and its hook, which replaces f.BaseRepo before RunE.
+			// gm issue adds -R and its hook, which replaces f.BaseRepo before RunE.
 			cmdutil.EnableRepoOverride(cmd, f)
 
 			argv, err := shlex.Split(tt.args)
@@ -1538,7 +1538,7 @@ func TestCreateRun(t *testing.T) {
 
 			recorder := &telemetry.InvocationRecorderSpy{}
 			if len(tt.attach) > 0 {
-				opts.AttachEvent = attachments.BeginTelemetry(recorder, "gh test", len(tt.attach))
+				opts.AttachEvent = attachments.BeginTelemetry(recorder, "gm test", len(tt.attach))
 			}
 			if opts.IssueNumber == 0 {
 				opts.IssueNumber = 142

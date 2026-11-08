@@ -2,7 +2,7 @@ package list
 
 import (
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/spf13/cobra"
@@ -10,7 +10,7 @@ import (
 )
 
 type ListOptions struct {
-	Config func() (gh.Config, error)
+	Config func() (gm.Config, error)
 	IO     *iostreams.IOStreams
 }
 
@@ -25,7 +25,7 @@ func NewCmdList(f *cmdutil.Factory, runF func(*ListOptions) error) *cobra.Comman
 		Short:   "List your aliases",
 		Aliases: []string{"ls"},
 		Long: heredoc.Doc(`
-			This command prints out all of the aliases gh is configured to use.
+			This command prints out all of the aliases gm is configured to use.
 		`),
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {

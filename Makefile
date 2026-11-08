@@ -12,14 +12,14 @@ endif
 
 ## The following tasks delegate to `script/build.go` so they can be run cross-platform.
 
-.PHONY: bin/gh$(EXE)
-bin/gh$(EXE): script/build$(EXE)
+.PHONY: bin/gm$(EXE)
+bin/gm$(EXE): script/build$(EXE)
 	@script/build$(EXE) $@
 
-# Builds bin/gh with the ghdebug build tag, which enables the GH_INTERNAL_* overrides in internal/debug.
+# Builds bin/gm with the ghdebug build tag, which enables the GH_INTERNAL_* overrides in internal/debug.
 .PHONY: debug
 debug: script/build$(EXE)
-	@GO_BUILDTAGS=ghdebug script/build$(EXE) bin/gh$(EXE)
+	@GO_BUILDTAGS=ghdebug script/build$(EXE) bin/gm$(EXE)
 
 script/build$(EXE): script/build.go
 ifeq ($(EXE),)
@@ -37,15 +37,15 @@ manpages: script/build$(EXE)
 	@$< $@
 
 .PHONY: completions
-completions: bin/gh$(EXE)
+completions: bin/gm$(EXE)
 	mkdir -p ./share/bash-completion/completions ./share/fish/vendor_completions.d ./share/zsh/site-functions ./share/zsh/vendor-completions
-	bin/gh$(EXE) completion -s bash > ./share/bash-completion/completions/gh
-	bin/gh$(EXE) completion -s fish > ./share/fish/vendor_completions.d/gh.fish
-	bin/gh$(EXE) completion -s zsh > ./share/zsh/site-functions/_gh
+	bin/gm$(EXE) completion -s bash > ./share/bash-completion/completions/gm
+	bin/gm$(EXE) completion -s fish > ./share/fish/vendor_completions.d/gm.fish
+	bin/gm$(EXE) completion -s zsh > ./share/zsh/site-functions/_gm
 	# On Debian/Ubuntu the default zsh fpath does not include /usr/share/zsh/site-functions
 	# but does include /usr/share/zsh/vendor-completions, so we ship both paths in our
 	# .deb and .rpm packages. See https://github.com/cli/cli/issues/13166
-	cp ./share/zsh/site-functions/_gh ./share/zsh/vendor-completions/_gh
+	cp ./share/zsh/site-functions/_gm ./share/zsh/vendor-completions/_gm
 
 .PHONY: lint
 lint:
@@ -93,24 +93,24 @@ datadir := ${prefix}/share
 mandir  := ${datadir}/man
 
 .PHONY: install
-install: bin/gh manpages completions
+install: bin/gm manpages completions
 	install -d ${DESTDIR}${bindir}
-	install -m755 bin/gh ${DESTDIR}${bindir}/
+	install -m755 bin/gm ${DESTDIR}${bindir}/
 	install -d ${DESTDIR}${mandir}/man1
 	install -m644 ./share/man/man1/* ${DESTDIR}${mandir}/man1/
 	install -d ${DESTDIR}${datadir}/bash-completion/completions
-	install -m644 ./share/bash-completion/completions/gh ${DESTDIR}${datadir}/bash-completion/completions/gh
+	install -m644 ./share/bash-completion/completions/gm ${DESTDIR}${datadir}/bash-completion/completions/gm
 	install -d ${DESTDIR}${datadir}/fish/vendor_completions.d
-	install -m644 ./share/fish/vendor_completions.d/gh.fish ${DESTDIR}${datadir}/fish/vendor_completions.d/gh.fish
+	install -m644 ./share/fish/vendor_completions.d/gm.fish ${DESTDIR}${datadir}/fish/vendor_completions.d/gm.fish
 	install -d ${DESTDIR}${datadir}/zsh/site-functions
-	install -m644 ./share/zsh/site-functions/_gh ${DESTDIR}${datadir}/zsh/site-functions/_gh
+	install -m644 ./share/zsh/site-functions/_gm ${DESTDIR}${datadir}/zsh/site-functions/_gm
 
 .PHONY: uninstall
 uninstall:
-	rm -f ${DESTDIR}${bindir}/gh ${DESTDIR}${mandir}/man1/gh.1 ${DESTDIR}${mandir}/man1/gh-*.1
-	rm -f ${DESTDIR}${datadir}/bash-completion/completions/gh
-	rm -f ${DESTDIR}${datadir}/fish/vendor_completions.d/gh.fish
-	rm -f ${DESTDIR}${datadir}/zsh/site-functions/_gh
+	rm -f ${DESTDIR}${bindir}/gm ${DESTDIR}${mandir}/man1/gm.1 ${DESTDIR}${mandir}/man1/gm-*.1
+	rm -f ${DESTDIR}${datadir}/bash-completion/completions/gm
+	rm -f ${DESTDIR}${datadir}/fish/vendor_completions.d/gm.fish
+	rm -f ${DESTDIR}${datadir}/zsh/site-functions/_gm
 
 .PHONY: macospkg
 macospkg: manpages completions

@@ -1,6 +1,8 @@
 # Working on GitHub CLI
 
-This repository builds `gh` (`github.com/cli/cli/v2`).
+This repository builds `gm` (`github.com/cli/cli/v2`), a fork of the GitHub
+CLI that also speaks Gitea's REST API. It ships no `gh` binary: the command was
+renamed, so new code, help text and documentation refer to `gm`.
 
 ## Before preparing an external contribution
 
@@ -73,11 +75,11 @@ contributors. They carry repository conventions, not optional suggestions.
 Run from the repository root with the toolchain declared in `go.mod`.
 
 ```sh
-make                       # Unix: bin/gh
-go run script/build.go     # Windows: bin/gh.exe
+make                       # Unix: bin/gm
+go run script/build.go     # Windows: bin/gm.exe
 ```
 
-Exercise the built binary, not an installed `gh`. Follow the shared
+Exercise the built binary, not an installed `gh` or `gm`. Follow the shared
 [local validation guide](docs/testing.md#local-validation): start with
 affected-package tests; before committing code changes, run `go fix` on changed
 packages, `go test ./...`, and `make lint`. The guide distinguishes these gates

@@ -13,7 +13,7 @@
 # The matrix is deliberately short: this instance has one runner, so every job
 # runs one after another and each extra entry is another full compile before
 # the pipeline is green. Add targets when a second runner exists.
-name: Build
+name: Build and package
 
 on:
   push:
@@ -99,19 +99,40 @@ jobs:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
         run: |
+          # The binary is gm, not gh: this fork renamed the command and does
+          # not ship a gh-named executable.
           suffix=""
           if [ "$GOOS" = "windows" ]; then
             suffix=".exe"
           fi
-          mkdir -p dist
+          version=$(git describe --tags --always)
+          pkgdir="gitmip-cli_${version}_${GOOS}_${GOARCH}"
+          mkdir -p "dist/${pkgdir}"
           go build -trimpath -buildvcs=false \
-            -ldflags "-s -w -X github.com/cli/cli/v2/internal/build.Version=$(git describe --tags --always)" \
-            -o "dist/gh_${GOOS}_${GOARCH}${suffix}" ./cmd/gh
-          ls -l dist
+            -ldflags "-s -w -X github.com/cli/cli/v2/internal/build.Version=${version}" \
+            -o "dist/${pkgdir}/gm${suffix}" ./cmd/gm
+          # Package the man pages and LICENSE alongside the binary so the
+          # archive is self-describing the way the upstream release tarballs are.
+          go run ./cmd/gen-docs --man-page --doc-path "dist/${pkgdir}/share/man/man1" || true
+          cp LICENSE "dist/${pkgdir}/" 2>/dev/null || true
 
-      - name: Upload binary
+      - name: Package archive
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          # tar.gz for every platform, Windows included: the runner image always
+          # has tar, and installing zip for one matrix entry would make the
+          # Windows package depend on a package-manager step the others do not.
+          version=$(git describe --tags --always)
+          pkgdir="gitmip-cli_${version}_${GOOS}_${GOARCH}"
+          tar -czf "dist/${pkgdir}.tar.gz" -C dist "${pkgdir}"
+          rm -rf "dist/${pkgdir}"
+          ls -l dist/
+
+      - name: Upload archive
         uses: actions/upload-artifact@v4
         with:
-          name: gh_${{ matrix.goos }}_${{ matrix.goarch }}
-          path: dist/*
+          name: gitmip-cli_${{ matrix.goos }}_${{ matrix.goarch }}
+          path: dist/*.tar.gz
           if-no-files-found: error

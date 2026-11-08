@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmd/alias/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -15,7 +15,7 @@ import (
 )
 
 type ImportOptions struct {
-	Config func() (gh.Config, error)
+	Config func() (gm.Config, error)
 	IO     *iostreams.IOStreams
 
 	Filename          string
@@ -42,23 +42,23 @@ func NewCmdImport(f *cmdutil.Factory, runF func(*ImportOptions) error) *cobra.Co
 			the following:
 
 			    bugs: issue list --label=bug
-			    igrep: '!gh issue list --label="$1" | grep "$2"'
+			    igrep: '!gm issue list --label="$1" | grep "$2"'
 			    features: |-
 			        issue list
 			        --label=enhancement
 
 			Use %[1]s-%[1]s to read aliases (in YAML format) from standard input.
 
-			The output from %[1]sgh alias list%[1]s can be used to produce a YAML file
+			The output from %[1]sgm alias list%[1]s can be used to produce a YAML file
 			containing your aliases, which you can use to import them from one machine to
-			another. Run %[1]sgh help alias list%[1]s to learn more.
+			another. Run %[1]sgm help alias list%[1]s to learn more.
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Import aliases from a file
-			$ gh alias import aliases.yml
+			$ gm alias import aliases.yml
 
 			# Import aliases from standard input
-			$ gh alias import -
+			$ gm alias import -
 		`),
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
@@ -129,7 +129,7 @@ func importRun(opts *ImportOptions) error {
 
 		if !opts.validAliasName(alias) {
 			if !existingAlias {
-				fmt.Fprintf(&msg, "%s Could not import alias %s: already a gh command or extension\n",
+				fmt.Fprintf(&msg, "%s Could not import alias %s: already a gm command or extension\n",
 					cs.FailureIcon(),
 					cs.Bold(alias),
 				)
@@ -148,7 +148,7 @@ func importRun(opts *ImportOptions) error {
 		expansion := aliasMap[alias]
 
 		if !opts.validAliasExpansion(expansion) {
-			fmt.Fprintf(&msg, "%s Could not import alias %s: expansion does not correspond to a gh command, extension, or alias\n",
+			fmt.Fprintf(&msg, "%s Could not import alias %s: expansion does not correspond to a gm command, extension, or alias\n",
 				cs.FailureIcon(),
 				cs.Bold(alias),
 			)

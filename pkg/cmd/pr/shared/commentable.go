@@ -11,9 +11,9 @@ import (
 
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/attachments"
-	"github.com/cli/cli/v2/internal/gh"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/text"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -467,7 +467,7 @@ func CommentableConfirmSubmitSurvey(p Prompt) func() (bool, error) {
 	}
 }
 
-func CommentableInteractiveEditSurvey(cf func() (gh.Config, error), io *iostreams.IOStreams) func(string) (string, error) {
+func CommentableInteractiveEditSurvey(cf func() (gm.Config, error), io *iostreams.IOStreams) func(string) (string, error) {
 	return func(initialValue string) (string, error) {
 		editorCommand, err := cmdutil.DetermineEditor(cf)
 		if err != nil {
@@ -486,7 +486,7 @@ func CommentableInteractiveCreateIfNoneSurvey(p Prompt) func() (bool, error) {
 	}
 }
 
-func CommentableEditSurvey(cf func() (gh.Config, error), io *iostreams.IOStreams) func(string) (string, error) {
+func CommentableEditSurvey(cf func() (gm.Config, error), io *iostreams.IOStreams) func(string) (string, error) {
 	return func(initialValue string) (string, error) {
 		editorCommand, err := cmdutil.DetermineEditor(cf)
 		if err != nil {

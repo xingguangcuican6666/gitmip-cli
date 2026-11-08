@@ -1,10 +1,10 @@
-// Package artifact holds gh issue artifact, the command group for the
+// Package artifact holds gm issue artifact, the command group for the
 // Markdown documents, HTML documents and links attached to an issue.
 package artifact
 
 import (
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	cmdCreate "github.com/cli/cli/v2/pkg/cmd/issue/artifact/create"
 	cmdDelete "github.com/cli/cli/v2/pkg/cmd/issue/artifact/delete"
 	cmdDownload "github.com/cli/cli/v2/pkg/cmd/issue/artifact/download"
@@ -15,8 +15,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewCmdArtifact returns the gh issue artifact command group, which is in
-// preview. It inherits -R from gh issue. telemetry records --attach use, as
+// NewCmdArtifact returns the gm issue artifact command group, which is in
+// preview. It inherits -R from gm issue. telemetry records --attach use, as
 // in the other commands that take it.
 func NewCmdArtifact(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder) *cobra.Command {
 	cmd := &cobra.Command{
@@ -26,7 +26,7 @@ func NewCmdArtifact(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder
 			Working with issue artifacts in the GitHub CLI is in preview and subject to change without notice.
 
 			Issue artifacts are Markdown documents, HTML documents and links attached to an issue.
-			They are not GitHub Actions artifacts; to download those, use %[1]sgh run download%[1]s.
+			They are not GitHub Actions artifacts; to download those, use %[1]sgm run download%[1]s.
 		`, "`"),
 	}
 

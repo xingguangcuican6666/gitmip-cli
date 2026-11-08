@@ -113,7 +113,7 @@ func issueForPullRequest(pr *api.PullRequest) *api.Issue {
 
 // requestReviewersGitea adds or removes review requests by login.
 //
-// Gitea's payload names the reviewers array and the teams array separately. gh
+// Gitea's payload names the reviewers array and the teams array separately. gm
 // cannot tell a team from a user on a Gitea host, where teams are org entities
 // the reviewer search does not return, so everything is sent as a reviewer login.
 func requestReviewersGitea(client *api.Client, repo ghrepo.Interface, number int, reviewers []string, add bool) error {

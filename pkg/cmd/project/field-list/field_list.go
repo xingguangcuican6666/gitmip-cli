@@ -33,7 +33,7 @@ func NewCmdList(f *cmdutil.Factory, runF func(config listConfig) error) *cobra.C
 		Use:   "field-list [<number>]",
 		Example: heredoc.Doc(`
 			# List fields in the current user's project "1"
-			$ gh project field-list 1 --owner "@me"
+			$ gm project field-list 1 --owner "@me"
 		`),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

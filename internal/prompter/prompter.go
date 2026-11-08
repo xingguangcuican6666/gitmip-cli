@@ -37,7 +37,7 @@ type Prompter interface {
 	// Confirm prompts the user to confirm an action.
 	Confirm(prompt string, defaultValue bool) (bool, error)
 
-	// gh specific prompts
+	// gm specific prompts
 
 	// AuthToken prompts the user to enter an authentication token.
 	AuthToken() (string, error)

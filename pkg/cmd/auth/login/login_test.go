@@ -13,7 +13,7 @@ import (
 	"github.com/cli/cli/v2/internal/authflow"
 	"github.com/cli/cli/v2/internal/browser"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/internal/run"
 	"github.com/cli/cli/v2/pkg/cmd/auth/shared/gitcredentials"
@@ -338,7 +338,7 @@ func Test_loginRun_nontty(t *testing.T) {
 		opts                    *LoginOptions
 		env                     map[string]string
 		httpStubs               func(*httpmock.Registry)
-		cfgStubs                func(*testing.T, gh.Config)
+		cfgStubs                func(*testing.T, gm.Config)
 		expiringCredentialsCfg  string
 		wantRequestRefreshToken *bool
 		wantHosts               string
@@ -476,7 +476,7 @@ func Test_loginRun_nontty(t *testing.T) {
 				Hostname: "github.com",
 				Token:    "newUserToken",
 			},
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				_, err := c.Authentication().Login("github.com", "monalisa", "abc123", "https", false)
 				require.NoError(t, err)
 			},
@@ -576,7 +576,7 @@ func Test_loginRun_nontty(t *testing.T) {
 			if tt.expiringCredentialsCfg != "" {
 				cfg.Set("", "expiring_credentials", tt.expiringCredentialsCfg)
 			}
-			tt.opts.Config = func() (gh.Config, error) {
+			tt.opts.Config = func() (gm.Config, error) {
 				return cfg, nil
 			}
 
@@ -646,7 +646,7 @@ func Test_loginRun_Survey(t *testing.T) {
 		httpStubs       func(*httpmock.Registry)
 		prompterStubs   func(*prompter.PrompterMock)
 		runStubs        func(*run.CommandStubber)
-		cfgStubs        func(*testing.T, gh.Config)
+		cfgStubs        func(*testing.T, gm.Config)
 		wantHosts       string
 		wantErrOut      *regexp.Regexp
 		wantSecureToken string
@@ -830,7 +830,7 @@ func Test_loginRun_Survey(t *testing.T) {
 					return -1, prompter.NoSuchPromptErr(prompt)
 				}
 			},
-			cfgStubs: func(t *testing.T, c gh.Config) {
+			cfgStubs: func(t *testing.T, c gm.Config) {
 				_, err := c.Authentication().Login("github.com", "monalisa", "abc123", "https", false)
 				require.NoError(t, err)
 			},
@@ -870,7 +870,7 @@ func Test_loginRun_Survey(t *testing.T) {
 			if tt.cfgStubs != nil {
 				tt.cfgStubs(t, cfg)
 			}
-			tt.opts.Config = func() (gh.Config, error) {
+			tt.opts.Config = func() (gm.Config, error) {
 				return cfg, nil
 			}
 
@@ -1017,7 +1017,7 @@ func Test_loginRun_expiringHint(t *testing.T) {
 
 			opts := &LoginOptions{
 				IO:              ios,
-				Config:          func() (gh.Config, error) { return cfg, nil },
+				Config:          func() (gm.Config, error) { return cfg, nil },
 				HttpClient:      func() (*http.Client, error) { return &http.Client{Transport: reg}, nil },
 				PlainHttpClient: func() (*http.Client, error) { return &http.Client{Transport: reg}, nil },
 				Prompter:        pm,

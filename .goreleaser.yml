@@ -1,11 +1,11 @@
 version: 2
 
-project_name: gh
+project_name: gitmip-cli
 
 release:
   prerelease: auto
   draft: true # we only publish after the Windows MSI gets uploaded
-  name_template: "GitHub CLI {{.Version}}"
+  name_template: "gitmip-cli {{.Version}}"
 
 before:
   hooks:
@@ -14,7 +14,7 @@ before:
     - >- # On linux the completions are used in nfpms below, but on macos they are used outside in the deployment build.
       {{ if eq .Runtime.Goos "windows" }}echo{{ end }} make completions
     - >- # We need to create the `.syso` files (per architecture) to embed Windows resources (version info)
-      {{ if ne .Runtime.Goos "windows" }}echo{{ end }} pwsh '.\script\gen-winres.ps1' '{{ .Version }} ({{time "2006-01-02"}})' '{{ .Version }}' '.\script\versioninfo.template.json' '.\cmd\gh\'
+      {{ if ne .Runtime.Goos "windows" }}echo{{ end }} pwsh '.\script\gen-winres.ps1' '{{ .Version }} ({{time "2006-01-02"}})' '{{ .Version }}' '.\script\versioninfo.template.json' '.\cmd\gm\'
 builds:
   - id: macos #build:macos
     goos: [darwin]
@@ -26,8 +26,8 @@ builds:
       post:
         - cmd: ./script/sign '{{ .Path }}'
           output: true
-    binary: bin/gh
-    main: ./cmd/gh
+    binary: bin/gm
+    main: ./cmd/gm
     ldflags:
       - -s -w -X github.com/cli/cli/v2/internal/build.Version={{.Version}} -X github.com/cli/cli/v2/internal/build.Date={{time "2006-01-02"}}
 
@@ -40,8 +40,8 @@ builds:
       pre:
         - cmd: bash ./script/licenses {{ .Os }} {{ .Arch }}
           output: true
-    binary: bin/gh
-    main: ./cmd/gh
+    binary: bin/gm
+    main: ./cmd/gm
     ldflags:
       - -s -w -X github.com/cli/cli/v2/internal/build.Version={{.Version}} -X github.com/cli/cli/v2/internal/build.Date={{time "2006-01-02"}}
 
@@ -55,31 +55,31 @@ builds:
       post:
         - cmd: pwsh .\script\sign.ps1 '{{ .Path }}'
           output: true
-    binary: bin/gh
-    main: ./cmd/gh
+    binary: bin/gm
+    main: ./cmd/gm
     ldflags:
       - -s -w -X github.com/cli/cli/v2/internal/build.Version={{.Version}} -X github.com/cli/cli/v2/internal/build.Date={{time "2006-01-02"}}
 
 archives:
   - id: linux-archive
     ids: [linux]
-    name_template: "gh_{{ .Version }}_linux_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    name_template: "gitmip-cli_{{ .Version }}_linux_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
     wrap_in_directory: true
     formats: [tar.gz]
     files:
       - LICENSE
-      - ./share/man/man1/gh*.1
+      - ./share/man/man1/gm*.1
   - id: macos-archive
     ids: [macos]
-    name_template: "gh_{{ .Version }}_macOS_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    name_template: "gitmip-cli_{{ .Version }}_macOS_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
     wrap_in_directory: true
     formats: [zip]
     files:
       - LICENSE
-      - ./share/man/man1/gh*.1
+      - ./share/man/man1/gm*.1
   - id: windows-archive
     ids: [windows]
-    name_template: "gh_{{ .Version }}_windows_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    name_template: "gitmip-cli_{{ .Version }}_windows_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
     wrap_in_directory: false
     formats: [zip]
     files:
@@ -88,26 +88,26 @@ archives:
 nfpms: #build:linux
   - ids: [linux]
     license: MIT
-    maintainer: GitHub
-    homepage: https://github.com/cli/cli
+    maintainer: gitmip-cli
+    homepage: https://github.com/xingguangcuican6666/gitmip-cli
     bindir: /usr
     dependencies:
       - git
-    description: GitHub’s official command line tool.
+    description: Command line tool for GitHub and Gitea, forked from GitHub CLI.
     formats:
       - deb
       - rpm
     contents:
-      - src: "./share/man/man1/gh*.1"
+      - src: "./share/man/man1/gm*.1"
         dst: "/usr/share/man/man1"
-      - src: "./share/bash-completion/completions/gh"
-        dst: "/usr/share/bash-completion/completions/gh"
-      - src: "./share/fish/vendor_completions.d/gh.fish"
-        dst: "/usr/share/fish/vendor_completions.d/gh.fish"
-      - src: "./share/zsh/site-functions/_gh"
-        dst: "/usr/share/zsh/site-functions/_gh"
+      - src: "./share/bash-completion/completions/gm"
+        dst: "/usr/share/bash-completion/completions/gm"
+      - src: "./share/fish/vendor_completions.d/gm.fish"
+        dst: "/usr/share/fish/vendor_completions.d/gm.fish"
+      - src: "./share/zsh/site-functions/_gm"
+        dst: "/usr/share/zsh/site-functions/_gm"
       # Debian/Ubuntu zsh does not look in /usr/share/zsh/site-functions by default,
       # so we also install to vendor-completions. See https://github.com/cli/cli/issues/13166
-      - src: "./share/zsh/vendor-completions/_gh"
-        dst: "/usr/share/zsh/vendor-completions/_gh"
+      - src: "./share/zsh/vendor-completions/_gm"
+        dst: "/usr/share/zsh/vendor-completions/_gm"
         packager: deb

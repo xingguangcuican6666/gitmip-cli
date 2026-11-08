@@ -3,7 +3,7 @@ package cmdutil
 import (
 	"reflect"
 
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -26,7 +26,7 @@ func DisableAuthCheckFlag(flag *pflag.Flag) {
 	flag.Annotations[skipAuthCheckAnnotation] = []string{"true"}
 }
 
-func CheckAuth(cfg gh.Config) bool {
+func CheckAuth(cfg gm.Config) bool {
 	if cfg.Authentication().HasEnvToken() {
 		return true
 	}

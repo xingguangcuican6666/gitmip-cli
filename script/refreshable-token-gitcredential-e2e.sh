@@ -38,7 +38,7 @@
 # to run under VS Code unless GH_INTERNAL_E2E_ALLOW_VSCODE=1 is set.
 #
 # Environment:
-#   GH_INTERNAL_E2E_BIN          Path to the gh binary to test. Defaults to ./bin/gh, else gh on PATH.
+#   GH_INTERNAL_E2E_BIN          Path to the gm binary to test. Defaults to ./bin/gm, else gm on PATH.
 #   GH_INTERNAL_E2E_HOST         Host to authenticate against. Defaults to github.com.
 #   GH_INTERNAL_E2E_ALLOW_VSCODE Set to bypass the VS Code integrated-terminal guard.
 
@@ -196,9 +196,9 @@ next_step() {
 # ---------------------------------------------------------------------------
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-GH="${GH_INTERNAL_E2E_BIN:-$ROOT/bin/gh}"
+GH="${GH_INTERNAL_E2E_BIN:-$ROOT/bin/gm}"
 if [ ! -x "$GH" ]; then
-  GH="$(command -v gh || true)"
+  GH="$(command -v gm || true)"
 fi
 HOST="${GH_INTERNAL_E2E_HOST:-github.com}"
 HELPER_KEY="credential.https://$HOST.helper"

@@ -28,7 +28,7 @@ type Uploader struct {
 
 // NewUploader prepares uploads against targetRepository, the numeric REST id of
 // the repository the assets are uploaded against, and viewerPermission, the
-// GraphQL viewerPermission field on that same repository. It refuses what gh
+// GraphQL viewerPermission field on that same repository. It refuses what gm
 // can tell will not upload. The credential is left to the endpoint, which
 // accepts tokens from only some GitHub Apps.
 //

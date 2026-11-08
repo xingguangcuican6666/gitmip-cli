@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/internal/telemetry"
 	"github.com/cli/cli/v2/pkg/cmd/skills/install"
@@ -23,7 +23,7 @@ func TestSearchRun_UnsupportedHost(t *testing.T) {
 	cfg := config.NewMockConfig()
 	authCfg := cfg.Authentication()
 	authCfg.SetDefaultHost("acme.ghes.com", "user")
-	cfg.AuthenticationFunc = func() gh.AuthConfig {
+	cfg.AuthenticationFunc = func() gm.AuthConfig {
 		return authCfg
 	}
 	err := searchRun(&SearchOptions{
@@ -32,7 +32,7 @@ func TestSearchRun_UnsupportedHost(t *testing.T) {
 		Page:       1,
 		Limit:      defaultLimit,
 		HttpClient: func() (*http.Client, error) { return &http.Client{}, nil },
-		Config:     func() (gh.Config, error) { return cfg, nil },
+		Config:     func() (gm.Config, error) { return cfg, nil },
 	})
 	require.ErrorContains(t, err, "does not currently support GitHub Enterprise Server")
 }
@@ -367,7 +367,7 @@ func TestSearchRun(t *testing.T) {
 			tt.opts.HttpClient = func() (*http.Client, error) {
 				return &http.Client{Transport: reg}, nil
 			}
-			tt.opts.Config = func() (gh.Config, error) {
+			tt.opts.Config = func() (gm.Config, error) {
 				return config.NewMockConfig(), nil
 			}
 
@@ -688,7 +688,7 @@ func TestSearchRun_TelemetryRecordsInstallFromResults(t *testing.T) {
 	err := searchRun(&SearchOptions{
 		IO:             ios,
 		HttpClient:     func() (*http.Client, error) { return &http.Client{Transport: reg}, nil },
-		Config:         func() (gh.Config, error) { return config.NewMockConfig(), nil },
+		Config:         func() (gm.Config, error) { return config.NewMockConfig(), nil },
 		Prompter:       pm,
 		Telemetry:      recorder,
 		ExecutablePath: "/nonexistent/gh", // install subprocess will fail; failures are logged, not fatal.

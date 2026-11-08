@@ -27,7 +27,7 @@ func TestHelperConfigContract(t *testing.T) {
 			git.IsolateConfig(t)
 
 			return &gitcredentials.HelperConfig{
-				SelfExecutablePath: "/path/to/gh",
+				SelfExecutablePath: "/path/to/gm",
 				GitClient:          &git.Client{},
 			}
 		},
@@ -44,7 +44,7 @@ func TestSetsCorrectCommandInGitConfig(t *testing.T) {
 
 	gc := &git.Client{}
 	hc := &gitcredentials.HelperConfig{
-		SelfExecutablePath: "/path/to/gh",
+		SelfExecutablePath: "/path/to/gm",
 		GitClient:          gc,
 	}
 	require.NoError(t, hc.ConfigureOurs("github.com"))
@@ -54,7 +54,7 @@ func TestSetsCorrectCommandInGitConfig(t *testing.T) {
 	require.NoError(t, err)
 	output, err := cmd.Output()
 	require.NoError(t, err)
-	require.Equal(t, "!/path/to/gh auth git-credential\n", string(output))
+	require.Equal(t, "!/path/to/gm auth git-credential\n", string(output))
 }
 
 func TestHelperIsOurs(t *testing.T) {
@@ -80,18 +80,18 @@ func TestHelperIsOurs(t *testing.T) {
 			want: false,
 		},
 		{
-			name: "looks like gh but isn't",
-			cmd:  "gh auth",
+			name: "looks like gm but isn't",
+			cmd:  "gm auth",
 			want: false,
 		},
 		{
 			name: "ours",
-			cmd:  "!/path/to/gh auth",
+			cmd:  "!/path/to/gm auth",
 			want: true,
 		},
 		{
 			name:        "ours - Windows edition",
-			cmd:         `!'C:\Program Files\GitHub CLI\gh.exe' auth git-credential`,
+			cmd:         `!'C:\Program Files\GitHub CLI\gm.exe' auth git-credential`,
 			want:        true,
 			windowsOnly: true,
 		},

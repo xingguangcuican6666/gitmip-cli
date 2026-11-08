@@ -10,7 +10,7 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/git"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/internal/skills/registry"
 
@@ -355,7 +355,7 @@ func TestUpdateRun(t *testing.T) {
 				ios.SetStdoutTTY(false)
 				return &UpdateOptions{
 					IO:     ios,
-					Config: func() (gh.Config, error) { return config.NewMockConfig(), nil },
+					Config: func() (gm.Config, error) { return config.NewMockConfig(), nil },
 					HttpClient: func() (*http.Client, error) {
 						return &http.Client{Transport: reg}, nil
 					},
@@ -371,7 +371,7 @@ func TestUpdateRun(t *testing.T) {
 				ios.SetStdoutTTY(false)
 				return &UpdateOptions{
 					IO:     ios,
-					Config: func() (gh.Config, error) { return config.NewMockConfig(), nil },
+					Config: func() (gm.Config, error) { return config.NewMockConfig(), nil },
 					HttpClient: func() (*http.Client, error) {
 						return &http.Client{Transport: reg}, nil
 					},
@@ -401,7 +401,7 @@ func TestUpdateRun(t *testing.T) {
 				ios.SetStdoutTTY(false)
 				return &UpdateOptions{
 					IO:     ios,
-					Config: func() (gh.Config, error) { return config.NewMockConfig(), nil },
+					Config: func() (gm.Config, error) { return config.NewMockConfig(), nil },
 					HttpClient: func() (*http.Client, error) {
 						return &http.Client{Transport: reg}, nil
 					},
@@ -434,7 +434,7 @@ func TestUpdateRun(t *testing.T) {
 				ios.SetStderrTTY(true)
 				return &UpdateOptions{
 					IO:     ios,
-					Config: func() (gh.Config, error) { return config.NewMockConfig(), nil },
+					Config: func() (gm.Config, error) { return config.NewMockConfig(), nil },
 					HttpClient: func() (*http.Client, error) {
 						return &http.Client{Transport: reg}, nil
 					},
@@ -464,7 +464,7 @@ func TestUpdateRun(t *testing.T) {
 				ios.SetStdinTTY(false)
 				return &UpdateOptions{
 					IO:     ios,
-					Config: func() (gh.Config, error) { return config.NewMockConfig(), nil },
+					Config: func() (gm.Config, error) { return config.NewMockConfig(), nil },
 					HttpClient: func() (*http.Client, error) {
 						return &http.Client{Transport: reg}, nil
 					},
@@ -494,7 +494,7 @@ func TestUpdateRun(t *testing.T) {
 				ios.SetStderrTTY(true)
 				return &UpdateOptions{
 					IO:     ios,
-					Config: func() (gh.Config, error) { return config.NewMockConfig(), nil },
+					Config: func() (gm.Config, error) { return config.NewMockConfig(), nil },
 					HttpClient: func() (*http.Client, error) {
 						return &http.Client{Transport: reg}, nil
 					},
@@ -508,7 +508,7 @@ func TestUpdateRun(t *testing.T) {
 					All:       true,
 				}
 			},
-			wantStderr: "Run `gh skill update manual-skill` interactively",
+			wantStderr: "Run `gm skill update manual-skill` interactively",
 		},
 		{
 			name: "all up to date",
@@ -544,7 +544,7 @@ func TestUpdateRun(t *testing.T) {
 				ios.SetStdoutTTY(false)
 				return &UpdateOptions{
 					IO:     ios,
-					Config: func() (gh.Config, error) { return config.NewMockConfig(), nil },
+					Config: func() (gm.Config, error) { return config.NewMockConfig(), nil },
 					HttpClient: func() (*http.Client, error) {
 						return &http.Client{Transport: reg}, nil
 					},
@@ -589,7 +589,7 @@ func TestUpdateRun(t *testing.T) {
 				ios.SetStderrTTY(true)
 				return &UpdateOptions{
 					IO:     ios,
-					Config: func() (gh.Config, error) { return config.NewMockConfig(), nil },
+					Config: func() (gm.Config, error) { return config.NewMockConfig(), nil },
 					HttpClient: func() (*http.Client, error) {
 						return &http.Client{Transport: reg}, nil
 					},
@@ -637,7 +637,7 @@ func TestUpdateRun(t *testing.T) {
 				ios.SetStdinTTY(false)
 				return &UpdateOptions{
 					IO:     ios,
-					Config: func() (gh.Config, error) { return config.NewMockConfig(), nil },
+					Config: func() (gm.Config, error) { return config.NewMockConfig(), nil },
 					HttpClient: func() (*http.Client, error) {
 						return &http.Client{Transport: reg}, nil
 					},
@@ -689,7 +689,7 @@ func TestUpdateRun(t *testing.T) {
 				ios.SetStdoutTTY(false)
 				return &UpdateOptions{
 					IO:     ios,
-					Config: func() (gh.Config, error) { return config.NewMockConfig(), nil },
+					Config: func() (gm.Config, error) { return config.NewMockConfig(), nil },
 					HttpClient: func() (*http.Client, error) {
 						return &http.Client{Transport: reg}, nil
 					},
@@ -752,7 +752,7 @@ func TestUpdateRun(t *testing.T) {
 				ios.SetStdoutTTY(false)
 				return &UpdateOptions{
 					IO:     ios,
-					Config: func() (gh.Config, error) { return config.NewMockConfig(), nil },
+					Config: func() (gm.Config, error) { return config.NewMockConfig(), nil },
 					HttpClient: func() (*http.Client, error) {
 						return &http.Client{Transport: reg}, nil
 					},
@@ -822,7 +822,7 @@ func TestUpdateRun(t *testing.T) {
 				ios.SetStdoutTTY(false)
 				return &UpdateOptions{
 					IO:     ios,
-					Config: func() (gh.Config, error) { return config.NewMockConfig(), nil },
+					Config: func() (gm.Config, error) { return config.NewMockConfig(), nil },
 					HttpClient: func() (*http.Client, error) {
 						return &http.Client{Transport: reg}, nil
 					},
@@ -884,7 +884,7 @@ func TestUpdateRun(t *testing.T) {
 				ios.SetStderrTTY(true)
 				return &UpdateOptions{
 					IO:     ios,
-					Config: func() (gh.Config, error) { return config.NewMockConfig(), nil },
+					Config: func() (gm.Config, error) { return config.NewMockConfig(), nil },
 					HttpClient: func() (*http.Client, error) {
 						return &http.Client{Transport: reg}, nil
 					},
@@ -939,7 +939,7 @@ func TestUpdateRun(t *testing.T) {
 				ios.SetStderrTTY(true)
 				return &UpdateOptions{
 					IO:     ios,
-					Config: func() (gh.Config, error) { return config.NewMockConfig(), nil },
+					Config: func() (gm.Config, error) { return config.NewMockConfig(), nil },
 					HttpClient: func() (*http.Client, error) {
 						return &http.Client{Transport: reg}, nil
 					},
@@ -975,7 +975,7 @@ func TestUpdateRun(t *testing.T) {
 				ios.SetStderrTTY(true)
 				return &UpdateOptions{
 					IO:     ios,
-					Config: func() (gh.Config, error) { return config.NewMockConfig(), nil },
+					Config: func() (gm.Config, error) { return config.NewMockConfig(), nil },
 					HttpClient: func() (*http.Client, error) {
 						return &http.Client{Transport: reg}, nil
 					},
@@ -1030,7 +1030,7 @@ func TestUpdateRun(t *testing.T) {
 				ios.SetStderrTTY(true)
 				return &UpdateOptions{
 					IO:     ios,
-					Config: func() (gh.Config, error) { return config.NewMockConfig(), nil },
+					Config: func() (gm.Config, error) { return config.NewMockConfig(), nil },
 					HttpClient: func() (*http.Client, error) {
 						return &http.Client{Transport: reg}, nil
 					},
@@ -1098,7 +1098,7 @@ func TestUpdateRun(t *testing.T) {
 				ios.SetStdoutTTY(false)
 				return &UpdateOptions{
 					IO:     ios,
-					Config: func() (gh.Config, error) { return config.NewMockConfig(), nil },
+					Config: func() (gm.Config, error) { return config.NewMockConfig(), nil },
 					HttpClient: func() (*http.Client, error) {
 						return &http.Client{Transport: reg}, nil
 					},
@@ -1139,7 +1139,7 @@ func TestUpdateRun(t *testing.T) {
 				ios.SetStderrTTY(true)
 				return &UpdateOptions{
 					IO:     ios,
-					Config: func() (gh.Config, error) { return config.NewMockConfig(), nil },
+					Config: func() (gm.Config, error) { return config.NewMockConfig(), nil },
 					HttpClient: func() (*http.Client, error) {
 						return &http.Client{Transport: reg}, nil
 					},
@@ -1185,7 +1185,7 @@ func TestUpdateRun(t *testing.T) {
 				ios.SetStderrTTY(true)
 				return &UpdateOptions{
 					IO:     ios,
-					Config: func() (gh.Config, error) { return config.NewMockConfig(), nil },
+					Config: func() (gm.Config, error) { return config.NewMockConfig(), nil },
 					HttpClient: func() (*http.Client, error) {
 						return &http.Client{Transport: reg}, nil
 					},

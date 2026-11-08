@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/tableprinter"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -15,7 +15,7 @@ import (
 
 type ListOptions struct {
 	IO         *iostreams.IOStreams
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 	HTTPClient func() (*http.Client, error)
 }
 
@@ -60,7 +60,7 @@ func listRun(opts *ListOptions) error {
 		if errors.Is(err, errScopes) {
 			cs := opts.IO.ColorScheme()
 			fmt.Fprint(opts.IO.ErrOut, "Error: insufficient OAuth scopes to list GPG keys\n")
-			fmt.Fprintf(opts.IO.ErrOut, "Run the following to grant scopes: %s\n", cs.Bold("gh auth refresh -s read:gpg_key"))
+			fmt.Fprintf(opts.IO.ErrOut, "Run the following to grant scopes: %s\n", cs.Bold("gm auth refresh -s read:gpg_key"))
 			return cmdutil.SilentError
 		}
 		return err

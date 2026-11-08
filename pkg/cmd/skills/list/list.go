@@ -12,8 +12,8 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/git"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/internal/skills/discovery"
 	"github.com/cli/cli/v2/internal/skills/frontmatter"
 	"github.com/cli/cli/v2/internal/skills/installer"
@@ -129,16 +129,16 @@ func NewCmdList(f *cmdutil.Factory, telemetry ghtelemetry.EventRecorder, runF fu
 		`, "`"),
 		Example: heredoc.Doc(`
 			# List all installed skills
-			$ gh skill list
+			$ gm skill list
 
 			# List skills installed for GitHub Copilot
-			$ gh skill list --agent github-copilot
+			$ gm skill list --agent github-copilot
 
 			# List user-scope skills
-			$ gh skill list --scope user
+			$ gm skill list --scope user
 
 			# List skills as JSON
-			$ gh skill list --json skillName,sourceURL,scope,version,pinned,path
+			$ gm skill list --json skillName,sourceURL,scope,version,pinned,path
 		`),
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {

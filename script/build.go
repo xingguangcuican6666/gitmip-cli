@@ -4,7 +4,7 @@
 //
 // Known tasks are:
 //
-//   bin/gh:
+//   bin/gm:
 //     Builds the main executable.
 //     Supported environment variables:
 //     - GH_VERSION: determined from source by default
@@ -41,7 +41,7 @@ import (
 )
 
 var tasks = map[string]func(string) error{
-	"bin/gh": func(exe string) error {
+	"bin/gm": func(exe string) error {
 		buildTags, _ := os.LookupEnv("GO_BUILDTAGS")
 
 		info, err := os.Stat(exe)
@@ -62,7 +62,7 @@ var tasks = map[string]func(string) error{
 		if buildTags != "" {
 			args = append(args, "-tags", buildTags)
 		}
-		args = append(args, "-ldflags", ldflags, "-o", exe, "./cmd/gh")
+		args = append(args, "-ldflags", ldflags, "-o", exe, "./cmd/gm")
 
 		return run(args...)
 	},
@@ -88,9 +88,9 @@ func main() {
 
 	if len(args) < 2 {
 		if isWindowsTarget() {
-			args = append(args, filepath.Join("bin", "gh.exe"))
+			args = append(args, filepath.Join("bin", "gm.exe"))
 		} else {
-			args = append(args, "bin/gh")
+			args = append(args, "bin/gm")
 		}
 	}
 

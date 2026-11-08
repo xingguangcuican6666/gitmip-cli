@@ -7,7 +7,7 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/stretchr/testify/assert"
@@ -36,10 +36,10 @@ func TestAliasList(t *testing.T) {
 			config: heredoc.Doc(`
 				aliases:
 				  co: pr checkout
-				  gc: "!gh gist create \"$@\" | pbcopy"
+				  gc: "!gm gist create \"$@\" | pbcopy"
 			`),
 			isTTY:      true,
-			wantStdout: "co: pr checkout\ngc: '!gh gist create \"$@\" | pbcopy'\n",
+			wantStdout: "co: pr checkout\ngc: '!gm gist create \"$@\" | pbcopy'\n",
 			wantStderr: "",
 		},
 		{
@@ -67,7 +67,7 @@ func TestAliasList(t *testing.T) {
 
 			factory := &cmdutil.Factory{
 				IOStreams: ios,
-				Config: func() (gh.Config, error) {
+				Config: func() (gm.Config, error) {
 					return cfg, nil
 				},
 			}

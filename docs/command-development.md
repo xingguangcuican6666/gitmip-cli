@@ -23,7 +23,7 @@ set. Use these named examples for their specific purpose:
 | `NewCmdRoot` in [root/root.go](../pkg/cmd/root/root.go) | Top-level registration |
 | `NewCmdIssue` in [issue/issue.go](../pkg/cmd/issue/issue.go) | Subcommand registration; `cmdutil.AddGroup` groups help output |
 
-The executable starts at [main](../cmd/gh/main.go), delegates to
+The executable starts at [main](../cmd/gm/main.go), delegates to
 [`ghcmd.Main`](../internal/ghcmd/cmd.go), and builds the command tree through
 `root.NewCmdRoot`.
 

@@ -177,7 +177,7 @@ func (r *PullRequestFindRefsResolver) ResolvePullRequestRefs(baseRepo ghrepo.Int
 }
 
 // DefaultPRHead is a neighbour to defaultPushTarget, but instead of holding
-// basic git remote information, it holds a resolved repository in `gh` terms.
+// basic git remote information, it holds a resolved repository in `gm` terms.
 //
 // Since we may not be able to determine a default remote for a branch, this
 // is also true of the resolved repository.

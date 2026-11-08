@@ -159,7 +159,7 @@ func (q Query) StandardSearchString() string {
 // search does not OR repeated instances of special qualifiers (i.e.
 // is:private/public, repo:, user:, or in:).
 //
-// To keep the gh experience consistent and backward-compatible, the mentioned
+// To keep the gm experience consistent and backward-compatible, the mentioned
 // special qualifiers are explicitly grouped and combined with an OR operator.
 //
 // The advanced syntax is documented at https://github.blog/changelog/2025-03-06-github-issues-projects-api-support-for-issues-advanced-search-and-more

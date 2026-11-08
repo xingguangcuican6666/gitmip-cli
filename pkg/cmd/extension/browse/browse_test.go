@@ -8,7 +8,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/cli/cli/v2/internal/config"
 	fd "github.com/cli/cli/v2/internal/featuredetection"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/extensions"
 	"github.com/cli/cli/v2/pkg/httpmock"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -57,7 +57,7 @@ func TestGetExtensionsReturnsBrowsableMetadata(t *testing.T) {
 		}),
 	)
 	cfg := config.NewMockConfig()
-	cfg.AuthenticationFunc = func() gh.AuthConfig {
+	cfg.AuthenticationFunc = func() gm.AuthConfig {
 		authCfg := &config.AuthConfig{}
 		authCfg.SetDefaultHost("github.com", "")
 		return authCfg
@@ -106,7 +106,7 @@ func TestExtBrowseRunsBubbleTeaModel(t *testing.T) {
 	// Given one extension is available to browse
 	ios, _, _, _ := iostreams.Test()
 	cfg := config.NewMockConfig()
-	cfg.AuthenticationFunc = func() gh.AuthConfig {
+	cfg.AuthenticationFunc = func() gm.AuthConfig {
 		authCfg := &config.AuthConfig{}
 		authCfg.SetDefaultHost("github.com", "")
 		return authCfg

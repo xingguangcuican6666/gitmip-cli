@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/text"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -14,7 +14,7 @@ import (
 
 type ListOptions struct {
 	IO         *iostreams.IOStreams
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 	HttpClient func() (*http.Client, error)
 
 	Limit int
@@ -33,10 +33,10 @@ func NewCmdList(f *cmdutil.Factory, runF func(*ListOptions) error) *cobra.Comman
 		Short: "List organizations for the authenticated user.",
 		Example: heredoc.Doc(`
 			# List the first 30 organizations
-			$ gh org list
+			$ gm org list
 
 			# List more organizations
-			$ gh org list --limit 100
+			$ gm org list --limit 100
 		`),
 		Aliases: []string{"ls"},
 		RunE: func(cmd *cobra.Command, args []string) error {

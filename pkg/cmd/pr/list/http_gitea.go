@@ -16,7 +16,7 @@ import (
 // Gitea has no GraphQL API and no search endpoint for pull requests, so listing
 // is answered here by walking GET /repos/{o}/{r}/pulls.
 //
-// Gitea filters server-side by state, base branch and author. Everything else gh
+// Gitea filters server-side by state, base branch and author. Everything else gm
 // exposes is filtered locally: head branch, draft, assignee, label and search
 // text. Local filtering over pages means the limit counts matches rather than
 // rows fetched, so a repository whose open pull requests mostly fail the filter
@@ -101,7 +101,7 @@ func listPullRequestsGitea(httpClient *http.Client, repo ghrepo.Interface, filte
 	return &api.PullRequestAndTotalCount{PullRequests: matches, TotalCount: total}, nil
 }
 
-// giteaPullRequestState maps gh's state filter onto Gitea's. Gitea has open,
+// giteaPullRequestState maps gm's state filter onto Gitea's. Gitea has open,
 // closed and all; merged is derived, so asking for merged means asking for all
 // and filtering locally.
 func giteaPullRequestState(state string) string {

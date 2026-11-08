@@ -21,9 +21,9 @@ import (
 	"github.com/cli/cli/v2/internal/attachments"
 	"github.com/cli/cli/v2/internal/browser"
 	fd "github.com/cli/cli/v2/internal/featuredetection"
-	"github.com/cli/cli/v2/internal/gh"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/internal/text"
@@ -40,7 +40,7 @@ type CreateOptions struct {
 	Detector         fd.Detector
 	HttpClient       func() (*http.Client, error)
 	GitClient        *git.Client
-	Config           func() (gh.Config, error)
+	Config           func() (gm.Config, error)
 	IO               *iostreams.IOStreams
 	Remotes          func() (ghContext.Remotes, error)
 	Branch           func() (string, error)
@@ -266,16 +266,16 @@ func NewCmdCreate(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder, 
 			head branch of the pull request. Disable this with %[1]s--no-maintainer-edit%[1]s.
 
 			Adding a pull request to projects requires authorization with the %[1]sproject%[1]s scope.
-			To authorize, run %[1]sgh auth refresh -s project%[1]s.
+			To authorize, run %[1]sgm auth refresh -s project%[1]s.
 		`, "`"),
 		Example: heredoc.Doc(`
-			$ gh pr create --title "The bug is fixed" --body "Everything works again"
-			$ gh pr create --reviewer monalisa,hubot  --reviewer myorg/team-name
-			$ gh pr create --project "Roadmap"
-			$ gh pr create --base develop --head monalisa:feature
-			$ gh pr create --template "pull_request_template.md"
-			$ gh pr create --attach './login.png#The login error state'
-			$ gh pr create --attach ./before.png --attach ./after.png
+			$ gm pr create --title "The bug is fixed" --body "Everything works again"
+			$ gm pr create --reviewer monalisa,hubot  --reviewer myorg/team-name
+			$ gm pr create --project "Roadmap"
+			$ gm pr create --base develop --head monalisa:feature
+			$ gm pr create --template "pull_request_template.md"
+			$ gm pr create --attach './login.png#The login error state'
+			$ gm pr create --attach ./before.png --attach ./after.png
 		`),
 		Args:    cmdutil.NoArgsQuoteReminder,
 		Aliases: []string{"new"},
@@ -808,7 +808,7 @@ func NewCreateContext(opts *CreateOptions) (*CreateContext, error) {
 		// The baseTrackingBranch is used later for a command like:
 		// `git commit upstream/main feature` in order to create a PR message showing the commits
 		// between these two refs. I'm not really sure what is expected to happen if we don't have a remote,
-		// which seems like it would be possible with a command `gh pr create --repo owner/repo-that-is-not-a-remote`.
+		// which seems like it would be possible with a command `gm pr create --repo owner/repo-that-is-not-a-remote`.
 		// In that case, we might just have a mess? In any case, this is what the old code did, so I don't want to change
 		// it as part of an already large refactor.
 		baseRemote, _ := resolvedRemotes.RemoteForRepo(baseRepo)
@@ -1090,7 +1090,7 @@ func getRemotes(opts *CreateOptions) (ghContext.Remotes, error) {
 	return remotes, nil
 }
 
-func submitPR(opts CreateOptions, ctx CreateContext, state shared.IssueMetadataState, projectV1Support gh.ProjectsV1Support, uploader *attachments.Uploader) error {
+func submitPR(opts CreateOptions, ctx CreateContext, state shared.IssueMetadataState, projectV1Support gm.ProjectsV1Support, uploader *attachments.Uploader) error {
 	client := ctx.Client
 
 	params := map[string]any{
@@ -1347,7 +1347,7 @@ func handlePush(opts CreateOptions, ctx CreateContext) error {
 
 		fmt.Fprintf(opts.IO.ErrOut, "Added %s as remote %q\n", ghrepo.FullName(pushableRefs.HeadRepo()), remoteName)
 
-		// Only mark `upstream` remote as default if `gh pr create` created the remote.
+		// Only mark `upstream` remote as default if `gm pr create` created the remote.
 		if requiresFork {
 			err := gitClient.SetRemoteResolution(context.Background(), upstreamName, "base")
 			if err != nil {
@@ -1356,7 +1356,7 @@ func handlePush(opts CreateOptions, ctx CreateContext) error {
 
 			if opts.IO.IsStdoutTTY() {
 				cs := opts.IO.ColorScheme()
-				fmt.Fprintf(opts.IO.ErrOut, "%s Repository %s set as the default repository. To learn more about the default repository, run: gh repo set-default --help\n", cs.WarningIcon(), cs.Bold(ghrepo.FullName(pushableRefs.HeadRepo())))
+				fmt.Fprintf(opts.IO.ErrOut, "%s Repository %s set as the default repository. To learn more about the default repository, run: gm repo set-default --help\n", cs.WarningIcon(), cs.Bold(ghrepo.FullName(pushableRefs.HeadRepo())))
 			}
 		}
 
@@ -1389,7 +1389,7 @@ func handlePush(opts CreateOptions, ctx CreateContext) error {
 	return pushBranch()
 }
 
-func generateCompareURL(ctx CreateContext, state shared.IssueMetadataState, projectsV1Support gh.ProjectsV1Support) (string, error) {
+func generateCompareURL(ctx CreateContext, state shared.IssueMetadataState, projectsV1Support gm.ProjectsV1Support) (string, error) {
 	u := ghrepo.GenerateRepoURL(
 		ctx.PRRefs.BaseRepo(),
 		"compare/%s...%s?expand=1",

@@ -56,8 +56,8 @@ if ! command -v productbuild &> /dev/null; then
 fi
 # end of os requirements check
 
-# gh-binary paths
-bin_path="/bin/gh"
+# gm-binary paths
+bin_path="/bin/gm"
 arm64_bin="./dist/macos_darwin_arm64_v8.0$bin_path"
 amd64_bin="./dist/macos_darwin_amd64_v1$bin_path"
 # payload paths
@@ -67,7 +67,7 @@ payload_zsh_site_functions="${payload_root}/usr/local/share/zsh/site-functions"
 payload_man1="${payload_root}/usr/local/share/man/man1"
 
 merge_binaries() {
-    lipo -create -output "${payload_local_bin}/gh" "$arm64_bin" "$amd64_bin"
+    lipo -create -output "${payload_local_bin}/gm" "$arm64_bin" "$amd64_bin"
 }
 
 build_pkg() {
@@ -77,12 +77,12 @@ build_pkg() {
   mkdir -p "${payload_zsh_site_functions}"
 
   # copy man pages
-  for file in ./share/man/man1/gh*.1; do
+  for file in ./share/man/man1/gm*.1; do
     cp "$file" "${payload_man1}"
   done
   # Include only Zsh completions,
   # the recommended/only option on macOS since Catalina for default shell.
-  cp "./share/zsh/site-functions/_gh" "${payload_zsh_site_functions}"
+  cp "./share/zsh/site-functions/_gm" "${payload_zsh_site_functions}"
 
   # merge binaries
   merge_binaries

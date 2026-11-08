@@ -55,7 +55,7 @@ func PrintSkip(ios *iostreams.IOStreams, r Result, subject, reason string) {
 // PrintUnchanged prints the line for an artifact the command didn't change
 // because it already was as asked, such as an artifact that already matches
 // the version to restore. In a terminal, it reads "! <message>" on stderr, like
-// gh issue close on a closed issue, so stdout stays empty. Otherwise it is a
+// gm issue close on a closed issue, so stdout stays empty. Otherwise it is a
 // piped line on stdout whose status is "skipped", with reason. It isn't a
 // failure, so the command exits 0 after it.
 func PrintUnchanged(ios *iostreams.IOStreams, r Result, message, reason string) {
@@ -96,7 +96,7 @@ func PrintPartialFailure(ios *iostreams.IOStreams, status string, r Result, mess
 }
 
 // printResultLine prints a piped result line. Every line has all five
-// tab-separated columns, even empty ones, like gh pr checks rows.
+// tab-separated columns, even empty ones, like gm pr checks rows.
 func printResultLine(w io.Writer, status string, r Result, reason string) {
 	var number string
 	if r.Number > 0 {

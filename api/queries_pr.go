@@ -453,7 +453,7 @@ func parseCheckStatusFromStatusState(state StatusState) checkStatus {
 		// Gitea reports these as commit statuses. A warning is a run the server
 		// flagged without failing it and a skipped run never had to pass, so
 		// neither blocks a merge; counting either as pending would leave
-		// `gh pr status` showing a spinner forever.
+		// `gm pr status` showing a spinner forever.
 		return passing
 	case StatusStateExpected, StatusStatePending:
 		return pending

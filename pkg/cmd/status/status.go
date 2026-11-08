@@ -62,8 +62,8 @@ func NewCmdStatus(f *cmdutil.Factory, runF func(*StatusOptions) error) *cobra.Co
 			- Repository Activity (new issues/pull requests, comments)
 		`),
 		Example: heredoc.Doc(`
-			$ gh status -e cli/cli -e cli/go-gh # Exclude multiple repositories
-			$ gh status -o cli # Limit results to a single organization
+			$ gm status -e cli/cli -e cli/go-gh # Exclude multiple repositories
+			$ gm status -o cli # Limit results to a single organization
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := f.Config()
@@ -651,7 +651,7 @@ func statusRun(opts *StatusOptions) error {
 	if hosttype.IsGitea(hostname) {
 		if _, err := sg.CurrentUsername(); err != nil {
 			if giteaUnauthenticated(err) {
-				return errors.New("gh status shows work assigned to you, so it needs an authenticated session; run `gh auth login` first")
+				return errors.New("gm status shows work assigned to you, so it needs an authenticated session; run `gm auth login` first")
 			}
 			return err
 		}

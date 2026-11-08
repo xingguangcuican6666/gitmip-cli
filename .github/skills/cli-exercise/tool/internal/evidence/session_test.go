@@ -115,14 +115,14 @@ func sessionCases(t *testing.T) {
 		time := 1.0
 		chapter, text := "Typing", "Enter a title"
 		original := []event{{Time: &time, Type: "note", Chapter: &chapter, Text: &text}}
-		rendered := chapterEvents(chapterPresentation{Label: "Case", Phase: "exercise", Title: "Inspect the requested issue", Command: `gh issue view 'with spaces'`}, original)
+		rendered := chapterEvents(chapterPresentation{Label: "Case", Phase: "exercise", Title: "Inspect the requested issue", Command: `gm issue view 'with spaces'`}, original)
 		require.Equal(t, "Typing", *original[0].Chapter)
 		require.Len(t, rendered, 2)
 		require.Equal(t, "Case / Running", *rendered[1].Chapter)
 		require.NotContains(t, *rendered[1].Text, "Command:")
 		require.NotContains(t, *rendered[1].Text, "gh issue view")
 		require.Contains(t, *rendered[1].Text, "Enter a title")
-		require.Equal(t, `gh alias set 'name with space' 'config get prompt'`, displayCommand("/selected/gh", []string{"alias", "set", "name with space", "config get prompt"}))
+		require.Equal(t, `gm alias set 'name with space' 'config get prompt'`, displayCommand("/selected/gh", []string{"alias", "set", "name with space", "config get prompt"}))
 	})
 	for _, tc := range []struct {
 		statuses []string

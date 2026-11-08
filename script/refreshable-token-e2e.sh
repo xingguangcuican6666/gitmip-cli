@@ -25,7 +25,7 @@
 #   make debug
 #
 # Environment:
-#   GH_INTERNAL_E2E_BIN   Path to the gh binary to test. Defaults to ./bin/gh, else gh on PATH.
+#   GH_INTERNAL_E2E_BIN   Path to the gm binary to test. Defaults to ./bin/gm, else gm on PATH.
 #   GH_INTERNAL_E2E_HOST  Host to authenticate against. Defaults to github.com.
 
 set -uo pipefail
@@ -160,9 +160,9 @@ next_step() {
 # ---------------------------------------------------------------------------
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-GH="${GH_INTERNAL_E2E_BIN:-$ROOT/bin/gh}"
+GH="${GH_INTERNAL_E2E_BIN:-$ROOT/bin/gm}"
 if [ ! -x "$GH" ]; then
-  GH="$(command -v gh || true)"
+  GH="$(command -v gm || true)"
 fi
 HOST="${GH_INTERNAL_E2E_HOST:-github.com}"
 

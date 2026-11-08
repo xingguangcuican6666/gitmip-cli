@@ -6,8 +6,8 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmd/issue/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -18,7 +18,7 @@ import (
 
 type PinOptions struct {
 	HttpClient  func() (*http.Client, error)
-	Config      func() (gh.Config, error)
+	Config      func() (gm.Config, error)
 	IO          *iostreams.IOStreams
 	BaseRepo    func() (ghrepo.Interface, error)
 	IssueNumber int
@@ -42,13 +42,13 @@ func NewCmdPin(f *cmdutil.Factory, runF func(*PinOptions) error) *cobra.Command 
 		`),
 		Example: heredoc.Doc(`
 			# Pin an issue to the current repository
-			$ gh issue pin 23
+			$ gm issue pin 23
 
 			# Pin an issue by URL
-			$ gh issue pin https://github.com/owner/repo/issues/23
+			$ gm issue pin https://github.com/owner/repo/issues/23
 
 			# Pin an issue to specific repository
-			$ gh issue pin 23 --repo owner/repo
+			$ gm issue pin 23 --repo owner/repo
 		`),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

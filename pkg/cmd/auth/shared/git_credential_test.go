@@ -14,7 +14,7 @@ import (
 )
 
 // stubHelperConfig is a test double for the HelperConfig interface that returns a fixed configured helper and records
-// whether gh was configured as the credential helper.
+// whether gm was configured as the credential helper.
 type stubHelperConfig struct {
 	helper        gitcredentials.Helper
 	helperErr     error
@@ -76,18 +76,18 @@ func TestSetup_refreshableExternalHelper_declineGh(t *testing.T) {
 	if !strings.Contains(warning, "was not stored") {
 		t.Errorf("Setup() warning = %q, want it to state that the credential was not stored", warning)
 	}
-	if !strings.Contains(warning, "gh auth setup-git --hostname example.com") {
-		t.Errorf("Setup() warning = %q, want it to suggest running gh auth setup-git for the host", warning)
+	if !strings.Contains(warning, "gm auth setup-git --hostname example.com") {
+		t.Errorf("Setup() warning = %q, want it to suggest running gm auth setup-git for the host", warning)
 	}
 }
 
 func TestSetup_refreshableExternalHelper_acceptGh(t *testing.T) {
 	cs, restoreRun := run.Stub()
 	defer restoreRun(t)
-	// Accepting the prompt configures gh as the helper, so no reject is issued; only the config writes run.
+	// Accepting the prompt configures gm as the helper, so no reject is issued; only the config writes run.
 	cs.Register(`git config --global --replace-all credential\.`, 0, "")
 	cs.Register(`git config --global --add credential\.`, 0, "", func(args []string) {
-		if val := args[len(args)-1]; val != "!/path/to/gh auth git-credential" {
+		if val := args[len(args)-1]; val != "!/path/to/gm auth git-credential" {
 			t.Errorf("global credential helper configured to %q", val)
 		}
 	})
@@ -100,7 +100,7 @@ func TestSetup_refreshableExternalHelper_acceptGh(t *testing.T) {
 		},
 		helper: gitcredentials.Helper{Cmd: "osxkeychain"},
 		HelperConfig: &gitcredentials.HelperConfig{
-			SelfExecutablePath: "/path/to/gh",
+			SelfExecutablePath: "/path/to/gm",
 			GitClient:          &git.Client{GitPath: "some/path/git"},
 		},
 	}
@@ -110,7 +110,7 @@ func TestSetup_refreshableExternalHelper_acceptGh(t *testing.T) {
 		t.Errorf("Setup() error = %v", err)
 	}
 	if warning != "" {
-		t.Errorf("Setup() returned a warning after configuring gh as the helper: %q", warning)
+		t.Errorf("Setup() returned a warning after configuring gm as the helper: %q", warning)
 	}
 }
 
@@ -129,7 +129,7 @@ func TestGitCredentialsSetup_setOurs_GH(t *testing.T) {
 		if key := args[len(args)-2]; key != "credential.https://github.com.helper" {
 			t.Errorf("git config key was %q", key)
 		}
-		if val := args[len(args)-1]; val != "!/path/to/gh auth git-credential" {
+		if val := args[len(args)-1]; val != "!/path/to/gm auth git-credential" {
 			t.Errorf("global credential helper configured to %q", val)
 		}
 	})
@@ -145,7 +145,7 @@ func TestGitCredentialsSetup_setOurs_GH(t *testing.T) {
 		if key := args[len(args)-2]; key != "credential.https://gist.github.com.helper" {
 			t.Errorf("git config key was %q", key)
 		}
-		if val := args[len(args)-1]; val != "!/path/to/gh auth git-credential" {
+		if val := args[len(args)-1]; val != "!/path/to/gm auth git-credential" {
 			t.Errorf("global credential helper configured to %q", val)
 		}
 	})
@@ -153,7 +153,7 @@ func TestGitCredentialsSetup_setOurs_GH(t *testing.T) {
 	f := GitCredentialFlow{
 		helper: gitcredentials.Helper{},
 		HelperConfig: &gitcredentials.HelperConfig{
-			SelfExecutablePath: "/path/to/gh",
+			SelfExecutablePath: "/path/to/gm",
 			GitClient:          &git.Client{GitPath: "some/path/git"},
 		},
 	}
@@ -179,7 +179,7 @@ func TestSetup_setOurs_nonGH(t *testing.T) {
 		if key := args[len(args)-2]; key != "credential.https://example.com.helper" {
 			t.Errorf("git config key was %q", key)
 		}
-		if val := args[len(args)-1]; val != "!/path/to/gh auth git-credential" {
+		if val := args[len(args)-1]; val != "!/path/to/gm auth git-credential" {
 			t.Errorf("global credential helper configured to %q", val)
 		}
 	})
@@ -187,7 +187,7 @@ func TestSetup_setOurs_nonGH(t *testing.T) {
 	f := GitCredentialFlow{
 		helper: gitcredentials.Helper{},
 		HelperConfig: &gitcredentials.HelperConfig{
-			SelfExecutablePath: "/path/to/gh",
+			SelfExecutablePath: "/path/to/gm",
 			GitClient:          &git.Client{GitPath: "some/path/git"},
 		},
 	}
@@ -206,7 +206,7 @@ func TestPrompt_expiring_configure(t *testing.T) {
 		Prompter: &prompter.PrompterMock{
 			SelectFunc: func(message, _ string, options []string) (int, error) {
 				gotMessage = message
-				return slices.Index(options, "Set up gh as your Git credential helper (recommended)"), nil
+				return slices.Index(options, "Set up gm as your Git credential helper (recommended)"), nil
 			},
 		},
 		HelperConfig: hc,
@@ -278,10 +278,10 @@ func TestPrompt_expiring_alreadyOurs(t *testing.T) {
 		Prompter: &prompter.PrompterMock{
 			SelectFunc: func(_, _ string, options []string) (int, error) {
 				selectCalled = true
-				return slices.Index(options, "Set up gh as your Git credential helper (recommended)"), nil
+				return slices.Index(options, "Set up gm as your Git credential helper (recommended)"), nil
 			},
 		},
-		HelperConfig: &stubHelperConfig{helper: gitcredentials.Helper{Cmd: "!/path/to/gh auth git-credential"}},
+		HelperConfig: &stubHelperConfig{helper: gitcredentials.Helper{Cmd: "!/path/to/gm auth git-credential"}},
 	}
 
 	err := f.Prompt("github.com", true)
@@ -289,10 +289,10 @@ func TestPrompt_expiring_alreadyOurs(t *testing.T) {
 		t.Fatalf("Prompt() error = %v", err)
 	}
 	if selectCalled {
-		t.Error("Select was called even though gh is already the credential helper")
+		t.Error("Select was called even though gm is already the credential helper")
 	}
 	if f.ShouldSetup() {
-		t.Error("ShouldSetup() = true, want false when gh is already the credential helper")
+		t.Error("ShouldSetup() = true, want false when gm is already the credential helper")
 	}
 	if !slices.Contains(f.Scopes(), "workflow") {
 		t.Errorf("Scopes() = %v, want it to include workflow", f.Scopes())
@@ -302,10 +302,10 @@ func TestPrompt_expiring_alreadyOurs(t *testing.T) {
 func TestSetup_expiring_externalHelper_configuresOurs(t *testing.T) {
 	cs, restoreRun := run.Stub()
 	defer restoreRun(t)
-	// Configuring gh writes the helper config; no reject and no prompt are expected for an expiring login.
+	// Configuring gm writes the helper config; no reject and no prompt are expected for an expiring login.
 	cs.Register(`git config --global --replace-all credential\.`, 0, "")
 	cs.Register(`git config --global --add credential\.`, 0, "", func(args []string) {
-		if val := args[len(args)-1]; val != "!/path/to/gh auth git-credential" {
+		if val := args[len(args)-1]; val != "!/path/to/gm auth git-credential" {
 			t.Errorf("global credential helper configured to %q", val)
 		}
 	})
@@ -315,7 +315,7 @@ func TestSetup_expiring_externalHelper_configuresOurs(t *testing.T) {
 		expiring: true,
 		helper:   gitcredentials.Helper{Cmd: "osxkeychain"},
 		HelperConfig: &gitcredentials.HelperConfig{
-			SelfExecutablePath: "/path/to/gh",
+			SelfExecutablePath: "/path/to/gm",
 			GitClient:          &git.Client{GitPath: "some/path/git"},
 		},
 	}
@@ -325,7 +325,7 @@ func TestSetup_expiring_externalHelper_configuresOurs(t *testing.T) {
 		t.Errorf("Setup() error = %v", err)
 	}
 	if warning != "" {
-		t.Errorf("Setup() warning = %q, want empty after configuring gh for an expiring login", warning)
+		t.Errorf("Setup() warning = %q, want empty after configuring gm for an expiring login", warning)
 	}
 }
 
@@ -336,7 +336,7 @@ func TestDetectConfiguredHelper(t *testing.T) {
 		helperErr error
 		want      string
 	}{
-		{name: "ours", helper: gitcredentials.Helper{Cmd: "!/path/to/gh auth git-credential"}, want: "ours"},
+		{name: "ours", helper: gitcredentials.Helper{Cmd: "!/path/to/gm auth git-credential"}, want: "ours"},
 		{name: "other", helper: gitcredentials.Helper{Cmd: "osxkeychain"}, want: "other"},
 		{name: "none", helper: gitcredentials.Helper{}, want: "none"},
 		{name: "error", helperErr: errors.New("git config failed"), want: "error"},

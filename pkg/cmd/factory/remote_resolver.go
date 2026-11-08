@@ -7,8 +7,8 @@ import (
 
 	"github.com/cli/cli/v2/context"
 	"github.com/cli/cli/v2/git"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghinstance"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/set"
 	"github.com/cli/go-gh/v2/pkg/ssh"
 )
@@ -19,7 +19,7 @@ const (
 
 type remoteResolver struct {
 	readRemotes   func() (git.RemoteSet, error)
-	getConfig     func() (gh.Config, error)
+	getConfig     func() (gm.Config, error)
 	urlTranslator context.Translator
 	cachedRemotes context.Remotes
 	remotesError  error
@@ -87,7 +87,7 @@ func (rr *remoteResolver) Resolver() func() (context.Remotes, error) {
 				rr.remotesError = errors.New("set the GH_HOST environment variable to specify which GitHub host to use")
 				return nil, rr.remotesError
 			}
-			rr.remotesError = errors.New("none of the git remotes configured for this repository point to a known GitHub host. To tell gh about a new GitHub host, please use `gh auth login`")
+			rr.remotesError = errors.New("none of the git remotes configured for this repository point to a known GitHub host. To tell gm about a new GitHub host, please use `gm auth login`")
 			return nil, rr.remotesError
 		}
 

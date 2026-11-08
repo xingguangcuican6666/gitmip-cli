@@ -17,9 +17,9 @@ import (
 	"github.com/cli/cli/v2/internal/browser"
 	"github.com/cli/cli/v2/internal/config"
 	fd "github.com/cli/cli/v2/internal/featuredetection"
-	"github.com/cli/cli/v2/internal/gh"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/internal/run"
 	"github.com/cli/cli/v2/internal/telemetry"
@@ -326,7 +326,7 @@ func TestNewCmdCreate(t *testing.T) {
 
 			f := &cmdutil.Factory{
 				IOStreams: ios,
-				Config: func() (gh.Config, error) {
+				Config: func() (gm.Config, error) {
 					if tt.config != "" {
 						return config.NewMockConfigFromString(tt.config), nil
 					}
@@ -657,7 +657,7 @@ func Test_createRun(t *testing.T) {
 			opts: CreateOptions{
 				Interactive: true,
 				Detector:    &fd.EnabledDetectorMock{},
-				Title:       "test `gh issue create` actor assignees",
+				Title:       "test `gm issue create` actor assignees",
 				Body:        "Actor assignees allow users and bots to be assigned to issues",
 			},
 			promptStubs: func(_ *testing.T, pm *prompter.PrompterMock) {
@@ -736,7 +736,7 @@ func Test_createRun(t *testing.T) {
 			opts: CreateOptions{
 				Interactive: true,
 				Detector:    &fd.DisabledDetectorMock{},
-				Title:       "test `gh issue create` user assignees",
+				Title:       "test `gm issue create` user assignees",
 				Body:        "User assignees allow only users to be assigned to issues",
 			},
 			promptStubs: func(_ *testing.T, pm *prompter.PrompterMock) {
@@ -1459,7 +1459,7 @@ func Test_createRun(t *testing.T) {
 			// Given a pending event when operation counts are under test
 			attachmentRecorder := &telemetry.InvocationRecorderSpy{}
 			if tt.wantOperations != nil {
-				opts.AttachEvent = attachments.BeginTelemetry(attachmentRecorder, "gh test", len(tt.attach))
+				opts.AttachEvent = attachments.BeginTelemetry(attachmentRecorder, "gm test", len(tt.attach))
 			}
 
 			// When issue creation runs
@@ -1499,7 +1499,7 @@ func runCommandWithRootDirOverridden(rt http.RoundTripper, isTTY bool, cli strin
 		HttpClient: func() (*http.Client, error) {
 			return &http.Client{Transport: rt}, nil
 		},
-		Config: func() (gh.Config, error) {
+		Config: func() (gm.Config, error) {
 			return config.NewMockConfig(), nil
 		},
 		BaseRepo: func() (ghrepo.Interface, error) {

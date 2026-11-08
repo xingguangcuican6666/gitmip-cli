@@ -43,10 +43,10 @@ func newCmdEdit(f *cmdutil.Factory, runF func(*editOptions) error) *cobra.Comman
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Update the color of the bug label
-			$ gh label edit bug --color FF0000
+			$ gm label edit bug --color FF0000
 
 			# Rename and edit the description of the bug label
-			$ gh label edit bug --name big-bug --description "Bigger than normal bug"
+			$ gm label edit bug --name big-bug --description "Bigger than normal bug"
 		`),
 		Args: cmdutil.ExactArgs(1, "cannot update label: name argument required"),
 		RunE: func(c *cobra.Command, args []string) error {

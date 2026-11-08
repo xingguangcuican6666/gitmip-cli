@@ -15,7 +15,7 @@ import (
 	ghAPI "github.com/cli/go-gh/v2/pkg/api"
 )
 
-// Gitea has no GraphQL API, so the repository queries that gh builds as GraphQL
+// Gitea has no GraphQL API, so the repository queries that gm builds as GraphQL
 // fragments are answered here by GET /repos/{owner}/{repo} instead. The result
 // is mapped onto the same Repository type the GraphQL path produces, so callers
 // do not need to know which host they are talking to.
@@ -89,7 +89,7 @@ type giteaRepository struct {
 	Parent *giteaRepository `json:"parent"`
 }
 
-// toRepository maps a Gitea repository onto gh's Repository type.
+// toRepository maps a Gitea repository onto gm's Repository type.
 func (g giteaRepository) toRepository() *Repository {
 	r := &Repository{
 		ID:                  strconv.FormatInt(g.ID, 10),
@@ -280,7 +280,7 @@ func FetchRepository(client *Client, repo ghrepo.Interface, fields []string) (*R
 // its path.
 //
 // The body carries only archived. Gitea treats an omitted field as no change, and
-// sending the fields gh happened to have loaded would risk overwriting an edit
+// sending the fields gm happened to have loaded would risk overwriting an edit
 // made between the read and the write.
 func SetRepositoryArchivedGitea(client *Client, repo ghrepo.Interface, archived bool) error {
 	path := fmt.Sprintf("repos/%s/%s", repo.RepoOwner(), repo.RepoName())

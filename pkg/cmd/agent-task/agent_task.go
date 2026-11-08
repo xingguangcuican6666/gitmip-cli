@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	cmdCreate "github.com/cli/cli/v2/pkg/cmd/agent-task/create"
 	cmdList "github.com/cli/cli/v2/pkg/cmd/agent-task/list"
 	cmdView "github.com/cli/cli/v2/pkg/cmd/agent-task/view"
@@ -38,16 +38,16 @@ func NewCmdAgentTask(f *cmdutil.Factory) *cobra.Command {
 		},
 		Example: heredoc.Doc(`
 			# List your most recent agent tasks
-			$ gh agent-task list
+			$ gm agent-task list
 			
 			# Create a new agent task on the current repository
-			$ gh agent-task create "Improve the performance of the data processing pipeline"
+			$ gm agent-task create "Improve the performance of the data processing pipeline"
 			
 			# View details about agent tasks associated with a pull request
-			$ gh agent-task view 123
+			$ gm agent-task view 123
 
 			# View details about a specific agent task
-			$ gh agent-task view 12345abc-12345-12345-12345-12345abc
+			$ gm agent-task view 12345abc-12345-12345-12345-12345abc
 		`),
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			return requireOAuthToken(f)
@@ -78,7 +78,7 @@ func requireOAuthToken(f *cmdutil.Factory) error {
 	authCfg := cfg.Authentication()
 	host, _ := authCfg.DefaultHost()
 	if host == "" {
-		return errors.New("no default host configured; run 'gh auth login'")
+		return errors.New("no default host configured; run 'gm auth login'")
 	}
 
 	if auth.IsEnterprise(host) {
@@ -91,18 +91,18 @@ func requireOAuthToken(f *cmdutil.Factory) error {
 	// likely minted through our device flow. The refreshable source covers an expiring
 	// login whose credential fell back to plaintext config; without it, such a login would
 	// be rejected here before the CAPI refresh path can run.
-	tokenSourceIsDeviceFlow := cred.Source == gh.TokenSourceOAuthToken ||
-		cred.Source == gh.TokenSourceKeyring ||
-		cred.Source == gh.TokenSourceRefreshableOAuthToken
+	tokenSourceIsDeviceFlow := cred.Source == gm.TokenSourceOAuthToken ||
+		cred.Source == gm.TokenSourceKeyring ||
+		cred.Source == gm.TokenSourceRefreshableOAuthToken
 	// Tokens with "gho_" prefix are OAuth tokens.
 	//
 	// TODO: this matches a token prefix itself. It could ask
-	// gh.AuthConfig.ActiveTokenType instead.
+	// gm.AuthConfig.ActiveTokenType instead.
 	tokenIsOAuth := strings.HasPrefix(cred.Token, "gho_")
 
 	// Reject if the token is not from a device flow source or is not an OAuth token
 	if !tokenSourceIsDeviceFlow || !tokenIsOAuth {
-		return fmt.Errorf("this command requires an OAuth token. Re-authenticate with: gh auth login")
+		return fmt.Errorf("this command requires an OAuth token. Re-authenticate with: gm auth login")
 	}
 	return nil
 }

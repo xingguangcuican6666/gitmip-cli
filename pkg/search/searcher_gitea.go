@@ -332,7 +332,7 @@ func (s searcher) searchGiteaIssues(query Query) (IssuesResult, error) {
 		u.SetQuery("milestones", q.Milestone)
 	}
 	if q.Type != "" {
-		// gh spells the kind qualifier as type:issue / type:pr.
+		// gm spells the kind qualifier as type:issue / type:pr.
 		switch q.Type {
 		case "issue", "issues":
 			u.SetQuery("type", "issues")
@@ -356,7 +356,7 @@ func (s searcher) searchGiteaIssues(query Query) (IssuesResult, error) {
 		// Gitea's issue search is cross-repository and takes only an owner filter,
 		// so there is no way to scope it to one repository. Answering with the
 		// whole owner's issues would be a broader answer than the one asked for.
-		return IssuesResult{}, fmt.Errorf("Gitea's issue search cannot be scoped to a repository, so `repo:` is not supported; use `gh issue list -R <owner>/<repo> --search` instead")
+		return IssuesResult{}, fmt.Errorf("Gitea's issue search cannot be scoped to a repository, so `repo:` is not supported; use `gm issue list -R <owner>/<repo> --search` instead")
 	}
 	if q.Mentions != "" {
 		if err := giteaViewerOnlyQualifier("mentions", q.Mentions); err != nil {
@@ -431,7 +431,7 @@ func safeurlJoin(parts ...string) (*safeurl.MutableSafeURL, error) {
 
 // giteaRepositoryToSearchResult maps a repository onto the search result shape.
 //
-// The id is the numeric one rendered as a string, because gh's search results use
+// The id is the numeric one rendered as a string, because gm's search results use
 // a string id and Gitea has no node id to put there.
 func giteaRepositoryToSearchResult(row giteaSearchRow) Repository {
 	return Repository{
@@ -614,7 +614,7 @@ func (s searcher) giteaWebURL(query Query) string {
 	case KindRepositories:
 		path = "/explore/repos"
 	case KindIssues:
-		// The issue kind covers both issues and pull requests; gh's PR search
+		// The issue kind covers both issues and pull requests; gm's PR search
 		// sets the type qualifier, which the issues dashboard honours.
 		path = "/issues"
 	case "pull requests":

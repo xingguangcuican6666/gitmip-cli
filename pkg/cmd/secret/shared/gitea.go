@@ -6,7 +6,7 @@ import (
 
 // Gitea supports Actions secrets only. It has no Codespaces, Dependabot or
 // Agents secret stores, and no deployment environments, so three of the four
-// entity and app combinations gh models have nothing to talk to.
+// entity and app combinations gm models have nothing to talk to.
 //
 // Rejecting them here rather than at the request keeps the error on the flag
 // the user actually passed, and keeps the messages in one place across list,
@@ -42,10 +42,10 @@ func IsSupportedOnGitea(app App, entity SecretEntity) error {
 // no collection endpoint, so there is nothing to list.
 const SupportsListingUserSecretsOnGitea = false
 
-// ErrUserSecretsListUnsupportedOnGitea explains why `gh secret list --user`
+// ErrUserSecretsListUnsupportedOnGitea explains why `gm secret list --user`
 // cannot work against a Gitea host.
 var ErrUserSecretsListUnsupportedOnGitea = fmt.Errorf(
-	"Gitea has no endpoint for listing user-level secrets, so `gh secret list --user` is not supported")
+	"Gitea has no endpoint for listing user-level secrets, so `gm secret list --user` is not supported")
 
 // GiteaSecretsNeedEncryption reports whether secrets must be encrypted locally
 // before they are sent. GitHub requires libsodium sealed-box encryption against

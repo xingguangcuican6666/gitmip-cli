@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/google/shlex"
@@ -79,7 +79,7 @@ func Test_setupGitRun(t *testing.T) {
 		name               string
 		opts               *SetupGitOptions
 		setupErr           error
-		cfgStubs           func(*testing.T, gh.Config)
+		cfgStubs           func(*testing.T, gm.Config)
 		expectedHostsSetup []string
 		expectedErr        error
 		expectedErrOut     string
@@ -87,7 +87,7 @@ func Test_setupGitRun(t *testing.T) {
 		{
 			name: "opts.Config returns an error",
 			opts: &SetupGitOptions{
-				Config: func() (gh.Config, error) {
+				Config: func() (gm.Config, error) {
 					return nil, fmt.Errorf("oops")
 				},
 			},
@@ -98,10 +98,10 @@ func Test_setupGitRun(t *testing.T) {
 			opts: &SetupGitOptions{
 				Hostname: "ghe.io",
 			},
-			cfgStubs: func(t *testing.T, cfg gh.Config) {
+			cfgStubs: func(t *testing.T, cfg gm.Config) {
 				login(t, cfg, "github.com", "test-user", "gho_ABCDEFG", "https", false)
 			},
-			expectedErr: errors.New("You are not logged into the GitHub host \"ghe.io\". Run gh auth login -h ghe.io to authenticate or provide `--force`"),
+			expectedErr: errors.New("You are not logged into the GitHub host \"ghe.io\". Run gm auth login -h ghe.io to authenticate or provide `--force`"),
 		},
 		{
 			name: "when an unknown hostname is provided with forcing, set it up",
@@ -116,7 +116,7 @@ func Test_setupGitRun(t *testing.T) {
 			opts: &SetupGitOptions{
 				Hostname: "ghe.io",
 			},
-			cfgStubs: func(t *testing.T, cfg gh.Config) {
+			cfgStubs: func(t *testing.T, cfg gm.Config) {
 				login(t, cfg, "ghe.io", "test-user", "gho_ABCDEFG", "https", false)
 			},
 			expectedHostsSetup: []string{"ghe.io"},
@@ -127,7 +127,7 @@ func Test_setupGitRun(t *testing.T) {
 				Hostname: "ghe.io",
 			},
 			setupErr: fmt.Errorf("broken"),
-			cfgStubs: func(t *testing.T, cfg gh.Config) {
+			cfgStubs: func(t *testing.T, cfg gm.Config) {
 				login(t, cfg, "ghe.io", "test-user", "gho_ABCDEFG", "https", false)
 			},
 			expectedErr:    errors.New("failed to set up git credential helper: broken"),
@@ -137,12 +137,12 @@ func Test_setupGitRun(t *testing.T) {
 			name:           "when there are no known hosts and no hostname is provided, return an error",
 			opts:           &SetupGitOptions{},
 			expectedErr:    cmdutil.SilentError,
-			expectedErrOut: "You are not logged into any GitHub hosts. Run gh auth login to authenticate.\n",
+			expectedErrOut: "You are not logged into any GitHub hosts. Run gm auth login to authenticate.\n",
 		},
 		{
 			name: "when there are known hosts, and no hostname is provided, set them all up",
 			opts: &SetupGitOptions{},
-			cfgStubs: func(t *testing.T, cfg gh.Config) {
+			cfgStubs: func(t *testing.T, cfg gm.Config) {
 				login(t, cfg, "ghe.io", "test-user", "gho_ABCDEFG", "https", false)
 				login(t, cfg, "github.com", "test-user", "gho_ABCDEFG", "https", false)
 			},
@@ -152,7 +152,7 @@ func Test_setupGitRun(t *testing.T) {
 			name:     "when no hostname is provided but setting one up errors, that error is bubbled",
 			opts:     &SetupGitOptions{},
 			setupErr: fmt.Errorf("broken"),
-			cfgStubs: func(t *testing.T, cfg gh.Config) {
+			cfgStubs: func(t *testing.T, cfg gm.Config) {
 				login(t, cfg, "ghe.io", "test-user", "gho_ABCDEFG", "https", false)
 			},
 			expectedErr:    errors.New("failed to set up git credential helper: broken"),
@@ -175,7 +175,7 @@ func Test_setupGitRun(t *testing.T) {
 			}
 
 			if tt.opts.Config == nil {
-				tt.opts.Config = func() (gh.Config, error) {
+				tt.opts.Config = func() (gm.Config, error) {
 					return cfg, nil
 				}
 			}
@@ -199,7 +199,7 @@ func Test_setupGitRun(t *testing.T) {
 	}
 }
 
-func login(t *testing.T, c gh.Config, hostname, username, token, gitProtocol string, secureStorage bool) {
+func login(t *testing.T, c gm.Config, hostname, username, token, gitProtocol string, secureStorage bool) {
 	t.Helper()
 	_, err := c.Authentication().Login(hostname, username, token, gitProtocol, secureStorage)
 	require.NoError(t, err)

@@ -14,9 +14,9 @@ import (
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/attachments"
 	fd "github.com/cli/cli/v2/internal/featuredetection"
-	"github.com/cli/cli/v2/internal/gh"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/text"
 	issueShared "github.com/cli/cli/v2/pkg/cmd/issue/shared"
@@ -36,7 +36,7 @@ type EditOptions struct {
 	DetermineEditor    func() (string, error)
 	FieldsToEditSurvey func(prShared.EditPrompter, *prShared.Editable) error
 	EditFieldsSurvey   func(prShared.EditPrompter, *prShared.Editable, string) error
-	FetchOptions       func(*api.Client, ghrepo.Interface, *prShared.Editable, gh.ProjectsV1Support) error
+	FetchOptions       func(*api.Client, ghrepo.Interface, *prShared.Editable, gm.ProjectsV1Support) error
 
 	IssueNumbers []int
 	Interactive  bool
@@ -81,7 +81,7 @@ func NewCmdEdit(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder, ru
 			Edit one or more issues within the same repository.
 
 			Editing issues' projects requires authorization with the %[1]sproject%[1]s scope.
-			To authorize, run %[1]sgh auth refresh -s project%[1]s.
+			To authorize, run %[1]sgm auth refresh -s project%[1]s.
 
 			Use %[1]s--attach%[1]s to upload an image or video to a single issue. Without a body
 			flag the issue keeps the body it already has and the attachment is appended to it.
@@ -105,23 +105,23 @@ func NewCmdEdit(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder, ru
 			- %[1]s@copilot%[1]s: assign or unassign Copilot (not supported on GitHub Enterprise Server)
 		`, "`"),
 		Example: heredoc.Doc(`
-			$ gh issue edit 23 --title "I found a bug" --body "Nothing works"
-			$ gh issue edit 23 --add-label "bug,help wanted" --remove-label "core"
-			$ gh issue edit 23 --add-assignee "@me" --remove-assignee monalisa,hubot
-			$ gh issue edit 23 --add-assignee "@copilot"
-			$ gh issue edit 23 --add-project "Roadmap" --remove-project v1,v2
-			$ gh issue edit 23 --milestone "Version 1"
-			$ gh issue edit 23 --remove-milestone
-			$ gh issue edit 23 --body-file body.txt
-			$ gh issue edit 23 --attach './login.png#The login error state'
-			$ gh issue edit 23 --attach ./before.png --attach ./after.png
-			$ gh issue edit 23 34 --add-label "help wanted"
-			$ gh issue edit 23 --type Bug
-			$ gh issue edit 23 --remove-type
-			$ gh issue edit 23 --parent 100
-			$ gh issue edit 23 --remove-parent
-			$ gh issue edit 100 --add-sub-issue 123,124
-			$ gh issue edit 123 --add-blocked-by 200 --add-blocking 300,301
+			$ gm issue edit 23 --title "I found a bug" --body "Nothing works"
+			$ gm issue edit 23 --add-label "bug,help wanted" --remove-label "core"
+			$ gm issue edit 23 --add-assignee "@me" --remove-assignee monalisa,hubot
+			$ gm issue edit 23 --add-assignee "@copilot"
+			$ gm issue edit 23 --add-project "Roadmap" --remove-project v1,v2
+			$ gm issue edit 23 --milestone "Version 1"
+			$ gm issue edit 23 --remove-milestone
+			$ gm issue edit 23 --body-file body.txt
+			$ gm issue edit 23 --attach './login.png#The login error state'
+			$ gm issue edit 23 --attach ./before.png --attach ./after.png
+			$ gm issue edit 23 34 --add-label "help wanted"
+			$ gm issue edit 23 --type Bug
+			$ gm issue edit 23 --remove-type
+			$ gm issue edit 23 --parent 100
+			$ gm issue edit 23 --remove-parent
+			$ gm issue edit 100 --add-sub-issue 123,124
+			$ gm issue edit 123 --add-blocked-by 200 --add-blocking 300,301
 		`),
 		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -337,7 +337,7 @@ func editRun(opts *EditOptions) error {
 		// TODO projectsV1Deprecation
 		// Remove this section as we should no longer add projectCards
 		projectsV1Support := opts.Detector.ProjectsV1()
-		if projectsV1Support == gh.ProjectsV1Supported {
+		if projectsV1Support == gm.ProjectsV1Supported {
 			lookupFields = append(lookupFields, "projectCards")
 		}
 

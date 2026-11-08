@@ -3,8 +3,8 @@ package delete
 import (
 	"fmt"
 
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/pkg/cmd/secret/shared"
@@ -13,7 +13,7 @@ import (
 // resolveSecretHost returns the host a secret operation is aimed at. An
 // organization or user secret names no repository, so the default host decides
 // in those cases; a repository secret always belongs to its own host.
-func resolveSecretHost(cfg gh.Config, baseRepo ghrepo.Interface) string {
+func resolveSecretHost(cfg gm.Config, baseRepo ghrepo.Interface) string {
 	if baseRepo != nil {
 		return baseRepo.RepoHost()
 	}

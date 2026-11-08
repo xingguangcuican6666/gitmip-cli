@@ -25,7 +25,7 @@ import (
 // content field is what carries pre-written markdown, and a template with only
 // fields and no content simply offers an empty body.
 
-// giteaIssueTemplate is the subset of Gitea's IssueTemplate gh uses.
+// giteaIssueTemplate is the subset of Gitea's IssueTemplate gm uses.
 type giteaIssueTemplate struct {
 	Name     string `json:"name"`
 	Title    string `json:"title"`

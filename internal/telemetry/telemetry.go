@@ -1,4 +1,4 @@
-// Package telemetry provides best-effort usage telemetry for gh commands.
+// Package telemetry provides best-effort usage telemetry for gm commands.
 package telemetry
 
 import (
@@ -20,7 +20,7 @@ import (
 	"time"
 
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/pkg/jsoncolor"
 	"github.com/google/uuid"
 	"github.com/mgutz/ansi"
@@ -198,7 +198,7 @@ var LogFlusher = func(log io.Writer, colorEnabled bool) func(payload SendTelemet
 	}
 }
 
-// GitHubFlusher returns a flush function that sends telemetry payloads to a child `gh send-telemetry` process. This is used for the "enabled" telemetry mode.
+// GitHubFlusher returns a flush function that sends telemetry payloads to a child `gm send-telemetry` process. This is used for the "enabled" telemetry mode.
 // Empty payloads are dropped without spawning a subprocess.
 var GitHubFlusher = func(executable string) func(payload SendTelemetryPayload) {
 	return func(payload SendTelemetryPayload) {

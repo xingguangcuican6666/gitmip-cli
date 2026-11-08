@@ -45,10 +45,10 @@ func NewCmdMarkTemplate(f *cmdutil.Factory, runF func(config markTemplateConfig)
 		Use:   "mark-template [<number>]",
 		Example: heredoc.Doc(`
 			# Mark the github org's project "1" as a template
-			$ gh project mark-template 1 --owner "github"
+			$ gm project mark-template 1 --owner "github"
 
 			# Unmark the github org's project "1" as a template
-			$ gh project mark-template 1 --owner "github" --undo
+			$ gm project mark-template 1 --owner "github" --undo
 		`),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

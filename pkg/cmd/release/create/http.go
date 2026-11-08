@@ -182,7 +182,7 @@ func createRelease(httpClient *http.Client, repo ghrepo.Interface, params map[st
 	// https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/scopes-for-oauth-apps#available-scopes
 	// Gitea answers with the same release shape but names its ids differently and
 	// gives assets no API url, so the response is mapped rather than decoded
-	// straight into gh's Release.
+	// straight into gm's Release.
 	if hosttype.IsGitea(repo.RepoHost()) {
 		return shared.DecodeGiteaRelease(httpClient, repo, func() (*http.Response, error) {
 			return api.NewClientFromHTTP(httpClient).Request(repo.RepoHost(), http.MethodPost, path.String(), bytes.NewBuffer(bodyBytes))

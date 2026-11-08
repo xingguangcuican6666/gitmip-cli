@@ -16,7 +16,7 @@ import (
 // CREATE_NO_WINDOW is preferred over DETACHED_PROCESS here: DETACHED_PROCESS
 // removes the console entirely, which causes any console-subsystem descendant
 // (e.g. tzutil.exe invoked transitively to resolve the local IANA timezone)
-// to allocate a fresh conhost window, producing a visible flash on every gh
+// to allocate a fresh conhost window, producing a visible flash on every gm
 // invocation. CREATE_NO_WINDOW gives the child a non-visible console that
 // descendants can inherit, avoiding the flash.
 func detachAttrs() *syscall.SysProcAttr {

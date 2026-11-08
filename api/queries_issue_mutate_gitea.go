@@ -10,7 +10,7 @@ import (
 	"github.com/cli/cli/v2/internal/ghrepo"
 )
 
-// Gitea has no GraphQL API, so the issue mutations gh issues as GraphQL
+// Gitea has no GraphQL API, so the issue mutations gm issues as GraphQL
 // mutations are REST calls here.
 //
 // Every one of them addresses the issue by repository path plus index, since
@@ -23,7 +23,7 @@ import (
 // request when the index belongs to one and refuses to change the state of a
 // merged one, so the caller does not need to branch on issue type.
 //
-// Gitea records no close reason. `gh issue close --reason` and `--duplicate-of`
+// Gitea records no close reason. `gm issue close --reason` and `--duplicate-of`
 // therefore have nowhere to put their value, and the callers reject them rather
 // than accepting a flag that would be silently dropped.
 //
@@ -94,7 +94,7 @@ func UnpinIssueGitea(client *Client, repo ghrepo.Interface, number int) error {
 	return sendGiteaIssueMutation(client, repo.RepoHost(), http.MethodDelete, path, nil)
 }
 
-// ErrGiteaIssueTransferUnsupported explains why `gh issue transfer` cannot work
+// ErrGiteaIssueTransferUnsupported explains why `gm issue transfer` cannot work
 // on Gitea: it has an endpoint for transferring a repository and none for moving
 // an issue between repositories.
 var ErrGiteaIssueTransferUnsupported = fmt.Errorf(

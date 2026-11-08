@@ -12,7 +12,7 @@ import (
 	"testing/fstest"
 
 	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/httpmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -52,8 +52,8 @@ func newTestUploader(t *testing.T, reg *httpmock.Registry, host string, targetRe
 
 type staticTokenConfig map[string]string
 
-func (c staticTokenConfig) ActiveTokenWithRefresh(host string) (gh.Credential, gh.RefreshStatus, error) {
-	return gh.Credential{Token: c[host]}, gh.RefreshStatusUnnecessary, nil
+func (c staticTokenConfig) ActiveTokenWithRefresh(host string) (gm.Credential, gm.RefreshStatus, error) {
+	return gm.Credential{Token: c[host]}, gm.RefreshStatusUnnecessary, nil
 }
 
 func (c staticTokenConfig) HostForAPIHost(apiHost string) (string, bool) {

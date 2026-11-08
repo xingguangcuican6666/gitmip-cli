@@ -15,7 +15,7 @@ import (
 // Gitea has no GraphQL API, so the issue relationships that GitHub applies as
 // mutations are applied here as REST calls.
 //
-// Two of the four relationships gh models exist on Gitea. Blocked-by and
+// Two of the four relationships gm models exist on Gitea. Blocked-by and
 // blocking map onto Gitea's dependencies and blocks endpoints, which name the
 // other issue by owner, repo and index rather than by a node id.
 //

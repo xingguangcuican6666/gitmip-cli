@@ -34,7 +34,7 @@ func NewInspectCmd(f *cmdutil.Factory, runF func(*Options) error) *cobra.Command
 		Short:  "Inspect a Sigstore bundle",
 		Long: heredoc.Docf(`
 			Inspect a Sigstore bundle that has been downloaded to disk. To download bundles
-			associated with your artifact(s), see the %[1]sgh at download%[1]s command.
+			associated with your artifact(s), see the %[1]sgm at download%[1]s command.
 
 			Given a .json or .jsonl file, this command will:
 			- Extract the bundle's statement and predicate
@@ -47,17 +47,17 @@ func NewInspectCmd(f *cmdutil.Factory, runF func(*Options) error) *cobra.Command
 			timestamps, and if the included signatures match the provided public key.
 
 			This command cannot be used to verify a bundle. To verify a bundle, see the
-			%[1]sgh at verify%[1]s command.
+			%[1]sgm at verify%[1]s command.
 
 			By default, this command prints a condensed table. To see full results, provide the
 			%[1]s--format=json%[1]s flag.
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Inspect a Sigstore bundle and print the results in table format
-			$ gh attestation inspect <path-to-bundle>
+			$ gm attestation inspect <path-to-bundle>
 
 			# Inspect a Sigstore bundle and print the results in JSON format
-			$ gh attestation inspect <path-to-bundle> --format=json
+			$ gm attestation inspect <path-to-bundle> --format=json
 		`),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			// Create a logger for use throughout the inspect command

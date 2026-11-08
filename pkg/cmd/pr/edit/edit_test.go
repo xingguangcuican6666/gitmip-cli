@@ -12,9 +12,9 @@ import (
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/attachments"
 	fd "github.com/cli/cli/v2/internal/featuredetection"
-	"github.com/cli/cli/v2/internal/gh"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/internal/telemetry"
 	shared "github.com/cli/cli/v2/pkg/cmd/pr/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -1683,7 +1683,7 @@ func Test_editRun(t *testing.T) {
 			// Given a pending event when operation counts are under test
 			attachmentRecorder := &telemetry.InvocationRecorderSpy{}
 			if tt.wantOperations != nil {
-				tt.input.AttachEvent = attachments.BeginTelemetry(attachmentRecorder, "gh test", len(tt.attach))
+				tt.input.AttachEvent = attachments.BeginTelemetry(attachmentRecorder, "gm test", len(tt.attach))
 			}
 
 			var lookupFields []string
@@ -1938,7 +1938,7 @@ func mockProjectV2ItemUpdate(reg *httpmock.Registry) {
 
 type testFetcher struct{}
 
-func (f testFetcher) EditableOptionsFetch(client *api.Client, repo ghrepo.Interface, opts *shared.Editable, projectsV1Support gh.ProjectsV1Support) error {
+func (f testFetcher) EditableOptionsFetch(client *api.Client, repo ghrepo.Interface, opts *shared.Editable, projectsV1Support gm.ProjectsV1Support) error {
 	return shared.FetchOptions(client, repo, opts, projectsV1Support)
 }
 

@@ -20,7 +20,7 @@ func (e *OfficialExtension) Repository() ghrepo.Interface {
 	return ghrepo.NewWithHost(e.Owner, e.Repo, "github.com")
 }
 
-// OfficialExtensions is the registry of GitHub-owned extensions that gh will
+// OfficialExtensions is the registry of GitHub-owned extensions that gm will
 // offer to install when the user invokes the corresponding command name.
 var OfficialExtensions = []OfficialExtension{
 	{Name: "aw", Owner: "github", Repo: "gh-aw"},
@@ -44,7 +44,7 @@ var OfficialExtensions = []OfficialExtension{
 //
 // The owner is resolved only after a name match because resolving it for a
 // git-installed extension spawns git, and this is called for every installed
-// extension on every gh invocation. Official extension names are unique.
+// extension on every gm invocation. Official extension names are unique.
 func IsOfficial(ext Extension) bool {
 	name := ext.Name()
 	for _, official := range OfficialExtensions {

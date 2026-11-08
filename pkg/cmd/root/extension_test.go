@@ -43,7 +43,7 @@ func TestNewCmdExtension_Updates(t *testing.T) {
 			extURL:             "https//github.com/dne/major-update",
 			wantStderr: heredoc.Doc(`
 				A new release of major-update is available: 1.0.0 → 2.0.0
-				To upgrade, run: gh extension upgrade major-update
+				To upgrade, run: gm extension upgrade major-update
 				https//github.com/dne/major-update
 			`),
 		},
@@ -57,7 +57,7 @@ func TestNewCmdExtension_Updates(t *testing.T) {
 			extURL:             "https//github.com/dne/major-update",
 			wantStderr: heredoc.Doc(`
 				A new release of major-update-pin is available: 1.0.0 → 2.0.0
-				To upgrade, run: gh extension upgrade major-update-pin --force
+				To upgrade, run: gm extension upgrade major-update-pin --force
 				https//github.com/dne/major-update
 			`),
 		},
@@ -70,7 +70,7 @@ func TestNewCmdExtension_Updates(t *testing.T) {
 			extURL:             "https//github.com/dne/minor-update",
 			wantStderr: heredoc.Doc(`
 				A new release of minor-update is available: 1.0.0 → 1.1.0
-				To upgrade, run: gh extension upgrade minor-update
+				To upgrade, run: gm extension upgrade minor-update
 				https//github.com/dne/minor-update
 			`),
 		},
@@ -84,7 +84,7 @@ func TestNewCmdExtension_Updates(t *testing.T) {
 			extIsPinned:        true,
 			wantStderr: heredoc.Doc(`
 				A new release of minor-update-pin is available: 1.0.0 → 1.1.0
-				To upgrade, run: gh extension upgrade minor-update-pin --force
+				To upgrade, run: gm extension upgrade minor-update-pin --force
 				https//github.com/dne/minor-update
 			`),
 		},
@@ -97,7 +97,7 @@ func TestNewCmdExtension_Updates(t *testing.T) {
 			extURL:             "https//github.com/dne/patch-update",
 			wantStderr: heredoc.Doc(`
 				A new release of patch-update is available: 1.0.0 → 1.0.1
-				To upgrade, run: gh extension upgrade patch-update
+				To upgrade, run: gm extension upgrade patch-update
 				https//github.com/dne/patch-update
 			`),
 		},
@@ -111,7 +111,7 @@ func TestNewCmdExtension_Updates(t *testing.T) {
 			extIsPinned:        true,
 			wantStderr: heredoc.Doc(`
 				A new release of patch-update-pin is available: 1.0.0 → 1.0.1
-				To upgrade, run: gh extension upgrade patch-update-pin --force
+				To upgrade, run: gm extension upgrade patch-update-pin --force
 				https//github.com/dne/patch-update
 			`),
 		},

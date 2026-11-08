@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	accessibilityCmd "github.com/cli/cli/v2/pkg/cmd/accessibility"
 	actionsCmd "github.com/cli/cli/v2/pkg/cmd/actions"
 	agentTaskCmd "github.com/cli/cli/v2/pkg/cmd/agent-task"
@@ -69,13 +69,13 @@ func NewCmdRoot(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder, ve
 	}
 
 	cmd := &cobra.Command{
-		Use:   "gh <command> <subcommand> [flags]",
-		Short: "GitHub CLI",
-		Long:  `Work seamlessly with GitHub from the command line.`,
+		Use:   "gm <command> <subcommand> [flags]",
+		Short: "gitmip CLI",
+		Long:  `Work seamlessly with GitHub and Gitea from the command line.`,
 		Example: heredoc.Doc(`
-			$ gh issue create
-			$ gh repo clone cli/cli
-			$ gh pr checkout 321
+			$ gm issue create
+			$ gm repo clone cli/cli
+			$ gm pr checkout 321
 		`),
 		Annotations: map[string]string{
 			"versionInfo": versionCmd.Format(version, buildDate),
@@ -85,7 +85,7 @@ func NewCmdRoot(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder, ve
 			if cmdutil.IsAuthCheckEnabled(cmd) && !cmdutil.CheckAuth(cfg) {
 				parent := cmd.Parent()
 				if parent != nil && parent.Use == "codespace" {
-					fmt.Fprintln(io.ErrOut, "To get started with GitHub CLI, please run:  gh auth login -s codespace")
+					fmt.Fprintln(io.ErrOut, "To get started with GitHub CLI, please run:  gm auth login -s codespace")
 				} else {
 					fmt.Fprint(io.ErrOut, authHelp())
 				}
@@ -107,7 +107,7 @@ func NewCmdRoot(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder, ve
 		cmd.SilenceUsage = true
 
 		// this --version flag is checked in rootHelpFunc
-		cmd.Flags().Bool("version", false, "Show gh version")
+		cmd.Flags().Bool("version", false, "Show gm version")
 
 		cmd.SetHelpFunc(func(c *cobra.Command, args []string) {
 			rootHelpFunc(f, c, args)

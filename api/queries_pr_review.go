@@ -556,7 +556,7 @@ func SuggestedReviewerActors(client *Client, repo ghrepo.Interface, prID string,
 }
 
 // SuggestedReviewerActorsForRepo fetches potential reviewers for a repository.
-// Unlike SuggestedReviewerActors, this doesn't require an existing PR - used for gh pr create.
+// Unlike SuggestedReviewerActors, this doesn't require an existing PR - used for gm pr create.
 // It combines results from two sources using a cascading quota system:
 // - repository collaborators (base quota: 5)
 // - organization teams (base quota: 5 + unfilled from collaborators)

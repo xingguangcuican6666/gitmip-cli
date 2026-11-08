@@ -47,7 +47,7 @@ var resolved sync.Map
 
 // override, when set, replaces config-based resolution entirely.
 //
-// A single pointer rather than a mutex is deliberate: gh commands resolve hosts
+// A single pointer rather than a mutex is deliberate: gm commands resolve hosts
 // serially, and the override exists so tests can control resolution without
 // writing a hosts.yml. It is never set in production.
 var override func(normalized string) (Type, bool)
@@ -82,7 +82,7 @@ func SetHostTypeOverride(table map[string]Type) func() {
 // has no host_type set or its value is unrecognized.
 //
 // An unrecognized value is treated as GitHub rather than rejected so that a
-// config written by a newer gh cannot break an older one. gh config set
+// config written by a newer gm cannot break an older one. gm config set
 // validates the value on the way in.
 func For(hostname string) Type {
 	normalized := ghauth.NormalizeHostname(hostname)

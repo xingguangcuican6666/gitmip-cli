@@ -9,8 +9,8 @@ import (
 
 	"github.com/cli/cli/v2/internal/config"
 	"github.com/cli/cli/v2/internal/docs"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/telemetry"
 	"github.com/cli/cli/v2/pkg/cmd/root"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -50,7 +50,7 @@ func run(args []string) error {
 	rootCmd, _ := root.NewCmdRoot(&cmdutil.Factory{
 		IOStreams: ios,
 		Browser:   &browser{},
-		Config: func() (gh.Config, error) {
+		Config: func() (gm.Config, error) {
 			return config.NewMockConfigFromString(""), nil
 		},
 		ExtensionManager: &em{},

@@ -10,8 +10,8 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/git"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/spf13/cobra"
@@ -21,7 +21,7 @@ import (
 type CloneOptions struct {
 	HttpClient func() (*http.Client, error)
 	GitClient  *git.Client
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 	IO         *iostreams.IOStreams
 
 	GitArgs      []string
@@ -52,7 +52,7 @@ func NewCmdClone(f *cmdutil.Factory, runF func(*CloneOptions) error) *cobra.Comm
 			defaults to the name of the authenticating user.
 
 			When a protocol scheme is not provided in the repository argument, the %[1]sgit_protocol%[1]s will be
-			chosen from your configuration, which can be checked via %[1]sgh config get git_protocol%[1]s. If the protocol
+			chosen from your configuration, which can be checked via %[1]sgm config get git_protocol%[1]s. If the protocol
 			scheme is provided, the repository will be cloned using the specified protocol.
 
 			If the repository is a fork, its parent repository will be added as an additional
@@ -65,23 +65,23 @@ func NewCmdClone(f *cmdutil.Factory, runF func(*CloneOptions) error) *cobra.Comm
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Clone a repository from a specific org
-			$ gh repo clone cli/cli
+			$ gm repo clone cli/cli
 
 			# Clone a repository from your own account
-			$ gh repo clone myrepo
+			$ gm repo clone myrepo
 
 			# Clone a repo, overriding git protocol configuration
-			$ gh repo clone https://github.com/cli/cli
-			$ gh repo clone git@github.com:cli/cli.git
+			$ gm repo clone https://github.com/cli/cli
+			$ gm repo clone git@github.com:cli/cli.git
 
 			# Clone a repository to a custom directory
-			$ gh repo clone cli/cli workspace/cli
+			$ gm repo clone cli/cli workspace/cli
 
 			# Clone a repository with additional git clone flags
-			$ gh repo clone cli/cli -- --depth=1
+			$ gm repo clone cli/cli -- --depth=1
 
 			# Clone a fork without adding an upstream remote
-			$ gh repo clone myfork --no-upstream
+			$ gm repo clone myfork --no-upstream
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts.Repository = args[0]
@@ -235,7 +235,7 @@ func cloneRun(opts *CloneOptions) error {
 			connectedToTerminal := opts.IO.IsStdoutTTY()
 			if connectedToTerminal {
 				cs := opts.IO.ColorScheme()
-				fmt.Fprintf(opts.IO.ErrOut, "%s Repository %s set as the default repository. To learn more about the default repository, run: gh repo set-default --help\n", cs.WarningIcon(), cs.Bold(ghrepo.FullName(canonicalRepo.Parent)))
+				fmt.Fprintf(opts.IO.ErrOut, "%s Repository %s set as the default repository. To learn more about the default repository, run: gm repo set-default --help\n", cs.WarningIcon(), cs.Bold(ghrepo.FullName(canonicalRepo.Parent)))
 			}
 		}
 	}

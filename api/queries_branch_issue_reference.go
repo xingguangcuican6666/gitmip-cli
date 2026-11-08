@@ -115,16 +115,16 @@ func CheckLinkedBranchFeature(client *Client, host string) error {
 	}
 
 	if len(query.Name.Fields) == 0 {
-		return fmt.Errorf("the `gh issue develop` command is not currently available")
+		return fmt.Errorf("the `gm issue develop` command is not currently available")
 	}
 
 	return nil
 }
 
-// ErrGiteaLinkedBranchUnsupported explains why `gh issue develop` cannot work on
+// ErrGiteaLinkedBranchUnsupported explains why `gm issue develop` cannot work on
 // a Gitea host.
 var ErrGiteaLinkedBranchUnsupported = fmt.Errorf(
-	"the `gh issue develop` command is not available on Gitea, which has no linked branches")
+	"the `gm issue develop` command is not available on Gitea, which has no linked branches")
 
 func FindRepoBranchID(client *Client, repo ghrepo.Interface, ref string) (string, string, error) {
 	var query struct {

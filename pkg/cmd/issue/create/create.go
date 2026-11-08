@@ -12,9 +12,9 @@ import (
 	"github.com/cli/cli/v2/internal/attachments"
 	"github.com/cli/cli/v2/internal/browser"
 	fd "github.com/cli/cli/v2/internal/featuredetection"
-	"github.com/cli/cli/v2/internal/gh"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/internal/text"
@@ -98,27 +98,27 @@ func NewCmdCreate(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder, 
 			issue's URL is still printed to stdout.
 
 			Adding an issue to projects requires authorization with the %[1]sproject%[1]s scope.
-			To authorize, run %[1]sgh auth refresh -s project%[1]s.
+			To authorize, run %[1]sgm auth refresh -s project%[1]s.
 
 			The %[1]s--assignee%[1]s flag supports the following special values:
 			- %[1]s@me%[1]s: assign yourself
 			- %[1]s@copilot%[1]s: assign Copilot (not supported on GitHub Enterprise Server)
 		`, "`"),
 		Example: heredoc.Doc(`
-			$ gh issue create --title "I found a bug" --body "Nothing works"
-			$ gh issue create --attach './login.png#The login error state'
-			$ gh issue create --attach ./before.png --attach ./after.png
-			$ gh issue create --label "bug,help wanted"
-			$ gh issue create --label bug --label "help wanted"
-			$ gh issue create --assignee monalisa,hubot
-			$ gh issue create --assignee "@me"
-			$ gh issue create --assignee "@copilot"
-			$ gh issue create --project "Roadmap"
-			$ gh issue create --template "Bug Report"
-			$ gh issue create --type Bug
-			$ gh issue create --parent 100
-			$ gh issue create --parent https://github.com/cli/go-gh/issues/42
-			$ gh issue create --blocked-by 200,201 --blocking 300
+			$ gm issue create --title "I found a bug" --body "Nothing works"
+			$ gm issue create --attach './login.png#The login error state'
+			$ gm issue create --attach ./before.png --attach ./after.png
+			$ gm issue create --label "bug,help wanted"
+			$ gm issue create --label bug --label "help wanted"
+			$ gm issue create --assignee monalisa,hubot
+			$ gm issue create --assignee "@me"
+			$ gm issue create --assignee "@copilot"
+			$ gm issue create --project "Roadmap"
+			$ gm issue create --template "Bug Report"
+			$ gm issue create --type Bug
+			$ gm issue create --parent 100
+			$ gm issue create --parent https://github.com/cli/go-gh/issues/42
+			$ gm issue create --blocked-by 200,201 --blocking 300
 		`),
 		Args:    cmdutil.NoArgsQuoteReminder,
 		Aliases: []string{"new"},
@@ -522,7 +522,7 @@ func createRun(opts *CreateOptions) (err error) {
 	return
 }
 
-func generatePreviewURL(apiClient *api.Client, baseRepo ghrepo.Interface, tb prShared.IssueMetadataState, projectsV1Support gh.ProjectsV1Support) (string, error) {
+func generatePreviewURL(apiClient *api.Client, baseRepo ghrepo.Interface, tb prShared.IssueMetadataState, projectsV1Support gm.ProjectsV1Support) (string, error) {
 	openURL := ghrepo.GenerateRepoURL(baseRepo, "issues/new")
 	return prShared.WithPrAndIssueQueryParams(apiClient, baseRepo, openURL, tb, projectsV1Support)
 }

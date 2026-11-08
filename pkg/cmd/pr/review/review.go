@@ -7,8 +7,8 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/pkg/cmd/pr/shared"
@@ -20,7 +20,7 @@ import (
 
 type ReviewOptions struct {
 	HttpClient func() (*http.Client, error)
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 	IO         *iostreams.IOStreams
 	Prompter   prompter.Prompter
 
@@ -58,16 +58,16 @@ func NewCmdReview(f *cmdutil.Factory, runF func(*ReviewOptions) error) *cobra.Co
 		`),
 		Example: heredoc.Doc(`
 			# Approve the pull request of the current branch
-			$ gh pr review --approve
+			$ gm pr review --approve
 
 			# Leave a review comment for the current branch
-			$ gh pr review --comment -b "interesting"
+			$ gm pr review --comment -b "interesting"
 
 			# Add a review for a specific pull request
-			$ gh pr review 123
+			$ gm pr review 123
 
 			# Request changes on a specific pull request
-			$ gh pr review 123 -r -b "needs more ASCII art"
+			$ gm pr review 123 -r -b "needs more ASCII art"
 		`),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

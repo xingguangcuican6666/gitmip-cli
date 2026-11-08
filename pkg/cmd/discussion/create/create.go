@@ -47,10 +47,10 @@ func NewCmdCreate(f *cmdutil.Factory, runF func(*CreateOptions) error) *cobra.Co
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Create interactively
-			$ gh discussion create
+			$ gm discussion create
 
 			# Create non-interactively
-			$ gh discussion create --title "My question" --category "Q&A" --body "Details here"
+			$ gm discussion create --title "My question" --category "Q&A" --body "Details here"
 		`),
 		Args: cmdutil.NoArgsQuoteReminder,
 		RunE: func(cmd *cobra.Command, args []string) error {

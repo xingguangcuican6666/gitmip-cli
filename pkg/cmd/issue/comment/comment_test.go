@@ -13,9 +13,9 @@ import (
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/browser"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/internal/telemetry"
 	"github.com/cli/cli/v2/pkg/cmd/pr/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -952,9 +952,9 @@ func Test_commentRun(t *testing.T) {
 	}
 }
 
-func testConfig() func() (gh.Config, error) {
+func testConfig() func() (gm.Config, error) {
 	cfg := config.NewMockConfigFromString("hosts:\n  github.com:\n    oauth_token: gho_a_token_that_can_upload\n")
-	return func() (gh.Config, error) { return cfg, nil }
+	return func() (gm.Config, error) { return cfg, nil }
 }
 
 func mockCommentCreate(t *testing.T, reg *httpmock.Registry) {

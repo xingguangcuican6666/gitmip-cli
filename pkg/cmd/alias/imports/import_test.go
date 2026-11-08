@@ -11,7 +11,7 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmd/alias/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -130,12 +130,12 @@ func TestImportRun(t *testing.T) {
 			},
 			fileContents: heredoc.Doc(`
                 co: pr checkout
-                igrep: '!gh issue list --label="$1" | grep "$2"'
+                igrep: '!gm issue list --label="$1" | grep "$2"'
             `),
 			wantConfig: heredoc.Doc(`
                 aliases:
                     co: pr checkout
-                    igrep: '!gh issue list --label="$1" | grep "$2"'
+                    igrep: '!gm issue list --label="$1" | grep "$2"'
             `),
 			wantStderr: importFileMsg + "\n✓ Added alias co\n✓ Added alias igrep\n\n",
 		},
@@ -157,7 +157,7 @@ func TestImportRun(t *testing.T) {
             `),
 			initConfig: heredoc.Doc(`
                 aliases:
-                    igrep: '!gh issue list --label="$1" | grep "$2"'
+                    igrep: '!gm issue list --label="$1" | grep "$2"'
                 editor: vim
             `),
 			aliasCommands: []*cobra.Command{
@@ -165,7 +165,7 @@ func TestImportRun(t *testing.T) {
 			},
 			wantConfig: heredoc.Doc(`
                 aliases:
-                    igrep: '!gh issue list --label="$1" | grep "$2"'
+                    igrep: '!gm issue list --label="$1" | grep "$2"'
                     co: pr checkout
                     users: |-
                         api graphql -F name="$1" -f query='
@@ -189,7 +189,7 @@ func TestImportRun(t *testing.T) {
                 features: |-
                     issue list
                     --label=enhancement
-                igrep: '!gh issue list --label="$1" | grep "$2"'
+                igrep: '!gm issue list --label="$1" | grep "$2"'
             `),
 			wantConfig: heredoc.Doc(`
                 aliases:
@@ -197,7 +197,7 @@ func TestImportRun(t *testing.T) {
                     features: |-
                         issue list
                         --label=enhancement
-                    igrep: '!gh issue list --label="$1" | grep "$2"'
+                    igrep: '!gm issue list --label="$1" | grep "$2"'
             `),
 			wantStderr: importStdinMsg + "\n✓ Added alias co\n✓ Added alias features\n✓ Added alias igrep\n\n",
 		},
@@ -209,7 +209,7 @@ func TestImportRun(t *testing.T) {
 			},
 			fileContents: heredoc.Doc(`
                 co: pr checkout -R cool/repo
-                igrep: '!gh issue list --label="$1" | grep "$2"'
+                igrep: '!gm issue list --label="$1" | grep "$2"'
             `),
 			initConfig: heredoc.Doc(`
                 aliases:
@@ -222,7 +222,7 @@ func TestImportRun(t *testing.T) {
 			wantConfig: heredoc.Doc(`
                 aliases:
                     co: pr checkout
-                    igrep: '!gh issue list --label="$1" | grep "$2"'
+                    igrep: '!gm issue list --label="$1" | grep "$2"'
                 editor: vim
             `),
 			wantStderr: importFileMsg + "\nX Could not import alias co: name already taken\n✓ Added alias igrep\n\n",
@@ -235,7 +235,7 @@ func TestImportRun(t *testing.T) {
 			},
 			fileContents: heredoc.Doc(`
                 co: pr checkout -R cool/repo
-                igrep: '!gh issue list --label="$1" | grep "$2"'
+                igrep: '!gm issue list --label="$1" | grep "$2"'
             `),
 			initConfig: heredoc.Doc(`
                 aliases:
@@ -248,13 +248,13 @@ func TestImportRun(t *testing.T) {
 			wantConfig: heredoc.Doc(`
                 aliases:
                     co: pr checkout -R cool/repo
-                    igrep: '!gh issue list --label="$1" | grep "$2"'
+                    igrep: '!gm issue list --label="$1" | grep "$2"'
                 editor: vim
             `),
 			wantStderr: importFileMsg + "\n! Changed alias co\n✓ Added alias igrep\n\n",
 		},
 		{
-			name: "alias is a gh command",
+			name: "alias is a gm command",
 			opts: &ImportOptions{
 				Filename:          tmpFile,
 				OverwriteExisting: false,
@@ -267,9 +267,9 @@ func TestImportRun(t *testing.T) {
 			wantStderr: strings.Join(
 				[]string{
 					importFileMsg,
-					"X Could not import alias api: already a gh command or extension",
-					"X Could not import alias issue: already a gh command or extension",
-					"X Could not import alias pr: already a gh command or extension\n\n",
+					"X Could not import alias api: already a gm command or extension",
+					"X Could not import alias issue: already a gm command or extension",
+					"X Could not import alias pr: already a gm command or extension\n\n",
 				},
 				"\n",
 			),
@@ -287,8 +287,8 @@ func TestImportRun(t *testing.T) {
 			wantStderr: strings.Join(
 				[]string{
 					importFileMsg,
-					"X Could not import alias alias1: expansion does not correspond to a gh command, extension, or alias",
-					"X Could not import alias alias2: expansion does not correspond to a gh command, extension, or alias\n\n",
+					"X Could not import alias alias1: expansion does not correspond to a gm command, extension, or alias",
+					"X Could not import alias alias2: expansion does not correspond to a gm command, extension, or alias\n\n",
 				},
 				"\n",
 			),
@@ -310,7 +310,7 @@ func TestImportRun(t *testing.T) {
 
 			readConfigs := config.StubWriteConfig(t)
 			cfg := config.NewMockConfigFromString(tt.initConfig)
-			tt.opts.Config = func() (gh.Config, error) {
+			tt.opts.Config = func() (gm.Config, error) {
 				return cfg, nil
 			}
 

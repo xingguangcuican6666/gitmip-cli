@@ -44,10 +44,10 @@ func NewCmdEdit(f *cmdutil.Factory, runF func(*EditOptions) error) *cobra.Comman
 		Short: "Edit a release",
 		Example: heredoc.Doc(`
 			# Publish a release that was previously a draft
-			$ gh release edit v1.0 --draft=false
+			$ gm release edit v1.0 --draft=false
 
 			# Update the release notes from the content of a file
-			$ gh release edit v1.0 --notes-file /path/to/release_notes.md
+			$ gm release edit v1.0 --notes-file /path/to/release_notes.md
 		`),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

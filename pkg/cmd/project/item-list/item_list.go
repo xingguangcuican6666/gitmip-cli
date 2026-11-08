@@ -47,19 +47,19 @@ func NewCmdList(f *cmdutil.Factory, runF func(config listConfig) error) *cobra.C
 		`),
 		Example: heredoc.Doc(`
 			# List the items in the current users's project "1"
-			$ gh project item-list 1 --owner "@me"
+			$ gm project item-list 1 --owner "@me"
 
 			# List items assigned to a specific user
-			$ gh project item-list 1 --owner "@me" --query "assignee:monalisa"
+			$ gm project item-list 1 --owner "@me" --query "assignee:monalisa"
 
 			# List open issues assigned to yourself
-			$ gh project item-list 1 --owner "@me" --query "assignee:@me is:issue is:open"
+			$ gm project item-list 1 --owner "@me" --query "assignee:@me is:issue is:open"
 
 			# List items with the "bug" label that are not done
-			$ gh project item-list 1 --owner "@me" --query "label:bug -status:Done"
+			$ gm project item-list 1 --owner "@me" --query "label:bug -status:Done"
 
 			# Show the "Status" and "Priority" field values as extra columns
-			$ gh project item-list 1 --owner "@me" --field "Status" --field "Priority"
+			$ gm project item-list 1 --owner "@me" --field "Status" --field "Priority"
 		`),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

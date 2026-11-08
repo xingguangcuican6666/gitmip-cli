@@ -20,13 +20,13 @@ type helpTopic struct {
 var HelpTopics = []helpTopic{
 	{
 		name:  "mintty",
-		short: "Information about using gh with MinTTY",
+		short: "Information about using gm with MinTTY",
 		long: heredoc.Docf(`
 			MinTTY is the terminal emulator that comes by default with Git
-			for Windows. It has known issues with gh's ability to prompt a
+			for Windows. It has known issues with gm's ability to prompt a
 			user for input.
 
-			There are a few workarounds to make gh work with MinTTY:
+			There are a few workarounds to make gm work with MinTTY:
 
 			- Reinstall Git for Windows, checking "Enable experimental support for pseudo consoles".
 
@@ -34,20 +34,20 @@ var HelpTopics = []helpTopic{
 			  You can run %[1]sC:\Program Files\Git\bin\bash.exe%[1]s from any terminal emulator to continue
 			  using all of the tooling in Git For Windows without MinTTY.
 
-			- Prefix invocations of gh with %[1]swinpty%[1]s, eg: %[1]swinpty gh auth login%[1]s.
+			- Prefix invocations of gm with %[1]swinpty%[1]s, eg: %[1]swinpty gm auth login%[1]s.
 			  NOTE: this can lead to some UI bugs.
 		`, "`"),
 	},
 	{
 		name:  "environment",
-		short: "Environment variables that can be used with gh",
+		short: "Environment variables that can be used with gm",
 		long: heredoc.Docf(`
 			%[1]sGH_TOKEN%[1]s, %[1]sGITHUB_TOKEN%[1]s (in order of precedence): an authentication token that will be used when
 			a command targets %[1]sgithub.com%[1]s, a subdomain of %[1]sghe.com%[1]s, or %[1]sgithub.localhost%[1]s. Setting this avoids
 			being prompted to authenticate and takes precedence over previously stored credentials.
 
 			%[1]sGH_ENTERPRISE_TOKEN%[1]s, %[1]sGITHUB_ENTERPRISE_TOKEN%[1]s (in order of precedence): an authentication
-			token that will be used when a command targets a GitHub Enterprise Server host. %[1]sgh%[1]s treats any host other
+			token that will be used when a command targets a GitHub Enterprise Server host. %[1]sgm%[1]s treats any host other
 			than %[1]sgithub.com%[1]s, a subdomain of %[1]sghe.com%[1]s, or %[1]sgithub.localhost%[1]s as a GitHub Enterprise Server host.
 
 			%[1]sGH_HOST%[1]s: specify the GitHub hostname for commands where a hostname has not been provided, or
@@ -93,17 +93,17 @@ var HelpTopics = []helpTopic{
 			the number of columns available in the current viewport.
 
 			%[1]sGH_NO_UPDATE_NOTIFIER%[1]s: set to any value to disable GitHub CLI update notifications.
-			When any command is executed, gh checks for new versions once every 24 hours.
+			When any command is executed, gm checks for new versions once every 24 hours.
 			If a newer version was found, an upgrade notice is displayed on standard error.
 
 			%[1]sGH_NO_EXTENSION_UPDATE_NOTIFIER%[1]s: set to any value to disable GitHub CLI extension update notifications.
-			When an extension is executed, gh checks for new versions for the executed extension once every 24 hours.
+			When an extension is executed, gm checks for new versions for the executed extension once every 24 hours.
 			If a newer version was found, an upgrade notice is displayed on standard error.
 
-			%[1]sGH_EXTENSION%[1]s: set to %[1]s1%[1]s by gh when it invokes an extension, allowing an extension to
-			tell whether it was run as %[1]sgh <extension>%[1]s or directly as a standalone program.
+			%[1]sGH_EXTENSION%[1]s: set to %[1]s1%[1]s by gm when it invokes an extension, allowing an extension to
+			tell whether it was run as %[1]sgm <extension>%[1]s or directly as a standalone program.
 
-			%[1]sGH_CONFIG_DIR%[1]s: the directory where gh will store configuration files. If not specified,
+			%[1]sGH_CONFIG_DIR%[1]s: the directory where gm will store configuration files. If not specified,
 			the default value will be one of the following paths (in order of precedence):
 			  - %[1]s$XDG_CONFIG_HOME/gh%[1]s (if %[1]s$XDG_CONFIG_HOME%[1]s is set),
 			  - %[1]s$AppData/GitHub CLI%[1]s (on Windows if %[1]s$AppData%[1]s is set), or
@@ -111,9 +111,9 @@ var HelpTopics = []helpTopic{
 
 			%[1]sGH_PROMPT_DISABLED%[1]s: set to any value to disable interactive prompting in the terminal.
 
-			%[1]sGH_PATH%[1]s: set the path to the gh executable, useful for when gh can not properly determine
-			its own path such as in the cygwin terminal. gh also sets this when invoking extensions so they
-			can call back into the same gh executable.
+			%[1]sGH_PATH%[1]s: set the path to the gm executable, useful for when gm can not properly determine
+			its own path such as in the cygwin terminal. gm also sets this when invoking extensions so they
+			can call back into the same gm executable.
 
 			%[1]sGH_MDWIDTH%[1]s: default maximum width for markdown render wrapping.  The max width of lines
 			wrapped on the terminal will be taken as the lesser of the terminal width, this value, or 120 if
@@ -134,9 +134,9 @@ var HelpTopics = []helpTopic{
 	},
 	{
 		name:  "telemetry",
-		short: "Information about telemetry in gh",
+		short: "Information about telemetry in gm",
 		long: heredoc.Doc(`
-			gh collects telemetry to help us understand how the CLI is being used and to improve it.
+			gm collects telemetry to help us understand how the CLI is being used and to improve it.
 
 			To learn more about what data is collected, how it is used, and how to opt out, see:
 			<https://cli.github.com/telemetry>
@@ -144,13 +144,13 @@ var HelpTopics = []helpTopic{
 	},
 	{
 		name:  "reference",
-		short: "A comprehensive reference of all gh commands",
+		short: "A comprehensive reference of all gm commands",
 	},
 	{
 		name:  "formatting",
-		short: "Formatting options for JSON data exported from gh",
+		short: "Formatting options for JSON data exported from gm",
 		long: heredoc.Docf(`
-			By default, the result of %[1]sgh%[1]s commands are output in line-based plain text format.
+			By default, the result of %[1]sgm%[1]s commands are output in line-based plain text format.
 			Some commands support passing the %[1]s--json%[1]s flag, which converts the output to JSON format.
 			Once in JSON, the output can be further formatted according to a required formatting string by
 			adding either the %[1]s--jq%[1]s or %[1]s--template%[1]s flag. This is useful for selecting a subset of data,
@@ -196,7 +196,7 @@ var HelpTopics = []helpTopic{
 		`, "`"),
 		example: heredoc.Doc(`
 			# Default output format
-			$ gh pr list
+			$ gm pr list
 			Showing 23 of 23 open pull requests in cli/cli
 
 			#123  A helpful contribution          contribution-branch              about 1 day ago
@@ -205,7 +205,7 @@ var HelpTopics = []helpTopic{
 
 
 			# Adding the --json flag with a list of field names
-			$ gh pr list --json number,title,author
+			$ gm pr list --json number,title,author
 			[
 			  {
 			    "author": {
@@ -232,14 +232,14 @@ var HelpTopics = []helpTopic{
 
 
 			# Adding the --jq flag and selecting fields from the array
-			$ gh pr list --json author --jq '.[].author.login'
+			$ gm pr list --json author --jq '.[].author.login'
 			monalisa
 			codercat
 			cli-maintainer
 
 
 			# --jq can be used to implement more complex filtering and output changes
-			$ gh issue list --json number,title,labels --jq \
+			$ gm issue list --json number,title,labels --jq \
 			  'map(select((.labels | length) > 0))    # must have labels
 			  | map(.labels = (.labels | map(.name))) # show only the label names
 			  | .[:3]                                 # select the first 3 results'
@@ -272,11 +272,11 @@ var HelpTopics = []helpTopic{
 
 
 			# Using the --template flag with the hyperlink helper
-			$ gh issue list --json title,url --template '{{range .}}{{hyperlink .url .title}}{{"\n"}}{{end}}'
+			$ gm issue list --json title,url --template '{{range .}}{{hyperlink .url .title}}{{"\n"}}{{end}}'
 
 
 			# Adding the --template flag and modifying the display format
-			$ gh pr list --json number,title,headRefName,updatedAt --template \
+			$ gm pr list --json number,title,headRefName,updatedAt --template \
 				'{{range .}}{{tablerow (printf "#%v" .number | autocolor "green") .title .headRefName (timeago .updatedAt)}}{{end}}'
 
 			#123  A helpful contribution      contribution-branch       about 1 day ago
@@ -285,7 +285,7 @@ var HelpTopics = []helpTopic{
 
 
 			# A more complex example with the --template flag which formats a pull request using multiple tables with headers
-			$ gh pr view 3519 --json number,title,body,reviews,assignees --template \
+			$ gm pr view 3519 --json number,title,body,reviews,assignees --template \
 			'{{printf "#%v" .number}} {{.title}}
 
 			{{.body}}
@@ -308,9 +308,9 @@ var HelpTopics = []helpTopic{
 	},
 	{
 		name:  "exit-codes",
-		short: "Exit codes used by gh",
+		short: "Exit codes used by gm",
 		long: heredoc.Doc(`
-			gh follows normal conventions regarding exit codes.
+			gm follows normal conventions regarding exit codes.
 
 			- If a command completes successfully, the exit code will be 0
 
@@ -360,6 +360,6 @@ func helpTopicHelpFunc(w io.Writer, command *cobra.Command) {
 }
 
 func helpTopicUsageFunc(w io.Writer, command *cobra.Command) error {
-	fmt.Fprintf(w, "Usage: gh help %s", command.Use)
+	fmt.Fprintf(w, "Usage: gm help %s", command.Use)
 	return nil
 }

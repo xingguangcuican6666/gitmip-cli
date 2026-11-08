@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/telemetry"
 	"github.com/cli/cli/v2/pkg/cmd/attestation/api"
 	"github.com/cli/cli/v2/pkg/cmd/attestation/artifact/oci"
@@ -32,7 +32,7 @@ func TestVerifyIntegration(t *testing.T) {
 
 	ios, _, _, _ := iostreams.Test()
 	hc, err := factory.HttpClientFunc(
-		func() (gh.Config, error) { return config.NewMockConfig(), nil },
+		func() (gm.Config, error) { return config.NewMockConfig(), nil },
 		ios,
 		"test",
 		"",
@@ -152,7 +152,7 @@ func TestVerifyIntegrationCustomIssuer(t *testing.T) {
 
 	ios, _, _, _ := iostreams.Test()
 	hc, err := factory.HttpClientFunc(
-		func() (gh.Config, error) { return config.NewMockConfig(), nil },
+		func() (gm.Config, error) { return config.NewMockConfig(), nil },
 		ios,
 		"test",
 		"",
@@ -230,7 +230,7 @@ func TestVerifyIntegrationReusableWorkflow(t *testing.T) {
 	cfg := config.NewMockConfig()
 	ios, _, _, _ := iostreams.Test()
 	hc, err := factory.HttpClientFunc(
-		func() (gh.Config, error) { return cfg, nil },
+		func() (gm.Config, error) { return cfg, nil },
 		ios,
 		"test",
 		"",
@@ -327,7 +327,7 @@ func TestVerifyIntegrationReusableWorkflowSignerWorkflow(t *testing.T) {
 	cfg := config.NewMockConfig()
 	ios, _, _, _ := iostreams.Test()
 	hc, err := factory.HttpClientFunc(
-		func() (gh.Config, error) { return cfg, nil },
+		func() (gm.Config, error) { return cfg, nil },
 		ios,
 		"test",
 		"",
@@ -343,7 +343,7 @@ func TestVerifyIntegrationReusableWorkflowSignerWorkflow(t *testing.T) {
 		APIClient:    api.NewLiveClient(hc, http.DefaultClient, host, logger),
 		ArtifactPath: artifactPath,
 		BundlePath:   bundlePath,
-		Config: func() (gh.Config, error) {
+		Config: func() (gm.Config, error) {
 			return cfg, nil
 		},
 		DigestAlgorithm:  "sha256",

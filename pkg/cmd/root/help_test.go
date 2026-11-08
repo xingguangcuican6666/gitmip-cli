@@ -7,7 +7,7 @@ import (
 
 	"github.com/cli/cli/v2/internal/browser"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/telemetry"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/extensions"
@@ -27,8 +27,8 @@ func TestDedent(t *testing.T) {
 
 	cases := []c{
 		{
-			input:    "      --help      Show help for command\n      --version   Show gh version\n",
-			expected: "--help      Show help for command\n--version   Show gh version\n",
+			input:    "      --help      Show help for command\n      --version   Show gm version\n",
+			expected: "--help      Show help for command\n--version   Show gm version\n",
 		},
 		{
 			input:    "      --help              Show help for command\n  -R, --repo OWNER/REPO   Select another repository using the OWNER/REPO format\n",
@@ -67,7 +67,7 @@ func TestKramdownCompatibleDocs(t *testing.T) {
 	ios, _, _, _ := iostreams.Test()
 	f := &cmdutil.Factory{
 		IOStreams: ios,
-		Config:    func() (gh.Config, error) { return config.NewMockConfig(), nil },
+		Config:    func() (gm.Config, error) { return config.NewMockConfig(), nil },
 		Browser:   &browser.Stub{},
 		ExtensionManager: &extensions.ExtensionManagerMock{
 			ListFunc: func() []extensions.Extension {
@@ -128,7 +128,7 @@ func assertPipesAreInCodeBlocks(t *testing.T, cmd *cobra.Command) {
 func TestWriteHelp_aliasResolution(t *testing.T) {
 	newRoot := func() (*cobra.Command, *iostreams.IOStreams) {
 		ios, _, _, _ := iostreams.Test()
-		rootCmd := &cobra.Command{Use: "gh"}
+		rootCmd := &cobra.Command{Use: "gm"}
 		prCmd := &cobra.Command{Use: "pr", Short: "Manage pull requests"}
 		listCmd := &cobra.Command{Use: "list", Short: "List pull requests", Run: func(*cobra.Command, []string) {}}
 		listCmd.Flags().Int("limit", 30, "Maximum number of items to fetch")
@@ -146,7 +146,7 @@ func TestWriteHelp_aliasResolution(t *testing.T) {
 		WriteHelp(&buf, ios.ColorScheme(), aliasCmd)
 
 		out := buf.String()
-		require.Contains(t, out, "gh pr list")
+		require.Contains(t, out, "gm pr list")
 		require.Contains(t, out, "--limit")
 		require.NotContains(t, out, `Alias for "pr list"`)
 	})
@@ -159,7 +159,7 @@ func TestWriteHelp_aliasResolution(t *testing.T) {
 		var buf bytes.Buffer
 		WriteHelp(&buf, ios.ColorScheme(), aliasCmd)
 
-		require.Contains(t, buf.String(), "gh pr list")
+		require.Contains(t, buf.String(), "gm pr list")
 	})
 
 	t.Run("shell alias has no target and renders its own help", func(t *testing.T) {
@@ -170,7 +170,7 @@ func TestWriteHelp_aliasResolution(t *testing.T) {
 		var buf bytes.Buffer
 		WriteHelp(&buf, ios.ColorScheme(), aliasCmd)
 
-		require.Contains(t, buf.String(), "gh sh")
+		require.Contains(t, buf.String(), "gm sh")
 	})
 
 	t.Run("alias expanding to an unknown command falls back to the alias", func(t *testing.T) {
@@ -181,7 +181,7 @@ func TestWriteHelp_aliasResolution(t *testing.T) {
 		var buf bytes.Buffer
 		WriteHelp(&buf, ios.ColorScheme(), aliasCmd)
 
-		require.Contains(t, buf.String(), "gh zz")
+		require.Contains(t, buf.String(), "gm zz")
 	})
 
 	t.Run("non-alias command is unaffected", func(t *testing.T) {
@@ -192,6 +192,6 @@ func TestWriteHelp_aliasResolution(t *testing.T) {
 		var buf bytes.Buffer
 		WriteHelp(&buf, ios.ColorScheme(), target)
 
-		require.Contains(t, buf.String(), "gh pr list")
+		require.Contains(t, buf.String(), "gm pr list")
 	})
 }

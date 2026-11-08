@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/google/shlex"
@@ -50,7 +50,7 @@ func TestNewCmdConfigSet(t *testing.T) {
 			_ = config.StubWriteConfig(t)
 
 			f := &cmdutil.Factory{
-				Config: func() (gh.Config, error) {
+				Config: func() (gm.Config, error) {
 					return config.NewMockConfig(), nil
 				},
 			}
@@ -194,7 +194,7 @@ func Test_setRun(t *testing.T) {
 			optionalEntry := tt.input.Config.GetOrDefault(tt.input.Hostname, tt.input.Key)
 			entry := optionalEntry.Expect("expected a value to be set")
 			assert.Equal(t, tt.expectedValue, entry.Value)
-			assert.Equal(t, gh.ConfigUserProvided, entry.Source)
+			assert.Equal(t, gm.ConfigUserProvided, entry.Source)
 		})
 	}
 }

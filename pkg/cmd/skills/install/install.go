@@ -15,9 +15,9 @@ import (
 	"github.com/cli/cli/v2/api"
 	ghContext "github.com/cli/cli/v2/context"
 	"github.com/cli/cli/v2/git"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
 	"github.com/cli/cli/v2/internal/ghinstance"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/internal/skills/discovery"
@@ -142,7 +142,7 @@ func NewCmdInstall(f *cmdutil.Factory, telemetry ghtelemetry.EventRecorder, runF
 
 			Installed skills have source tracking metadata injected into their
 			frontmatter. This metadata identifies the source repository and
-			enables %[1]sgh skill update%[1]s to detect changes.
+			enables %[1]sgm skill update%[1]s to detect changes.
 
 			When run interactively, the command prompts for any missing arguments.
 
@@ -155,43 +155,43 @@ func NewCmdInstall(f *cmdutil.Factory, telemetry ghtelemetry.EventRecorder, runF
 		`, "`", registry.AgentHelpList()),
 		Example: heredoc.Doc(`
 			# Interactive: choose repo, skill, and agent
-			$ gh skill install
+			$ gm skill install
 
 			# Choose a skill from the repo interactively
-			$ gh skill install github/awesome-copilot
+			$ gm skill install github/awesome-copilot
 
 			# List available skills non-interactively (e.g. to pipe into grep)
-			$ gh skill install github/awesome-copilot | grep review
+			$ gm skill install github/awesome-copilot | grep review
 
 			# Install a specific skill
-			$ gh skill install github/awesome-copilot git-commit
+			$ gm skill install github/awesome-copilot git-commit
 
 			# Install all skills from a repository
-			$ gh skill install github/awesome-copilot --all
+			$ gm skill install github/awesome-copilot --all
 
 			# Install a specific version
-			$ gh skill install github/awesome-copilot git-commit@v1.2.0
+			$ gm skill install github/awesome-copilot git-commit@v1.2.0
 
 			# Install from a large namespaced repo by path (efficient, skips full discovery)
-			$ gh skill install github/awesome-copilot skills/monalisa/code-review
+			$ gm skill install github/awesome-copilot skills/monalisa/code-review
 
 			# Install from a non-standard nested path (efficient, skips full discovery)
-			$ gh skill install monalisa/skills-repo packages/agent-skills/code-review
+			$ gm skill install monalisa/skills-repo packages/agent-skills/code-review
 
 			# Install from a local directory
-			$ gh skill install ./my-skills-repo --from-local
+			$ gm skill install ./my-skills-repo --from-local
 
 			# Install a specific local skill
-			$ gh skill install ./my-skills-repo git-commit --from-local
+			$ gm skill install ./my-skills-repo git-commit --from-local
 
 			# Install for Claude Code at user scope
-			$ gh skill install github/awesome-copilot git-commit --agent claude-code --scope user
+			$ gm skill install github/awesome-copilot git-commit --agent claude-code --scope user
 
 			# Pin to a specific git ref
-			$ gh skill install github/awesome-copilot git-commit --pin v2.0.0
+			$ gm skill install github/awesome-copilot git-commit --pin v2.0.0
 
 			# Install skills from hidden directories (e.g. .claude/skills/)
-			$ gh skill install owner/repo --allow-hidden-dirs
+			$ gm skill install owner/repo --allow-hidden-dirs
 		`),
 		Aliases: []string{"add"},
 		Args:    cobra.MaximumNArgs(2),
@@ -637,7 +637,7 @@ func discoverSkills(opts *InstallOptions, client *api.Client, hostname string, r
 	opts.IO.StopProgressIndicator()
 	if err != nil {
 		if treeTooLarge, ok := errors.AsType[*discovery.TreeTooLargeError](err); ok {
-			fmt.Fprintf(opts.IO.ErrOut, "%s\n  Use path-based install instead: gh skill install %s/%s skills/<skill-name>\n",
+			fmt.Fprintf(opts.IO.ErrOut, "%s\n  Use path-based install instead: gm skill install %s/%s skills/<skill-name>\n",
 				err, treeTooLarge.Owner, treeTooLarge.Repo)
 			return nil, err
 		}
@@ -697,7 +697,7 @@ var errSkillsListed = errors.New("skills listed")
 func selectSkillsWithSelector(opts *InstallOptions, skills []discovery.Skill, canPrompt bool, sel skillSelector) ([]discovery.Skill, error) {
 	checkCollisions := func(ss []discovery.Skill) error {
 		if err := collisionError(ss); err != nil {
-			fmt.Fprintf(opts.IO.ErrOut, "Hint: install individually using the full name: gh skill install %s namespace/skill-name\n", sel.sourceHint)
+			fmt.Fprintf(opts.IO.ErrOut, "Hint: install individually using the full name: gm skill install %s namespace/skill-name\n", sel.sourceHint)
 			return err
 		}
 		return nil
@@ -1205,9 +1205,9 @@ func printReviewHint(w io.Writer, repo, sha string, skillNames []string, allowHi
 	}
 	for _, name := range skillNames {
 		if sha != "" {
-			fmt.Fprintf(w, "    gh skill preview %s %s@%s%s\n", repo, name, sha, hiddenFlag)
+			fmt.Fprintf(w, "    gm skill preview %s %s@%s%s\n", repo, name, sha, hiddenFlag)
 		} else {
-			fmt.Fprintf(w, "    gh skill preview %s %s%s\n", repo, name, hiddenFlag)
+			fmt.Fprintf(w, "    gm skill preview %s %s%s\n", repo, name, hiddenFlag)
 		}
 	}
 	fmt.Fprintln(w)

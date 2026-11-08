@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -125,7 +125,7 @@ type hostUsers struct {
 	users []user
 }
 
-type tokenAssertion func(t *testing.T, cfg gh.Config)
+type tokenAssertion func(t *testing.T, cfg gm.Config)
 
 func Test_logoutRun_tty(t *testing.T) {
 	tests := []struct {
@@ -323,7 +323,7 @@ func Test_logoutRun_tty(t *testing.T) {
 				}
 			}
 
-			tt.opts.Config = func() (gh.Config, error) {
+			tt.opts.Config = func() (gm.Config, error) {
 				return cfg, nil
 			}
 
@@ -517,7 +517,7 @@ func Test_logoutRun_nontty(t *testing.T) {
 					)
 				}
 			}
-			tt.opts.Config = func() (gh.Config, error) {
+			tt.opts.Config = func() (gm.Config, error) {
 				return cfg, nil
 			}
 
@@ -553,7 +553,7 @@ func Test_logoutRun_nontty(t *testing.T) {
 }
 
 func hasNoToken(hostname string) tokenAssertion {
-	return func(t *testing.T, cfg gh.Config) {
+	return func(t *testing.T, cfg gm.Config) {
 		t.Helper()
 
 		token := cfg.Authentication().ActiveToken(hostname).Token
@@ -562,7 +562,7 @@ func hasNoToken(hostname string) tokenAssertion {
 }
 
 func hasActiveToken(hostname string, expectedToken string) tokenAssertion {
-	return func(t *testing.T, cfg gh.Config) {
+	return func(t *testing.T, cfg gm.Config) {
 		t.Helper()
 
 		token := cfg.Authentication().ActiveToken(hostname).Token

@@ -109,7 +109,7 @@ func getOrgVariablesGitea(client *http.Client, host, orgName string) ([]shared.V
 	return getVariablesGitea(client, host, u)
 }
 
-// getVariablesGitea pages through a Gitea variable list and maps it onto gh's
+// getVariablesGitea pages through a Gitea variable list and maps it onto gm's
 // Variable type.
 func getVariablesGitea(client *http.Client, host string, u *safeurl.MutableSafeURL) ([]shared.Variable, error) {
 	apiClient := api.NewClientFromHTTP(client)

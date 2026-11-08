@@ -189,7 +189,7 @@ func fetchTree(httpClient *http.Client, repo ghrepo.Interface, dirPath, ref stri
 
 	if obj.TypeName != "Tree" {
 		if obj.TypeName == "Blob" {
-			return nil, fmt.Errorf("%q is a file, not a directory; use `gh repo read-file` instead", dirPath)
+			return nil, fmt.Errorf("%q is a file, not a directory; use `gm repo read-file` instead", dirPath)
 		}
 		return nil, fmt.Errorf("%q is not a directory", dirPath)
 	}

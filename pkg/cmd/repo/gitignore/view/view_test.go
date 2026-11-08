@@ -7,7 +7,7 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/httpmock"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -76,7 +76,7 @@ func TestViewRun(t *testing.T) {
 			name:    "non-existent template",
 			opts:    &ViewOptions{Template: "non-existent"},
 			wantErr: true,
-			errMsg:  "'non-existent' is not a valid gitignore template. Run `gh repo gitignore list` for options",
+			errMsg:  "'non-existent' is not a valid gitignore template. Run `gm repo gitignore list` for options",
 			httpStubs: func(t *testing.T, reg *httpmock.Registry) {
 				reg.Register(
 					httpmock.REST("GET", "gitignore/templates/non-existent"),
@@ -94,7 +94,7 @@ func TestViewRun(t *testing.T) {
 		if tt.httpStubs != nil {
 			tt.httpStubs(t, reg)
 		}
-		tt.opts.Config = func() (gh.Config, error) {
+		tt.opts.Config = func() (gm.Config, error) {
 			return config.NewMockConfig(), nil
 		}
 		tt.opts.HTTPClient = func() (*http.Client, error) {

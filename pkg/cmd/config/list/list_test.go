@@ -6,7 +6,7 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/google/shlex"
@@ -38,7 +38,7 @@ func TestNewCmdConfigList(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := &cmdutil.Factory{
-				Config: func() (gh.Config, error) {
+				Config: func() (gm.Config, error) {
 					return config.NewMockConfig(), nil
 				},
 			}
@@ -74,13 +74,13 @@ func Test_listRun(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   *ListOptions
-		config  gh.Config
+		config  gm.Config
 		stdout  string
 		wantErr bool
 	}{
 		{
 			name: "list",
-			config: func() gh.Config {
+			config: func() gm.Config {
 				cfg := config.NewMockConfig()
 				cfg.Set("HOST", "api_host", "api-gateway.example.com")
 				cfg.Set("HOST", "git_protocol", "ssh")
@@ -118,7 +118,7 @@ func Test_listRun(t *testing.T) {
 	for _, tt := range tests {
 		ios, _, stdout, _ := iostreams.Test()
 		tt.input.IO = ios
-		tt.input.Config = func() (gh.Config, error) {
+		tt.input.Config = func() (gm.Config, error) {
 			return tt.config, nil
 		}
 

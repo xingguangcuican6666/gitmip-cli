@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmd/alias/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -14,7 +14,7 @@ import (
 )
 
 type SetOptions struct {
-	Config func() (gh.Config, error)
+	Config func() (gm.Config, error)
 	IO     *iostreams.IOStreams
 
 	Name              string
@@ -34,9 +34,9 @@ func NewCmdSet(f *cmdutil.Factory, runF func(*SetOptions) error) *cobra.Command 
 
 	cmd := &cobra.Command{
 		Use:   "set <alias> <expansion>",
-		Short: "Create a shortcut for a gh command",
+		Short: "Create a shortcut for a gm command",
 		Long: heredoc.Docf(`
-			Define a word that will expand to a full gh command when invoked.
+			Define a word that will expand to a full gm command when invoked.
 
 			The expansion may specify additional arguments and flags. If the expansion includes
 			positional placeholders such as %[1]s$1%[1]s, extra arguments that follow the alias will be
@@ -52,23 +52,23 @@ func NewCmdSet(f *cmdutil.Factory, runF func(*SetOptions) error) *cobra.Command 
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Note: Command Prompt on Windows requires using double quotes for arguments
-			$ gh alias set pv 'pr view'
-			$ gh pv -w 123  #=> gh pr view -w 123
+			$ gm alias set pv 'pr view'
+			$ gm pv -w 123  #=> gm pr view -w 123
 
-			$ gh alias set bugs 'issue list --label=bugs'
-			$ gh bugs
+			$ gm alias set bugs 'issue list --label=bugs'
+			$ gm bugs
 
-			$ gh alias set homework 'issue list --assignee @me'
-			$ gh homework
+			$ gm alias set homework 'issue list --assignee @me'
+			$ gm homework
 
-			$ gh alias set 'issue mine' 'issue list --mention @me'
-			$ gh issue mine
+			$ gm alias set 'issue mine' 'issue list --mention @me'
+			$ gm issue mine
 
-			$ gh alias set epicsBy 'issue list --author="$1" --label="epic"'
-			$ gh epicsBy vilmibm  #=> gh issue list --author="vilmibm" --label="epic"
+			$ gm alias set epicsBy 'issue list --author="$1" --label="epic"'
+			$ gm epicsBy vilmibm  #=> gm issue list --author="vilmibm" --label="epic"
 
-			$ gh alias set --shell igrep 'gh issue list --label="$1" | grep "$2"'
-			$ gh igrep epic foo  #=> gh issue list --label="epic" | grep "foo"
+			$ gm alias set --shell igrep 'gm issue list --label="$1" | grep "$2"'
+			$ gm igrep epic foo  #=> gm issue list --label="epic" | grep "foo"
 		`),
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -122,7 +122,7 @@ func setRun(opts *SetOptions) error {
 
 	if !opts.validAliasName(opts.Name) {
 		if !existingAlias {
-			return fmt.Errorf("%s Could not create alias %s: already a gh command or extension",
+			return fmt.Errorf("%s Could not create alias %s: already a gm command or extension",
 				cs.FailureIcon(),
 				cs.Bold(opts.Name))
 		}
@@ -136,7 +136,7 @@ func setRun(opts *SetOptions) error {
 	}
 
 	if !opts.validAliasExpansion(expansion) {
-		return fmt.Errorf("%s Could not create alias %s: expansion does not correspond to a gh command, extension, or alias",
+		return fmt.Errorf("%s Could not create alias %s: expansion does not correspond to a gm command, extension, or alias",
 			cs.FailureIcon(),
 			cs.Bold(opts.Name))
 	}

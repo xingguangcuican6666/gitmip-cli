@@ -14,7 +14,7 @@ import (
 )
 
 var fixtureRepositoryEnvironmentVariable = regexp.MustCompile(`^[A-Z_][A-Z0-9_]*$`)
-var directRepositoryCreation = regexp.MustCompile(`^(?:\[[^]]+\] )*(?:! )?exec gh repo create(?: |$)`)
+var directRepositoryCreation = regexp.MustCompile(`^(?:\[[^]]+\] )*(?:! )?exec gm repo create(?: |$)`)
 
 const fixtureRepositoryDeclarationHelp = `choose one:
   fixture-repo shared REPO
@@ -120,7 +120,7 @@ func validateFixtureRepositoryDeclaration(file string) error {
 			return fmt.Errorf("%s: fixture repository environment variable must match %s; for example:\n  fixture-repo shared REPO", file, fixtureRepositoryEnvironmentVariable)
 		}
 		if hasDirectRepositoryCreation {
-			return fmt.Errorf("%s: scripts using a managed fixture repository must not run gh repo create; either remove gh repo create or use:\n  fixture-repo none", file)
+			return fmt.Errorf("%s: scripts using a managed fixture repository must not run gm repo create; either remove gm repo create or use:\n  fixture-repo none", file)
 		}
 		return nil
 	default:
@@ -282,13 +282,13 @@ func TestValidateFixtureRepositoryDeclaration(t *testing.T) {
 		},
 		{
 			name:    "managed fixture creates repository",
-			content: "fixture-repo isolated REPO\nexec gh repo create $ORG/example --private\n",
-			wantErr: "either remove gh repo create or use:\n  fixture-repo none",
+			content: "fixture-repo isolated REPO\nexec gm repo create $ORG/example --private\n",
+			wantErr: "either remove gm repo create or use:\n  fixture-repo none",
 		},
 		{
 			name:    "managed fixture conditionally creates repository",
-			content: "fixture-repo shared REPO\n[windows] ! exec gh repo create $ORG/example --private\n",
-			wantErr: "either remove gh repo create or use:\n  fixture-repo none",
+			content: "fixture-repo shared REPO\n[windows] ! exec gm repo create $ORG/example --private\n",
+			wantErr: "either remove gm repo create or use:\n  fixture-repo none",
 		},
 		{
 			name: "ignores archive contents",

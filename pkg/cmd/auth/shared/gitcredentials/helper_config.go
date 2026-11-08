@@ -85,7 +85,7 @@ func (h Helper) IsOurs() bool {
 		return false
 	}
 
-	return strings.TrimSuffix(filepath.Base(args[0]), ".exe") == "gh"
+	return strings.TrimSuffix(filepath.Base(args[0]), ".exe") == "gm"
 }
 
 // ConfiguredHelper returns the configured git credential helper for a given hostname.

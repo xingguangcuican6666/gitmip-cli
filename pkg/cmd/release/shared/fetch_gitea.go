@@ -108,7 +108,7 @@ func withGiteaDraftQuery(base safeurl.SafeURL, page int) (safeurl.SafeURL, error
 // giteaAsset is Gitea's Attachment.
 //
 // It carries a numeric id and no url, where GitHub's asset carries both a node_id
-// and an API url. gh's shared ReleaseAsset reads GitHub's spellings, so decoding a
+// and an API url. gm's shared ReleaseAsset reads GitHub's spellings, so decoding a
 // Gitea release into it directly would leave every asset unaddressable, and the
 // upload and delete paths have nothing to send.
 type giteaAsset struct {
@@ -143,7 +143,7 @@ type giteaRelease struct {
 	} `json:"author"`
 }
 
-// fetchReleaseGiteaPath reads one release and maps its assets onto gh's shape.
+// fetchReleaseGiteaPath reads one release and maps its assets onto gm's shape.
 func fetchReleaseGiteaPath(ctx context.Context, httpClient *http.Client, repo ghrepo.Interface, path safeurl.SafeURL) (*Release, error) {
 	client := api.NewClientFromHTTP(httpClient)
 
@@ -164,7 +164,7 @@ func fetchReleaseGiteaPath(ctx context.Context, httpClient *http.Client, repo gh
 	return mapGiteaRelease(raw), nil
 }
 
-// mapGiteaRelease turns a Gitea release into gh's Release.
+// mapGiteaRelease turns a Gitea release into gm's Release.
 //
 // Each asset's API URL is built from the release's own URL and the asset's id,
 // which is the address Gitea's per-asset endpoints take.
@@ -233,7 +233,7 @@ func parseGiteaReleaseTime(value string) time.Time {
 }
 
 // DecodeGiteaReleaseFromURL performs a request and decodes Gitea's release
-// response onto gh's shape.
+// response onto gm's shape.
 //
 // It exists so the write paths, which hold a URL they built themselves rather than
 // a repository, can map the response the same way the read paths do.
@@ -260,7 +260,7 @@ func DecodeGiteaRelease(httpClient *http.Client, repo ghrepo.Interface, fn func(
 	return decodeGiteaReleaseBody(repo.RepoHost(), resp)
 }
 
-// decodeGiteaReleaseBody reads a release response onto gh's shape.
+// decodeGiteaReleaseBody reads a release response onto gm's shape.
 //
 // An empty body is not an error: Gitea answers some writes with 204, and the
 // caller then has no release to print, which it reports rather than inventing.

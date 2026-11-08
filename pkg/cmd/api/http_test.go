@@ -375,7 +375,7 @@ func Test_httpRequest(t *testing.T) {
 			},
 		},
 		{
-			// gh api takes the path verbatim - characters that safeurl would encode
+			// gm api takes the path verbatim - characters that safeurl would encode
 			// must pass through unchanged. This test uses a space and brackets,
 			// which safeurl would percent-encode.
 			name: "path with characters safeurl would escape: passed verbatim",

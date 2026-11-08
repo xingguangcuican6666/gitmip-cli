@@ -24,7 +24,7 @@ import (
 // the count meaningful; without it a repository with mostly pull requests would
 // report its total for both.
 //
-// Every filter gh exposes maps onto a Gitea query parameter except two. Labels
+// Every filter gm exposes maps onto a Gitea query parameter except two. Labels
 // and milestones are OR-matched server-side, where GitHub ANDs them, so asking
 // for two labels returns issues carrying either. That difference is reported
 // rather than silently accepted. Issue type has no counterpart at all.
@@ -244,7 +244,7 @@ func mapGiteaListIssue(raw giteaListIssue) *api.Issue {
 	return issue
 }
 
-// giteaIssueState maps gh's state filter onto Gitea's, which uses the same words
+// giteaIssueState maps gm's state filter onto Gitea's, which uses the same words
 // in lowercase and accepts "all" for both.
 func giteaIssueState(state string) string {
 	switch state {

@@ -15,7 +15,7 @@ import (
 // The resolvers mirror the semantics of the github-mcp-server Projects resolver
 // so the CLI and MCP surfaces behave identically, with two deliberate
 // differences documented on each type:
-//   - errors are human-readable (gh convention) rather than structured JSON,
+//   - errors are human-readable (gm convention) rather than structured JSON,
 //     but still list candidate names so the message stays self-correctable;
 //   - resolution yields GraphQL node IDs (PVTF_/PVTSSF_/PVTI_), not the numeric
 //     databaseIDs the MCP REST path needs.
@@ -72,7 +72,7 @@ type ItemNotInProjectError struct {
 }
 
 func (e *ItemNotInProjectError) Error() string {
-	return fmt.Sprintf("%s is not an item in project %d; add it first with `gh project item-add`", e.URL, e.ProjectNumber)
+	return fmt.Sprintf("%s is not an item in project %d; add it first with `gm project item-add`", e.URL, e.ProjectNumber)
 }
 
 // ResolveSingleSelectOptionID resolves optionName to its option ID on a

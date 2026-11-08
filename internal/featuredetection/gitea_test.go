@@ -3,7 +3,7 @@ package featuredetection
 import (
 	"testing"
 
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -61,7 +61,7 @@ func TestGiteaDetectorCapabilities(t *testing.T) {
 	})
 
 	t.Run("ProjectsV1", func(t *testing.T) {
-		assert.Equal(t, gh.ProjectsV1Unsupported, d.ProjectsV1())
+		assert.Equal(t, gm.ProjectsV1Unsupported, d.ProjectsV1())
 	})
 
 	t.Run("ProjectFeatures", func(t *testing.T) {

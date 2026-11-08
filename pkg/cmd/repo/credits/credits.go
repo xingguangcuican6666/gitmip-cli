@@ -42,16 +42,16 @@ func NewCmdCredits(f *cmdutil.Factory, runF func(*CreditsOptions) error) *cobra.
 	cmd := &cobra.Command{
 		Use:   "credits",
 		Short: "View credits for this tool",
-		Long:  `View animated credits for gh, the tool you are currently using :)`,
+		Long:  `View animated credits for gm, the tool you are currently using :)`,
 		Example: heredoc.Doc(`
 			# See a credits animation for this project
-			$ gh credits
+			$ gm credits
 
 			# Display a non-animated thank you
-			$ gh credits -s
+			$ gm credits -s
 
 			# Just print the contributors, one per line
-			$ gh credits | cat
+			$ gm credits | cat
 		`),
 		Args: cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -81,16 +81,16 @@ func NewCmdRepoCredits(f *cmdutil.Factory, runF func(*CreditsOptions) error) *co
 		Short: "View credits for a repository",
 		Example: heredoc.Doc(`
 			# View credits for the current repository
-			$ gh repo credits
+			$ gm repo credits
 
 			# View credits for a specific repository
-			$ gh repo credits cool/repo
+			$ gm repo credits cool/repo
 
 			# Print a non-animated thank you
-			$ gh repo credits -s
+			$ gm repo credits -s
 
 			# Pipe to just print the contributors, one per line
-			$ gh repo credits | cat
+			$ gm repo credits | cat
 		`),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

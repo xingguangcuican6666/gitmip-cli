@@ -104,7 +104,7 @@ func TestClientAuthenticatedCommandDefaultsToGhOnPath(t *testing.T) {
 
 	// Then gh is resolved from PATH by the credential helper
 	require.NoError(t, err)
-	assert.Equal(t, []string{"path/to/git", "-c", "credential.helper=", "-c", `credential.helper=!"gh" auth git-credential`, "fetch"}, cmd.Args)
+	assert.Equal(t, []string{"path/to/git", "-c", "credential.helper=", "-c", `credential.helper=!"gm" auth git-credential`, "fetch"}, cmd.Args)
 }
 
 func TestClientAuthenticatedCommandRejectsEmptyCredentialPattern(t *testing.T) {
@@ -1247,7 +1247,7 @@ func TestClientFetchUsesAuthenticatedCommand(t *testing.T) {
 
 	// Then Git clears existing helpers and scopes gh credentials to all hosts
 	require.NoError(t, err)
-	assert.Equal(t, []string{"path/to/git", "-c", "credential.helper=", "-c", `credential.helper=!"gh" auth git-credential`, "fetch", "origin", "trunk"}, gotArgs)
+	assert.Equal(t, []string{"path/to/git", "-c", "credential.helper=", "-c", `credential.helper=!"gm" auth git-credential`, "fetch", "origin", "trunk"}, gotArgs)
 }
 
 func TestClientPullFastForwardsCurrentBranch(t *testing.T) {
@@ -1315,7 +1315,7 @@ func TestClientPullUsesAuthenticatedFastForwardOnlyCommand(t *testing.T) {
 
 	// Then Git clears existing helpers, scopes gh credentials, and requires a fast-forward
 	require.NoError(t, err)
-	assert.Equal(t, []string{"path/to/git", "-c", "credential.helper=", "-c", `credential.helper=!"gh" auth git-credential`, "pull", "--ff-only", "origin", "trunk"}, gotArgs)
+	assert.Equal(t, []string{"path/to/git", "-c", "credential.helper=", "-c", `credential.helper=!"gm" auth git-credential`, "pull", "--ff-only", "origin", "trunk"}, gotArgs)
 }
 
 func TestClientPushCreatesRemoteBranchAndUpstream(t *testing.T) {
@@ -1363,7 +1363,7 @@ func TestClientPushUsesAuthenticatedUpstreamCommand(t *testing.T) {
 
 	// Then Git clears existing helpers, scopes gh credentials, and sets the upstream
 	require.NoError(t, err)
-	assert.Equal(t, []string{"path/to/git", "-c", "credential.helper=", "-c", `credential.helper=!"gh" auth git-credential`, "push", "--set-upstream", "origin", "trunk"}, gotArgs)
+	assert.Equal(t, []string{"path/to/git", "-c", "credential.helper=", "-c", `credential.helper=!"gm" auth git-credential`, "push", "--set-upstream", "origin", "trunk"}, gotArgs)
 }
 
 func TestClientCloneCreatesWorkingRepositoryInModifiedRepoDir(t *testing.T) {
@@ -1455,7 +1455,7 @@ func TestClientCloneUsesHostScopedAuthenticatedCommand(t *testing.T) {
 
 	// Then Git clears existing helpers and scopes gh credentials to the repository host
 	require.NoError(t, err)
-	assert.Equal(t, []string{"path/to/git", "-c", "credential.https://github.com.helper=", "-c", `credential.https://github.com.helper=!"gh" auth git-credential`, "clone", "https://github.com/cli/cli"}, gotArgs)
+	assert.Equal(t, []string{"path/to/git", "-c", "credential.https://github.com.helper=", "-c", `credential.https://github.com.helper=!"gm" auth git-credential`, "clone", "https://github.com/cli/cli"}, gotArgs)
 }
 
 func TestParseCloneArgs(t *testing.T) {

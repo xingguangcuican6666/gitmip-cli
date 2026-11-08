@@ -5,14 +5,14 @@ import (
 )
 
 func TestFormat(t *testing.T) {
-	expects := "gh version 1.4.0 (2020-12-15)\nhttps://github.com/cli/cli/releases/tag/v1.4.0\n"
+	expects := "gm version 1.4.0 (2020-12-15)\nhttps://github.com/xingguangcuican6666/gitmip-cli/releases/tag/v1.4.0\n"
 	if got := format("1.4.0", "2020-12-15", false); got != expects {
 		t.Errorf("format() = %q, wants %q", got, expects)
 	}
 }
 
 func TestFormatDebugBuild(t *testing.T) {
-	expects := "gh version 1.4.0 (2020-12-15) [debug build]\nhttps://github.com/cli/cli/releases/tag/v1.4.0\n"
+	expects := "gm version 1.4.0 (2020-12-15) [debug build]\nhttps://github.com/xingguangcuican6666/gitmip-cli/releases/tag/v1.4.0\n"
 	if got := format("1.4.0", "2020-12-15", true); got != expects {
 		t.Errorf("format() = %q, wants %q", got, expects)
 	}
@@ -20,35 +20,35 @@ func TestFormatDebugBuild(t *testing.T) {
 
 func TestChangelogURL(t *testing.T) {
 	tag := "0.3.2"
-	url := "https://github.com/cli/cli/releases/tag/v0.3.2"
+	url := "https://github.com/xingguangcuican6666/gitmip-cli/releases/tag/v0.3.2"
 	result := changelogURL(tag)
 	if result != url {
 		t.Errorf("expected %s to create url %s but got %s", tag, url, result)
 	}
 
 	tag = "v0.3.2"
-	url = "https://github.com/cli/cli/releases/tag/v0.3.2"
+	url = "https://github.com/xingguangcuican6666/gitmip-cli/releases/tag/v0.3.2"
 	result = changelogURL(tag)
 	if result != url {
 		t.Errorf("expected %s to create url %s but got %s", tag, url, result)
 	}
 
 	tag = "0.3.2-pre.1"
-	url = "https://github.com/cli/cli/releases/tag/v0.3.2-pre.1"
+	url = "https://github.com/xingguangcuican6666/gitmip-cli/releases/tag/v0.3.2-pre.1"
 	result = changelogURL(tag)
 	if result != url {
 		t.Errorf("expected %s to create url %s but got %s", tag, url, result)
 	}
 
 	tag = "0.3.5-90-gdd3f0e0"
-	url = "https://github.com/cli/cli/releases/latest"
+	url = "https://github.com/xingguangcuican6666/gitmip-cli/releases/latest"
 	result = changelogURL(tag)
 	if result != url {
 		t.Errorf("expected %s to create url %s but got %s", tag, url, result)
 	}
 
 	tag = "deadbeef"
-	url = "https://github.com/cli/cli/releases/latest"
+	url = "https://github.com/xingguangcuican6666/gitmip-cli/releases/latest"
 	result = changelogURL(tag)
 	if result != url {
 		t.Errorf("expected %s to create url %s but got %s", tag, url, result)

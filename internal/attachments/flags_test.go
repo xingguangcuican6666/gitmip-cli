@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/internal/telemetry"
 	"github.com/google/shlex"
 	"github.com/spf13/cobra"

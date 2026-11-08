@@ -14,8 +14,8 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmd/secret/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -28,7 +28,7 @@ import (
 type SetOptions struct {
 	HttpClient func() (*http.Client, error)
 	IO         *iostreams.IOStreams
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 	BaseRepo   func() (ghrepo.Interface, error)
 	Prompter   prompter.Prompter
 
@@ -76,40 +76,40 @@ func NewCmdSet(f *cmdutil.Factory, runF func(*SetOptions) error) *cobra.Command 
 		`),
 		Example: heredoc.Doc(`
 			# Paste secret value for the current repository in an interactive prompt
-			$ gh secret set MYSECRET
+			$ gm secret set MYSECRET
 
 			# Read secret value from an environment variable
-			$ gh secret set MYSECRET --body "$ENV_VALUE"
+			$ gm secret set MYSECRET --body "$ENV_VALUE"
 
 			# Set secret for a specific remote repository
-			$ gh secret set MYSECRET --repo origin/repo --body "$ENV_VALUE"
+			$ gm secret set MYSECRET --repo origin/repo --body "$ENV_VALUE"
 
 			# Read secret value from a file
-			$ gh secret set MYSECRET < myfile.txt
+			$ gm secret set MYSECRET < myfile.txt
 
 			# Set secret for a deployment environment in the current repository
-			$ gh secret set MYSECRET --env myenvironment
+			$ gm secret set MYSECRET --env myenvironment
 
 			# Set organization-level secret visible to both public and private repositories
-			$ gh secret set MYSECRET --org myOrg --visibility all
+			$ gm secret set MYSECRET --org myOrg --visibility all
 
 			# Set organization-level secret visible to specific repositories
-			$ gh secret set MYSECRET --org myOrg --repos repo1,repo2,repo3
+			$ gm secret set MYSECRET --org myOrg --repos repo1,repo2,repo3
 
 			# Set organization-level secret visible to no repositories
-			$ gh secret set MYSECRET --org myOrg --no-repos-selected
+			$ gm secret set MYSECRET --org myOrg --no-repos-selected
 
 			# Set user-level secret for Codespaces
-			$ gh secret set MYSECRET --user
+			$ gm secret set MYSECRET --user
 
 			# Set repository-level secret for Dependabot
-			$ gh secret set MYSECRET --app dependabot
+			$ gm secret set MYSECRET --app dependabot
 
 			# Set multiple secrets imported from the ".env" file
-			$ gh secret set -f .env
+			$ gm secret set -f .env
 
 			# Set multiple secrets from stdin
-			$ gh secret set -f - < myfile.txt
+			$ gm secret set -f - < myfile.txt
 		`),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

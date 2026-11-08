@@ -10,7 +10,7 @@ import (
 func NewCmdPreview(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "preview <command>",
-		Short: "Execute previews for gh features",
+		Short: "Execute previews for gm features",
 		Long: heredoc.Doc(`
 			Preview commands are for testing, demonstrative, and development purposes only.
 			They should be considered unstable and can change at any time.

@@ -13,7 +13,7 @@ import (
 // GET /repos/{o}/{r}/actions/variables/{name} and its org counterpart.
 //
 // The value field is "data", not "value", and there are no timestamps and no
-// visibility, so the fields gh exports for GitHub cannot all be filled.
+// visibility, so the fields gm exports for GitHub cannot all be filled.
 type giteaActionVariable struct {
 	Name        string `json:"name"`
 	Data        string `json:"data"`

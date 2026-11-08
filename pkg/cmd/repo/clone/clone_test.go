@@ -7,7 +7,7 @@ import (
 
 	"github.com/cli/cli/v2/git"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/run"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/httpmock"
@@ -115,14 +115,14 @@ func runCloneCommand(httpClient *http.Client, cli string) (*test.CmdOut, error) 
 	return runCloneCommandWithConfig(httpClient, config.NewMockConfig(), cli)
 }
 
-func runCloneCommandWithConfig(httpClient *http.Client, cfg gh.Config, cli string) (*test.CmdOut, error) {
+func runCloneCommandWithConfig(httpClient *http.Client, cfg gm.Config, cli string) (*test.CmdOut, error) {
 	ios, stdin, stdout, stderr := iostreams.Test()
 	fac := &cmdutil.Factory{
 		IOStreams: ios,
 		HttpClient: func() (*http.Client, error) {
 			return httpClient, nil
 		},
-		Config: func() (gh.Config, error) {
+		Config: func() (gm.Config, error) {
 			return cfg, nil
 		},
 		GitClient: &git.Client{

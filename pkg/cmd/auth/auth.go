@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	gitCredentialCmd "github.com/cli/cli/v2/pkg/cmd/auth/gitcredential"
 	authLoginCmd "github.com/cli/cli/v2/pkg/cmd/auth/login"
 	authLogoutCmd "github.com/cli/cli/v2/pkg/cmd/auth/logout"
@@ -17,7 +17,7 @@ import (
 func NewCmdAuth(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "auth <command>",
-		Short:   "Authenticate gh and git with GitHub",
+		Short:   "Authenticate gm and git with GitHub",
 		GroupID: "core",
 	}
 

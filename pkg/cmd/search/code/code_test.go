@@ -8,8 +8,8 @@ import (
 	"github.com/cli/cli/v2/internal/browser"
 	"github.com/cli/cli/v2/internal/config"
 	fd "github.com/cli/cli/v2/internal/featuredetection"
-	"github.com/cli/cli/v2/internal/gh"
-	ghmock "github.com/cli/cli/v2/internal/gh/mock"
+	"github.com/cli/cli/v2/internal/gm"
+	ghmock "github.com/cli/cli/v2/internal/gm/mock"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/cli/cli/v2/pkg/search"
@@ -192,7 +192,7 @@ func TestCodeRun(t *testing.T) {
 									TextMatches: []search.TextMatch{
 										{
 
-											Fragment: "\t\t\t$ gh pr create --fill\n\t\t\t$ gh pr view --web\n\t\t`),\n\t\tAnnotations: map[string]string{\n\t\t\t\"help:arguments\": heredoc.Doc(`\n\t\t\t\tA pull request can be supplied as argument in any of the following formats:\n\t\t\t\t- by number, e.g. \"123\";",
+											Fragment: "\t\t\t$ gm pr create --fill\n\t\t\t$ gm pr view --web\n\t\t`),\n\t\tAnnotations: map[string]string{\n\t\t\t\"help:arguments\": heredoc.Doc(`\n\t\t\t\tA pull request can be supplied as argument in any of the following formats:\n\t\t\t\t- by number, e.g. \"123\";",
 											Matches: []search.Match{
 												{
 													Text:    "map",
@@ -251,7 +251,7 @@ func TestCodeRun(t *testing.T) {
 									TextMatches: []search.TextMatch{
 										{
 
-											Fragment: "\t\t\t$ gh pr create --fill\n\t\t\t$ gh pr view --web\n\t\t`),\n\t\tAnnotations: map[string]string{\n\t\t\t\"help:arguments\": heredoc.Doc(`\n\t\t\t\tA pull request can be supplied as argument in any of the following formats:\n\t\t\t\t- by number, e.g. \"123\";",
+											Fragment: "\t\t\t$ gm pr create --fill\n\t\t\t$ gm pr view --web\n\t\t`),\n\t\tAnnotations: map[string]string{\n\t\t\t\"help:arguments\": heredoc.Doc(`\n\t\t\t\tA pull request can be supplied as argument in any of the following formats:\n\t\t\t\t- by number, e.g. \"123\";",
 											Matches: []search.Match{
 												{
 													Text:    "map",
@@ -327,7 +327,7 @@ func TestCodeRun(t *testing.T) {
 		{
 			name: "converts filename and extension qualifiers for github.com web search",
 			opts: &CodeOptions{
-				Config: func() (gh.Config, error) { return config.NewMockConfig(), nil },
+				Config: func() (gm.Config, error) { return config.NewMockConfig(), nil },
 				Query: search.Query{
 					Keywords: []string{"map"},
 					Kind:     "code",
@@ -345,7 +345,7 @@ func TestCodeRun(t *testing.T) {
 		{
 			name: "properly handles extension with dot prefix when converting to path qualifier",
 			opts: &CodeOptions{
-				Config: func() (gh.Config, error) { return config.NewMockConfig(), nil },
+				Config: func() (gm.Config, error) { return config.NewMockConfig(), nil },
 				Query: search.Query{
 					Keywords: []string{"map"},
 					Kind:     "code",
@@ -363,9 +363,9 @@ func TestCodeRun(t *testing.T) {
 		{
 			name: "does not convert filename and extension qualifiers for GHES web search",
 			opts: &CodeOptions{
-				Config: func() (gh.Config, error) {
+				Config: func() (gm.Config, error) {
 					cfg := &ghmock.ConfigMock{
-						AuthenticationFunc: func() gh.AuthConfig {
+						AuthenticationFunc: func() gm.AuthConfig {
 							authCfg := &config.AuthConfig{}
 							authCfg.SetDefaultHost("example.com", "GH_HOST")
 							return authCfg

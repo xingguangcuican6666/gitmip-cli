@@ -1,6 +1,6 @@
 package codespace
 
-// This file defines the 'gh cs ssh' and 'gh cs cp' subcommands.
+// This file defines the 'gm cs ssh' and 'gm cs cp' subcommands.
 
 import (
 	"context"
@@ -54,7 +54,7 @@ func newSSHCmd(app *App) *cobra.Command {
 		Short: "SSH into a codespace",
 		Long: heredoc.Docf(`
 			The %[1]sssh%[1]s command is used to SSH into a codespace. In its simplest form, you can
-			run %[1]sgh cs ssh%[1]s, select a codespace interactively, and connect.
+			run %[1]sgm cs ssh%[1]s, select a codespace interactively, and connect.
 
 			The %[1]sssh%[1]s command will automatically create a public/private ssh key pair in the
 			%[1]s~/.ssh%[1]s directory if you do not have an existing valid key pair. When selecting the
@@ -72,7 +72,7 @@ func newSSHCmd(app *App) *cobra.Command {
 			remote path completion for %[1]sscp/rsync/sshfs%[1]s, %[1]sgit%[1]s ssh remotes, and so on.
 
 			Once that is set up (see the second example below), you can ssh to codespaces as
-			if they were ordinary remote hosts (using %[1]sssh%[1]s, not %[1]sgh cs ssh%[1]s).
+			if they were ordinary remote hosts (using %[1]sssh%[1]s, not %[1]sgm cs ssh%[1]s).
 
 			Note that the codespace you are connecting to must have an SSH server pre-installed.
 			If the docker image being used for the codespace does not have an SSH server,
@@ -86,9 +86,9 @@ func newSSHCmd(app *App) *cobra.Command {
 				}
 		`, "`"),
 		Example: heredoc.Doc(`
-			$ gh codespace ssh
+			$ gm codespace ssh
 
-			$ gh codespace ssh --config > ~/.ssh/codespaces
+			$ gm codespace ssh --config > ~/.ssh/codespaces
 			$ printf 'Match all\nInclude ~/.ssh/codespaces\n' >> ~/.ssh/config
 		`),
 		PreRunE: func(c *cobra.Command, args []string) error {
@@ -673,8 +673,8 @@ func (a *App) printOpenSSHConfig(ctx context.Context, opts sshOptions) (err erro
 			Name                      string // the codespace name, passed to `ssh -c`
 			EscapedRef                string // the currently checked-out branch
 			SSHUser                   string // the remote ssh username
-			GHExec                    string // path used for invoking the current `gh` binary
-			AutomaticIdentityFilePath string // path used for automatic private key `gh cs ssh` would generate
+			GHExec                    string // path used for invoking the current `gm` binary
+			AutomaticIdentityFilePath string // path used for automatic private key `gm cs ssh` would generate
 		}
 
 		conf := codespaceSSHConfig{
@@ -736,10 +736,10 @@ func newCpCmd(app *App) *cobra.Command {
 			the codespace inside the %[1]s~/.ssh directory%[1]s.
 		`, "`"),
 		Example: heredoc.Doc(`
-			$ gh codespace cp -e README.md 'remote:/workspaces/$RepositoryName/'
-			$ gh codespace cp -e 'remote:~/*.go' ./gofiles/
-			$ gh codespace cp -e 'remote:/workspaces/myproj/go.{mod,sum}' ./gofiles/
-			$ gh codespace cp -e -- -F ~/.ssh/codespaces_config 'remote:~/*.go' ./gofiles/
+			$ gm codespace cp -e README.md 'remote:/workspaces/$RepositoryName/'
+			$ gm codespace cp -e 'remote:~/*.go' ./gofiles/
+			$ gm codespace cp -e 'remote:/workspaces/myproj/go.{mod,sum}' ./gofiles/
+			$ gm codespace cp -e -- -F ~/.ssh/codespaces_config 'remote:~/*.go' ./gofiles/
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return app.Copy(cmd.Context(), args, opts)

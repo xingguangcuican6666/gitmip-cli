@@ -1,3 +1,29 @@
+# gitmip-cli
+
+`gm` is a fork of the GitHub CLI that also speaks Gitea's REST API. The command is
+`gm`, not `gh`: this repository builds no `gh` binary.
+
+Build it:
+
+```sh
+make          # Unix: bin/gm
+go run script/build.go   # Windows: bin/gm.exe
+```
+
+To point `gm` at a Gitea instance, declare the host type in `hosts.yml`:
+
+```yaml
+hosts:
+    gitea.example.com:
+        host_type: gitea
+        git_protocol: https
+```
+
+Everything else works as it does upstream. See `docs/gitea-port.md` for what
+Gitea can and cannot serve.
+
+---
+
 # GitHub CLI
 
 GitHub CLI, or the gh CLI, is GitHub on the command line. It brings pull requests, issues, and other GitHub concepts to the terminal next to where you are already working with `git` and your code.

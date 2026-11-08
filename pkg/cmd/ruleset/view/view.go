@@ -56,19 +56,19 @@ func NewCmdView(f *cmdutil.Factory, runF func(*ViewOptions) error) *cobra.Comman
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Interactively choose a ruleset to view from all rulesets that apply to the current repository
-			$ gh ruleset view
+			$ gm ruleset view
 
 			# Interactively choose a ruleset to view from only rulesets configured in the current repository
-			$ gh ruleset view --parents=false
+			$ gm ruleset view --parents=false
 
 			# View a ruleset configured in the current repository or any of its parents
-			$ gh ruleset view 43
+			$ gm ruleset view 43
 
 			# View a ruleset configured in a different repository or any of its parents
-			$ gh ruleset view 23 --repo owner/repo
+			$ gm ruleset view 23 --repo owner/repo
 
 			# View an organization-level ruleset
-			$ gh ruleset view 23 --org my-org
+			$ gm ruleset view 23 --org my-org
 		`),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

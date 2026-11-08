@@ -14,8 +14,8 @@ import (
 	"github.com/cli/cli/v2/api"
 	ghContext "github.com/cli/cli/v2/context"
 	"github.com/cli/cli/v2/git"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmd/repo/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -32,7 +32,7 @@ type iprompter interface {
 type ForkOptions struct {
 	HttpClient func() (*http.Client, error)
 	GitClient  *git.Client
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 	IO         *iostreams.IOStreams
 	BaseRepo   func() (ghrepo.Interface, error)
 	Remotes    func() (ghContext.Remotes, error)
@@ -99,13 +99,13 @@ func NewCmdFork(f *cmdutil.Factory, runF func(*ForkOptions) error) *cobra.Comman
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Fork a repository
-			$ gh repo fork owner/repo
+			$ gm repo fork owner/repo
 
 			# Fork a repository and clone it locally
-			$ gh repo fork owner/repo --clone
+			$ gm repo fork owner/repo --clone
 
 			# Fork a repository without cloning it, skip the prompt
-			$ gh repo fork owner/repo --clone=false
+			$ gm repo fork owner/repo --clone=false
 		`),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			promptOk := opts.IO.CanPrompt()
@@ -261,7 +261,7 @@ func forkRun(opts *ForkOptions) error {
 		return err
 	}
 	protocolConfig := cfg.GitProtocol(repoToFork.RepoHost())
-	protocolIsConfiguredByUser := protocolConfig.Source == gh.ConfigUserProvided
+	protocolIsConfiguredByUser := protocolConfig.Source == gm.ConfigUserProvided
 	protocol := protocolConfig.Value
 
 	gitClient := opts.GitClient
@@ -394,7 +394,7 @@ func forkRun(opts *ForkOptions) error {
 
 			if connectedToTerminal {
 				fmt.Fprintf(stderr, "%s Cloned fork\n", cs.SuccessIcon())
-				fmt.Fprintf(stderr, "%s Repository %s set as the default repository. To learn more about the default repository, run: gh repo set-default --help\n", cs.WarningIcon(), cs.Bold(ghrepo.FullName(repoToFork)))
+				fmt.Fprintf(stderr, "%s Repository %s set as the default repository. To learn more about the default repository, run: gm repo set-default --help\n", cs.WarningIcon(), cs.Bold(ghrepo.FullName(repoToFork)))
 			}
 		}
 	}

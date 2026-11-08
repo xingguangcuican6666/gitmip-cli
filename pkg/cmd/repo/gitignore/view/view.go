@@ -8,7 +8,7 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/spf13/cobra"
@@ -17,7 +17,7 @@ import (
 type ViewOptions struct {
 	IO         *iostreams.IOStreams
 	HTTPClient func() (*http.Client, error)
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 	Template   string
 }
 
@@ -37,20 +37,20 @@ func NewCmdView(f *cmdutil.Factory, runF func(*ViewOptions) error) *cobra.Comman
 
 			%[1]s<template>%[1]s is a case-sensitive %[1]s.gitignore%[1]s template name.
 
-			For a list of available templates, run %[1]sgh repo gitignore list%[1]s.
+			For a list of available templates, run %[1]sgm repo gitignore list%[1]s.
 		`, "`"),
 		Example: heredoc.Doc(`
 			# View the Go gitignore template
-			$ gh repo gitignore view Go
+			$ gm repo gitignore view Go
 
 			# View the Python gitignore template
-			$ gh repo gitignore view Python
+			$ gm repo gitignore view Python
 
 			# Create a new .gitignore file using the Go template
-			$ gh repo gitignore view Go > .gitignore
+			$ gm repo gitignore view Go > .gitignore
 
 			# Create a new .gitignore file using the Python template
-			$ gh repo gitignore view Python > .gitignore
+			$ gm repo gitignore view Python > .gitignore
 		`),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -89,7 +89,7 @@ func viewRun(opts *ViewOptions) error {
 	if err != nil {
 		if httpErr, ok := errors.AsType[api.HTTPError](err); ok {
 			if httpErr.StatusCode == 404 {
-				return fmt.Errorf("'%s' is not a valid gitignore template. Run `gh repo gitignore list` for options", opts.Template)
+				return fmt.Errorf("'%s' is not a valid gitignore template. Run `gm repo gitignore list` for options", opts.Template)
 			}
 		}
 		return err

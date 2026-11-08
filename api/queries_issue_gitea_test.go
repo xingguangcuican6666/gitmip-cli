@@ -72,7 +72,7 @@ func TestMapGiteaIssueUpperCasesState(t *testing.T) {
 }
 
 // Gitea's issues endpoint answers for a pull request index too, and callers such
-// as `gh issue close` refuse to act on a pull request. Typename is what they
+// as `gm issue close` refuse to act on a pull request. Typename is what they
 // branch on, so the pull_request member has to decide it.
 func TestMapGiteaIssueTypename(t *testing.T) {
 	withGiteaIssueHost(t)
@@ -227,7 +227,7 @@ func TestIssueCommentsGitea(t *testing.T) {
 }
 
 // Gitea serves public repositories without a token. A failure to identify the
-// viewer must not turn an anonymous read into an error, or `gh issue view` on a
+// viewer must not turn an anonymous read into an error, or `gm issue view` on a
 // public repository would stop working for anyone not logged in.
 func TestIssueCommentsGiteaToleratesAnonymous(t *testing.T) {
 	withGiteaIssueHost(t)
@@ -858,7 +858,7 @@ func TestRepoLabelsGiteaPages(t *testing.T) {
 	assert.Equal(t, 2, pages)
 }
 
-// Gitea has no linked-branch type, so `gh issue develop` has to say so rather
+// Gitea has no linked-branch type, so `gm issue develop` has to say so rather
 // than fail on an introspection query the host cannot answer.
 func TestCheckLinkedBranchFeatureGitea(t *testing.T) {
 	withGiteaIssueHost(t)

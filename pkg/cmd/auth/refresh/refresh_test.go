@@ -13,9 +13,9 @@ import (
 
 	"github.com/cli/cli/v2/internal/authflow"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
-	ghmock "github.com/cli/cli/v2/internal/gh/mock"
+	"github.com/cli/cli/v2/internal/gm"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
+	ghmock "github.com/cli/cli/v2/internal/gm/mock"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/internal/telemetry"
 	"github.com/cli/cli/v2/pkg/cmd/auth/shared/gitcredentials"
@@ -246,7 +246,7 @@ type authArgs struct {
 type authOut struct {
 	username    string
 	token       string
-	refreshable *gh.Credential
+	refreshable *gm.Credential
 	err         error
 }
 
@@ -560,7 +560,7 @@ func Test_refreshRun(t *testing.T) {
 			authOut: authOut{
 				username:    "test-user",
 				token:       "gho_access",
-				refreshable: &gh.Credential{Token: "gho_access", RefreshToken: "ghr_refresh"},
+				refreshable: &gm.Credential{Token: "gho_access", RefreshToken: "ghr_refresh"},
 			},
 			wantAuthArgs: authArgs{
 				hostname:      "github.com",
@@ -619,7 +619,7 @@ func Test_refreshRun(t *testing.T) {
 			authOut: authOut{
 				username:    "test-user",
 				token:       "gho_access",
-				refreshable: &gh.Credential{Token: "gho_access", RefreshToken: "ghr_refresh"},
+				refreshable: &gm.Credential{Token: "gho_access", RefreshToken: "ghr_refresh"},
 			},
 			wantAuthArgs: authArgs{
 				hostname:      "github.com",
@@ -740,17 +740,17 @@ func Test_refreshRun(t *testing.T) {
 					authCfg := cfg.Authentication()
 					authCfg.SetTokenRefresher(tt.refresher)
 					expiry := time.Now().Add(-time.Hour)
-					_, err := authCfg.LoginRefreshable(hostname, "test-user", gh.Credential{Token: "expired-access", RefreshToken: "ghr_old", ExpiresAt: &expiry}, "https", false)
+					_, err := authCfg.LoginRefreshable(hostname, "test-user", gm.Credential{Token: "expired-access", RefreshToken: "ghr_old", ExpiresAt: &expiry}, "https", false)
 					require.NoError(t, err)
 				case tt.cfgRefreshable:
-					_, err := cfg.Authentication().LoginRefreshable(hostname, "test-user", gh.Credential{Token: "abc123", RefreshToken: "ghr_old"}, "https", false)
+					_, err := cfg.Authentication().LoginRefreshable(hostname, "test-user", gm.Credential{Token: "abc123", RefreshToken: "ghr_old"}, "https", false)
 					require.NoError(t, err)
 				default:
 					_, err := cfg.Authentication().Login(hostname, "test-user", "abc123", "https", false)
 					require.NoError(t, err)
 				}
 			}
-			tt.opts.Config = func() (gh.Config, error) {
+			tt.opts.Config = func() (gm.Config, error) {
 				return cfg, nil
 			}
 
@@ -846,7 +846,7 @@ func Test_refreshRun_recordsTelemetry(t *testing.T) {
 		Hostname:    "github.com",
 		Telemetry:   recorder,
 		ResetScopes: true,
-		Config: func() (gh.Config, error) {
+		Config: func() (gm.Config, error) {
 			return cfg, nil
 		},
 		AuthFlow: func(_ *http.Client, _ *iostreams.IOStreams, _ string, _ []string, _, _, _ bool) (*authflow.AuthResult, error) {
@@ -928,14 +928,14 @@ func Test_refreshRun_recordsTelemetryOnFailure(t *testing.T) {
 				Interactive: tt.interactive,
 				Telemetry:   recorder,
 				ResetScopes: true,
-				Config: func() (gh.Config, error) {
+				Config: func() (gm.Config, error) {
 					return cfg, nil
 				},
 				AuthFlow: func(_ *http.Client, _ *iostreams.IOStreams, _ string, _ []string, _, _, _ bool) (*authflow.AuthResult, error) {
 					return &authflow.AuthResult{
 						Token:       "xyz456",
 						Username:    "test-user",
-						Refreshable: &gh.Credential{Token: "xyz456", RefreshToken: "rt456"},
+						Refreshable: &gm.Credential{Token: "xyz456", RefreshToken: "rt456"},
 					}, nil
 				},
 				PlainHttpClient: func() (*http.Client, error) {
@@ -979,7 +979,7 @@ func Test_refreshRun_doesNotRecordTelemetryForEnterprise(t *testing.T) {
 		Hostname:    "ghe.example.com",
 		Telemetry:   recorder,
 		ResetScopes: true,
-		Config: func() (gh.Config, error) {
+		Config: func() (gm.Config, error) {
 			return cfg, nil
 		},
 		AuthFlow: func(_ *http.Client, _ *iostreams.IOStreams, _ string, _ []string, _, _, _ bool) (*authflow.AuthResult, error) {
@@ -1004,8 +1004,8 @@ func Test_refreshRun_doesNotRecordTelemetryForEnterprise(t *testing.T) {
 func renewingRefresher() *ghmock.TokenRefresherMock {
 	future := time.Now().Add(time.Hour)
 	return &ghmock.TokenRefresherMock{
-		RefreshFunc: func(_, _ string) (gh.RefreshableCredential, error) {
-			return gh.RefreshableCredential{
+		RefreshFunc: func(_, _ string) (gm.RefreshableCredential, error) {
+			return gm.RefreshableCredential{
 				AccessToken:  "new-access",
 				RefreshToken: "new-refresh",
 				ExpiresAt:    &future,
@@ -1017,8 +1017,8 @@ func renewingRefresher() *ghmock.TokenRefresherMock {
 // failingRefresher always fails to renew, simulating a transient refresh error.
 func failingRefresher() *ghmock.TokenRefresherMock {
 	return &ghmock.TokenRefresherMock{
-		RefreshFunc: func(_, _ string) (gh.RefreshableCredential, error) {
-			return gh.RefreshableCredential{}, errors.New("refresh failed")
+		RefreshFunc: func(_, _ string) (gm.RefreshableCredential, error) {
+			return gm.RefreshableCredential{}, errors.New("refresh failed")
 		},
 	}
 }

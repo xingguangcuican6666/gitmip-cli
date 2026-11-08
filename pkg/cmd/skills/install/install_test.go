@@ -734,7 +734,7 @@ func TestInstallRun(t *testing.T) {
 				}
 			},
 			wantStdout: "Installed git-commit",
-			wantStderr: "gh skill preview monalisa/skills-repo git-commit@abc123",
+			wantStderr: "gm skill preview monalisa/skills-repo git-commit@abc123",
 		},
 		{
 			name:  "remote install outputs file tree for TTY",
@@ -2351,7 +2351,7 @@ func TestInstallRun_ReviewGuidance(t *testing.T) {
 				Dir:         t.TempDir(),
 			}
 
-			wantReview := "Review installed content before use:\n\n    gh skill preview monalisa/skills-repo git-commit@abc123"
+			wantReview := "Review installed content before use:\n\n    gm skill preview monalisa/skills-repo git-commit@abc123"
 			if tt.local {
 				sourceDir := t.TempDir()
 				writeLocalTestSkill(t, sourceDir, filepath.Join("skills", "git-commit"), gitCommitContent)
@@ -2395,21 +2395,21 @@ func Test_printReviewHint(t *testing.T) {
 			repo:       "owner/repo",
 			sha:        "abc123def456",
 			skillNames: []string{"my-skill"},
-			wantOutput: "\nReview installed content before use:\n\n    gh skill preview owner/repo my-skill@abc123def456\n\n",
+			wantOutput: "\nReview installed content before use:\n\n    gm skill preview owner/repo my-skill@abc123def456\n\n",
 		},
 		{
 			name:       "remote install without SHA omits SHA from preview command",
 			repo:       "owner/repo",
 			sha:        "",
 			skillNames: []string{"my-skill"},
-			wantOutput: "\nReview installed content before use:\n\n    gh skill preview owner/repo my-skill\n\n",
+			wantOutput: "\nReview installed content before use:\n\n    gm skill preview owner/repo my-skill\n\n",
 		},
 		{
 			name:       "multiple skills with SHA",
 			repo:       "owner/repo",
 			sha:        "deadbeef",
 			skillNames: []string{"skill-a", "skill-b"},
-			wantOutput: "\nReview installed content before use:\n\n    gh skill preview owner/repo skill-a@deadbeef\n    gh skill preview owner/repo skill-b@deadbeef\n\n",
+			wantOutput: "\nReview installed content before use:\n\n    gm skill preview owner/repo skill-a@deadbeef\n    gm skill preview owner/repo skill-b@deadbeef\n\n",
 		},
 		{
 			name:       "local install shows generic message",
@@ -2431,7 +2431,7 @@ func Test_printReviewHint(t *testing.T) {
 			sha:             "abc123",
 			skillNames:      []string{"hidden-skill"},
 			allowHiddenDirs: true,
-			wantOutput:      "\nReview installed content before use:\n\n    gh skill preview owner/repo hidden-skill@abc123 --allow-hidden-dirs\n\n",
+			wantOutput:      "\nReview installed content before use:\n\n    gm skill preview owner/repo hidden-skill@abc123 --allow-hidden-dirs\n\n",
 		},
 		{
 			name:            "allow-hidden-dirs without SHA",
@@ -2439,7 +2439,7 @@ func Test_printReviewHint(t *testing.T) {
 			sha:             "",
 			skillNames:      []string{"hidden-skill"},
 			allowHiddenDirs: true,
-			wantOutput:      "\nReview installed content before use:\n\n    gh skill preview owner/repo hidden-skill --allow-hidden-dirs\n\n",
+			wantOutput:      "\nReview installed content before use:\n\n    gm skill preview owner/repo hidden-skill --allow-hidden-dirs\n\n",
 		},
 	}
 

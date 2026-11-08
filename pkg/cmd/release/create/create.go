@@ -11,8 +11,8 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/git"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/internal/text"
 	"github.com/cli/cli/v2/pkg/cmd/release/shared"
@@ -30,7 +30,7 @@ type iprompter interface {
 
 type CreateOptions struct {
 	IO         *iostreams.IOStreams
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 	HttpClient func() (*http.Client, error)
 	GitClient  *git.Client
 	BaseRepo   func() (ghrepo.Interface, error)
@@ -114,7 +114,7 @@ func NewCmdCreate(f *cmdutil.Factory, runF func(*CreateOptions) error) *cobra.Co
 			- Git tags associated with a release cannot be modified or deleted.
 			- Release assets cannot be modified or deleted.
 
-			When you attach assets, %[1]sgh release create%[1]s creates a draft release, uploads
+			When you attach assets, %[1]sgm release create%[1]s creates a draft release, uploads
 			each asset, and then publishes the release. These steps use separate API requests
 			and do not form a single atomic operation. If you specify %[1]s--draft%[1]s, the command
 			leaves the release unpublished.
@@ -126,37 +126,37 @@ func NewCmdCreate(f *cmdutil.Factory, runF func(*CreateOptions) error) *cobra.Co
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Interactively create a release
-			$ gh release create
+			$ gm release create
 
 			# Interactively create a release from specific tag
-			$ gh release create v1.2.3
+			$ gm release create v1.2.3
 
 			# Non-interactively create a release
-			$ gh release create v1.2.3 --notes "bugfix release"
+			$ gm release create v1.2.3 --notes "bugfix release"
 
 			# Use automatically generated via GitHub Release Notes API release notes
-			$ gh release create v1.2.3 --generate-notes
+			$ gm release create v1.2.3 --generate-notes
 
 			# Use release notes from a file
-			$ gh release create v1.2.3 -F release-notes.md
+			$ gm release create v1.2.3 -F release-notes.md
 
 			# Use tag annotation or associated commit message as notes
-			$ gh release create v1.2.3 --notes-from-tag
+			$ gm release create v1.2.3 --notes-from-tag
 
 			# Don't mark the release as latest
-			$ gh release create v1.2.3 --latest=false
+			$ gm release create v1.2.3 --latest=false
 
 			# Upload all tarballs in a directory as release assets
-			$ gh release create v1.2.3 ./dist/*.tgz
+			$ gm release create v1.2.3 ./dist/*.tgz
 
 			# Upload a release asset with a display label
-			$ gh release create v1.2.3 '/path/to/asset.zip#My display label'
+			$ gm release create v1.2.3 '/path/to/asset.zip#My display label'
 
 			# Create a release and start a discussion
-			$ gh release create v1.2.3 --discussion-category "General"
+			$ gm release create v1.2.3 --discussion-category "General"
 
 			# Create a release only if there are new commits available since the last release
-			$ gh release create v1.2.3 --fail-on-no-commits
+			$ gm release create v1.2.3 --fail-on-no-commits
 		`),
 		Aliases: []string{"new"},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -518,7 +518,7 @@ func createRun(opts *CreateOptions) error {
 
 	if errMissingRequiredWorkflowScope, ok := errors.AsType[*errMissingRequiredWorkflowScope](err); ok {
 		host := errMissingRequiredWorkflowScope.Hostname
-		refreshInstructions := fmt.Sprintf("gh auth refresh -h %[1]s -s workflow", host)
+		refreshInstructions := fmt.Sprintf("gm auth refresh -h %[1]s -s workflow", host)
 		cs := opts.IO.ColorScheme()
 
 		var sb strings.Builder

@@ -46,32 +46,32 @@ func NewCmdPrs(f *cmdutil.Factory, runF func(*shared.IssuesOptions) error) *cobr
 			%[1]s--web%[1]s. For more information about advanced issue search, see:
 			<https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/filtering-and-searching-issues-and-pull-requests#building-advanced-filters-for-issues>
 
-			For more information on handling search queries containing a hyphen, run %[1]sgh search --help%[1]s.
+			For more information on handling search queries containing a hyphen, run %[1]sgm search --help%[1]s.
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Search pull requests matching set of keywords "fix" and "bug"
-			$ gh search prs fix bug
+			$ gm search prs fix bug
 
 			# Search draft pull requests in cli repository
-			$ gh search prs --repo=cli/cli --draft
+			$ gm search prs --repo=cli/cli --draft
 
 			# Search pull requests using raw search qualifiers as separate arguments
-			$ gh search prs is:merged author:monalisa
+			$ gm search prs is:merged author:monalisa
 
 			# Search open pull requests requesting your review
-			$ gh search prs --review-requested=@me --state=open
+			$ gm search prs --review-requested=@me --state=open
 
 			# Search merged pull requests assigned to yourself
-			$ gh search prs --assignee=@me --merged
+			$ gm search prs --assignee=@me --merged
 
 			# Search pull requests with numerous reactions
-			$ gh search prs --reactions=">100"
+			$ gm search prs --reactions=">100"
 
 			# Search pull requests without label "bug"
-			$ gh search prs -- -label:bug
+			$ gm search prs -- -label:bug
 
 			# Search pull requests only from un-archived repositories (default is all repositories)
-			$ gh search prs --owner github --archived=false
+			$ gm search prs --owner github --archived=false
 		`),
 		RunE: func(c *cobra.Command, args []string) error {
 			if len(args) == 0 && c.Flags().NFlag() == 0 {

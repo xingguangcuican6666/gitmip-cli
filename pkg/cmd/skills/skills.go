@@ -2,7 +2,7 @@ package skills
 
 import (
 	"github.com/MakeNowJust/heredoc"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/pkg/cmd/skills/install"
 	skilllist "github.com/cli/cli/v2/pkg/cmd/skills/list"
 	"github.com/cli/cli/v2/pkg/cmd/skills/preview"
@@ -28,22 +28,22 @@ func NewCmdSkills(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder) 
 		GroupID: "core",
 		Example: heredoc.Doc(`
 			# Search for skills
-			$ gh skill search terraform
+			$ gm skill search terraform
 
 			# Install a skill
-			$ gh skill install github/awesome-copilot documentation-writer
+			$ gm skill install github/awesome-copilot documentation-writer
 
 			# List installed skills
-			$ gh skill list
+			$ gm skill list
 
 			# Preview a skill before installing
-			$ gh skill preview github/awesome-copilot documentation-writer
+			$ gm skill preview github/awesome-copilot documentation-writer
 
 			# Update all installed skills
-			$ gh skill update --all
+			$ gm skill update --all
 
 			# Validate skills for publishing
-			$ gh skill publish --dry-run
+			$ gm skill publish --dry-run
 		`),
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			telemetry.SetSampleRate(ghtelemetry.SAMPLE_ALL)

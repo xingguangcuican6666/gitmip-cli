@@ -8,7 +8,7 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/spf13/cobra"
@@ -16,7 +16,7 @@ import (
 
 type SetOptions struct {
 	IO     *iostreams.IOStreams
-	Config gh.Config
+	Config gm.Config
 
 	Key      string
 	Value    string
@@ -32,11 +32,11 @@ func NewCmdConfigSet(f *cmdutil.Factory, runF func(*SetOptions) error) *cobra.Co
 		Use:   "set <key> <value>",
 		Short: "Update configuration with a value for the given key",
 		Example: heredoc.Doc(`
-			$ gh config set editor vim
-			$ gh config set editor "code --wait"
-			$ gh config set git_protocol ssh --host github.com
-			$ gh config set api_host api-gateway.example.com --host example.com
-			$ gh config set prompt disabled
+			$ gm config set editor vim
+			$ gm config set editor "code --wait"
+			$ gm config set git_protocol ssh --host github.com
+			$ gm config set api_host api-gateway.example.com --host example.com
+			$ gm config set prompt disabled
 		`),
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {

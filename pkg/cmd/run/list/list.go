@@ -65,7 +65,7 @@ func NewCmdList(f *cmdutil.Factory, runF func(*ListOptions) error) *cobra.Comman
 
 			Runs created by organization and enterprise ruleset workflows will not display a workflow name due to GitHub API limitations.
 
-			To see runs associated with a pull request, users should run %[1]sgh pr checks%[1]s.
+			To see runs associated with a pull request, users should run %[1]sgm pr checks%[1]s.
 		`, "`"),
 		Aliases: []string{"ls"},
 		Args:    cobra.NoArgs,

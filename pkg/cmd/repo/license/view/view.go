@@ -9,7 +9,7 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/browser"
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/text"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -19,7 +19,7 @@ import (
 type ViewOptions struct {
 	IO         *iostreams.IOStreams
 	HTTPClient func() (*http.Client, error)
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 	License    string
 	Web        bool
 	Browser    browser.Browser
@@ -39,23 +39,23 @@ func NewCmdView(f *cmdutil.Factory, runF func(*ViewOptions) error) *cobra.Comman
 		Long: heredoc.Docf(`
 			View a specific repository license by license key or SPDX ID.
 
-			Run %[1]sgh repo license list%[1]s to see available commonly used licenses. For even more licenses, visit <https://choosealicense.com/appendix>.
+			Run %[1]sgm repo license list%[1]s to see available commonly used licenses. For even more licenses, visit <https://choosealicense.com/appendix>.
 		`, "`"),
 		Example: heredoc.Doc(`
 			# View the MIT license from SPDX ID
-			$ gh repo license view MIT
+			$ gm repo license view MIT
 
 			# View the MIT license from license key
-			$ gh repo license view mit
+			$ gm repo license view mit
 
 			# View the GNU AGPL-3.0 license from SPDX ID
-			$ gh repo license view AGPL-3.0
+			$ gm repo license view AGPL-3.0
 
 			# View the GNU AGPL-3.0 license from license key
-			$ gh repo license view agpl-3.0
+			$ gm repo license view agpl-3.0
 
 			# Create a LICENSE.md with the MIT license
-			$ gh repo license view MIT > LICENSE.md
+			$ gm repo license view MIT > LICENSE.md
 		`),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -97,7 +97,7 @@ func viewRun(opts *ViewOptions) error {
 	if err != nil {
 		if httpErr, ok := errors.AsType[api.HTTPError](err); ok {
 			if httpErr.StatusCode == 404 {
-				return fmt.Errorf("'%s' is not a valid license name or SPDX ID.\n\nRun `gh repo license list` to see available commonly used licenses. For even more licenses, visit %s", opts.License, text.DisplayURL("https://choosealicense.com/appendix"))
+				return fmt.Errorf("'%s' is not a valid license name or SPDX ID.\n\nRun `gm repo license list` to see available commonly used licenses. For even more licenses, visit %s", opts.License, text.DisplayURL("https://choosealicense.com/appendix"))
 			}
 		}
 		return err

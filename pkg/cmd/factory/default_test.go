@@ -10,8 +10,8 @@ import (
 
 	"github.com/cli/cli/v2/git"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
-	ghmock "github.com/cli/cli/v2/internal/gh/mock"
+	"github.com/cli/cli/v2/internal/gm"
+	ghmock "github.com/cli/cli/v2/internal/gm/mock"
 	"github.com/cli/cli/v2/internal/telemetry"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/httpmock"
@@ -72,9 +72,9 @@ func Test_BaseRepo(t *testing.T) {
 				readRemotes: func() (git.RemoteSet, error) {
 					return tt.remotes, nil
 				},
-				getConfig: func() (gh.Config, error) {
+				getConfig: func() (gm.Config, error) {
 					cfg := &ghmock.ConfigMock{}
-					cfg.AuthenticationFunc = func() gh.AuthConfig {
+					cfg.AuthenticationFunc = func() gm.AuthConfig {
 						authCfg := &config.AuthConfig{}
 						hosts := []string{"nonsense.com"}
 						if tt.override != "" {
@@ -212,9 +212,9 @@ func Test_SmartBaseRepo(t *testing.T) {
 				readRemotes: func() (git.RemoteSet, error) {
 					return tt.remotes, nil
 				},
-				getConfig: func() (gh.Config, error) {
+				getConfig: func() (gm.Config, error) {
 					cfg := &ghmock.ConfigMock{}
-					cfg.AuthenticationFunc = func() gh.AuthConfig {
+					cfg.AuthenticationFunc = func() gm.AuthConfig {
 						authCfg := &config.AuthConfig{}
 						hosts := []string{"nonsense.com"}
 						if tt.override != "" {
@@ -261,7 +261,7 @@ func Test_OverrideBaseRepo(t *testing.T) {
 	tests := []struct {
 		name        string
 		remotes     git.RemoteSet
-		config      gh.Config
+		config      gm.Config
 		envOverride string
 		argOverride string
 		wantsErr    bool
@@ -304,7 +304,7 @@ func Test_OverrideBaseRepo(t *testing.T) {
 				readRemotes: func() (git.RemoteSet, error) {
 					return tt.remotes, nil
 				},
-				getConfig: func() (gh.Config, error) {
+				getConfig: func() (gm.Config, error) {
 					return tt.config, nil
 				},
 			}
@@ -354,7 +354,7 @@ func TestSSOURL(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := config.NewMockConfig()
 			ios, _, _, stderr := iostreams.Test()
-			client, err := HttpClientFunc(func() (gh.Config, error) { return cfg, nil }, ios, "v1.2.3", "", &telemetry.NoOpService{})()
+			client, err := HttpClientFunc(func() (gm.Config, error) { return cfg, nil }, ios, "v1.2.3", "", &telemetry.NoOpService{})()
 			require.NoError(t, err)
 			req, err := http.NewRequest("GET", ts.URL, nil)
 			if tt.sso != "" {
@@ -393,7 +393,7 @@ func TestPlainHttpClient(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, 204, res.StatusCode)
-	assert.Equal(t, []string{"GitHub CLI v1.2.3"}, receivedHeaders.Values("User-Agent"))
+	assert.Equal(t, []string{"gitmip-cli v1.2.3"}, receivedHeaders.Values("User-Agent"))
 	assert.Equal(t, []string{"2022-11-28"}, receivedHeaders.Values("X-GitHub-Api-Version"))
 	assert.Nil(t, receivedHeaders.Values("Authorization"))
 	assert.Nil(t, receivedHeaders.Values("Content-Type"))
@@ -425,7 +425,7 @@ func TestTokenRefresherHttpClient(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, 204, res.StatusCode)
-	assert.Equal(t, []string{"GitHub CLI v1.2.3"}, receivedHeaders.Values("User-Agent"))
+	assert.Equal(t, []string{"gitmip-cli v1.2.3"}, receivedHeaders.Values("User-Agent"))
 	assert.Equal(t, []string{"2022-11-28"}, receivedHeaders.Values("X-GitHub-Api-Version"))
 	assert.Nil(t, receivedHeaders.Values("Authorization"))
 	assert.Nil(t, receivedHeaders.Values("Content-Type"))
@@ -442,7 +442,7 @@ func TestTokenRefresherHttpClient(t *testing.T) {
 func TestNewGitClient(t *testing.T) {
 	tests := []struct {
 		name          string
-		config        gh.Config
+		config        gm.Config
 		executable    string
 		wantAuthHosts []string
 		wantGhPath    string
@@ -458,7 +458,7 @@ func TestNewGitClient(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			f := &cmdutil.Factory{}
-			f.Config = func() (gh.Config, error) {
+			f.Config = func() (gm.Config, error) {
 				if tt.config == nil {
 					return config.NewMockConfig(), nil
 				} else {
@@ -483,15 +483,15 @@ func defaultConfig() *ghmock.ConfigMock {
 	return cfg
 }
 
-// recordingAuthConfig is a gh.AuthConfig that records SetTokenRefresher calls. It embeds the interface so it satisfies
-// gh.AuthConfig without implementing every method; only SetTokenRefresher is exercised by these tests.
+// recordingAuthConfig is a gm.AuthConfig that records SetTokenRefresher calls. It embeds the interface so it satisfies
+// gm.AuthConfig without implementing every method; only SetTokenRefresher is exercised by these tests.
 type recordingAuthConfig struct {
-	gh.AuthConfig
+	gm.AuthConfig
 	setCalls      int
-	lastRefresher gh.TokenRefresher
+	lastRefresher gm.TokenRefresher
 }
 
-func (r *recordingAuthConfig) SetTokenRefresher(refresher gh.TokenRefresher) {
+func (r *recordingAuthConfig) SetTokenRefresher(refresher gm.TokenRefresher) {
 	r.setCalls++
 	r.lastRefresher = refresher
 }
@@ -499,14 +499,14 @@ func (r *recordingAuthConfig) SetTokenRefresher(refresher gh.TokenRefresher) {
 func TestConfigWithTokenRefresher(t *testing.T) {
 	t.Run("injects a refresher once across multiple config resolutions", func(t *testing.T) {
 		authCfg := &recordingAuthConfig{}
-		cfg := &ghmock.ConfigMock{AuthenticationFunc: func() gh.AuthConfig { return authCfg }}
+		cfg := &ghmock.ConfigMock{AuthenticationFunc: func() gm.AuthConfig { return authCfg }}
 		plainCalls := 0
 		plainClientFunc := func() (*http.Client, error) {
 			plainCalls++
 			return &http.Client{}, nil
 		}
 
-		wrapped := configWithTokenRefresher(func() (gh.Config, error) { return cfg, nil }, plainClientFunc)
+		wrapped := configWithTokenRefresher(func() (gm.Config, error) { return cfg, nil }, plainClientFunc)
 
 		got, err := wrapped()
 		require.NoError(t, err)
@@ -523,10 +523,10 @@ func TestConfigWithTokenRefresher(t *testing.T) {
 
 	t.Run("skips injection when the plain client cannot be built", func(t *testing.T) {
 		authCfg := &recordingAuthConfig{}
-		cfg := &ghmock.ConfigMock{AuthenticationFunc: func() gh.AuthConfig { return authCfg }}
+		cfg := &ghmock.ConfigMock{AuthenticationFunc: func() gm.AuthConfig { return authCfg }}
 		plainClientFunc := func() (*http.Client, error) { return nil, errors.New("no client") }
 
-		wrapped := configWithTokenRefresher(func() (gh.Config, error) { return cfg, nil }, plainClientFunc)
+		wrapped := configWithTokenRefresher(func() (gm.Config, error) { return cfg, nil }, plainClientFunc)
 
 		got, err := wrapped()
 		require.NoError(t, err)
@@ -541,7 +541,7 @@ func TestConfigWithTokenRefresher(t *testing.T) {
 			return &http.Client{}, nil
 		}
 
-		wrapped := configWithTokenRefresher(func() (gh.Config, error) { return nil, errors.New("config boom") }, plainClientFunc)
+		wrapped := configWithTokenRefresher(func() (gm.Config, error) { return nil, errors.New("config boom") }, plainClientFunc)
 
 		_, err := wrapped()
 		require.EqualError(t, err, "config boom")

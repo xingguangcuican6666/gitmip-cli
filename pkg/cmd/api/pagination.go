@@ -105,7 +105,7 @@ func perPageParam(hostname string) string {
 // addPerPage appends the page size parameter to p unless the caller already set
 // a page size, under either parameter spelling, in params or in the query of p.
 //
-// gh api takes its path verbatim from the user, so an explicit page size is
+// gm api takes its path verbatim from the user, so an explicit page size is
 // passed through unchanged rather than rewritten to the host's spelling or
 // overridden by ours. A server ignores a size parameter it does not know, which
 // leaves its own default in force.

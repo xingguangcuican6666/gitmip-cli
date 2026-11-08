@@ -429,7 +429,7 @@ func generateScopesSuggestion(statusCode int, endpointNeedsScopes, tokenHasScope
 			continue
 		}
 		return fmt.Sprintf(
-			"This API operation needs the %[1]q scope. To request it, run:  gh auth refresh -h %[2]s -s %[1]s",
+			"This API operation needs the %[1]q scope. To request it, run:  gm auth refresh -h %[2]s -s %[1]s",
 			s,
 			ghauth.NormalizeHostname(hostname),
 		)
@@ -469,7 +469,7 @@ func clientOptions(hostname string, transport http.RoundTripper) ghAPI.ClientOpt
 // /api/v1 instead, so the prefix has to be corrected after go-gh has chosen it.
 //
 // The rewrite happens here, in the transport the client is built with, rather
-// than in the HTTP client gh hands around. That way it applies however the
+// than in the HTTP client gm hands around. That way it applies however the
 // caller obtained its *http.Client, including in tests that substitute a
 // transport, so a test asserting the request path sees the path that would go
 // on the wire.

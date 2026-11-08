@@ -104,7 +104,7 @@ func revertRun(opts *RevertOptions) error {
 	// server-side flow, so the work has to be done with git and a push, which is
 	// a different command from this one.
 	if hosttype.IsGitea(baseRepo.RepoHost()) {
-		return fmt.Errorf("Gitea has no revert endpoint, so `gh pr revert` cannot run against it; revert with git and open a pull request from the branch")
+		return fmt.Errorf("Gitea has no revert endpoint, so `gm pr revert` cannot run against it; revert with git and open a pull request from the branch")
 	}
 
 	httpClient, err := opts.HttpClient()

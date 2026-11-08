@@ -51,38 +51,38 @@ func NewCmdIssues(f *cmdutil.Factory, runF func(*shared.IssuesOptions) error) *c
 			cannot be used), return a single page of results, and are not available on
 			GitHub Enterprise Server.
 
-			For more information on handling search queries containing a hyphen, run %[1]sgh search --help%[1]s.
+			For more information on handling search queries containing a hyphen, run %[1]sgm search --help%[1]s.
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Search issues matching set of keywords "readme" and "typo"
-			$ gh search issues readme typo
+			$ gm search issues readme typo
 
 			# Search issues matching phrase "broken feature"
-			$ gh search issues "broken feature"
+			$ gm search issues "broken feature"
 
 			# Search issues using raw search qualifiers as separate arguments
-			$ gh search issues label:bug author:monalisa state:open
+			$ gm search issues label:bug author:monalisa state:open
 
 			# Search issues and pull requests in cli organization
-			$ gh search issues --include-prs --owner=cli
+			$ gm search issues --include-prs --owner=cli
 
 			# Search open issues assigned to yourself
-			$ gh search issues --assignee=@me --state=open
+			$ gm search issues --assignee=@me --state=open
 
 			# Search issues with numerous comments
-			$ gh search issues --comments=">100"
+			$ gm search issues --comments=">100"
 
 			# Search issues without label "bug"
-			$ gh search issues -- -label:bug
+			$ gm search issues -- -label:bug
 
 			# Search issues only from un-archived repositories (default is all repositories)
-			$ gh search issues --owner github --archived=false
+			$ gm search issues --owner github --archived=false
 
 			# Search issues using semantic (natural-language) ranking
-			$ gh search issues "feature broken on web" --search-type semantic
+			$ gm search issues "feature broken on web" --search-type semantic
 
 			# Search issues using hybrid (keyword + semantic) ranking
-			$ gh search issues "feature broken" --search-type hybrid
+			$ gm search issues "feature broken" --search-type hybrid
 		`),
 		RunE: func(c *cobra.Command, args []string) error {
 			if len(args) == 0 && c.Flags().NFlag() == 0 {

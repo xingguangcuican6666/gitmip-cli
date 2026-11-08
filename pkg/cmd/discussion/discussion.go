@@ -20,9 +20,9 @@ func NewCmdDiscussion(f *cmdutil.Factory) *cobra.Command {
 			Working with discussions in the GitHub CLI is in preview and subject to change without notice.
 		`),
 		Example: heredoc.Doc(`
-			$ gh discussion list
-			$ gh discussion create --category "General" --title "Hello" --body "Hello World!"
-			$ gh discussion view 123
+			$ gm discussion list
+			$ gm discussion create --category "General" --title "Hello" --body "Hello World!"
+			$ gm discussion view 123
 		`),
 		Annotations: map[string]string{
 			"help:arguments": heredoc.Doc(`

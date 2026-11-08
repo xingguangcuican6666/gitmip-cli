@@ -36,19 +36,19 @@ func NewCmdExtension(f *cmdutil.Factory) *cobra.Command {
 
 	extCmd := cobra.Command{
 		Use:   "extension",
-		Short: "Manage gh extensions",
+		Short: "Manage gm extensions",
 		Long: heredoc.Docf(`
-			GitHub CLI extensions are repositories that provide additional gh commands.
+			GitHub CLI extensions are repositories that provide additional gm commands.
 
 			The name of the extension repository must start with %[1]sgh-%[1]s and it must contain an
-			executable of the same name. All arguments passed to the %[1]sgh <extname>%[1]s invocation
+			executable of the same name. All arguments passed to the %[1]sgm <extname>%[1]s invocation
 			will be forwarded to the %[1]sgh-<extname>%[1]s executable of the extension.
 
-			An extension cannot override any of the core gh commands. If an extension name conflicts
-			with a core gh command, you can use %[1]sgh extension exec <extname>%[1]s.
+			An extension cannot override any of the core gm commands. If an extension name conflicts
+			with a core gm command, you can use %[1]sgm extension exec <extname>%[1]s.
 
-			When an extension is executed, gh will check for new versions once every 24 hours and display
-			an upgrade notice. See %[1]sgh help environment%[1]s for information on disabling extension notices.
+			When an extension is executed, gm will check for new versions once every 24 hours and display
+			an upgrade notice. See %[1]sgm help environment%[1]s for information on disabling extension notices.
 
 			Extensions are not verified, signed, or endorsed by GitHub. When you install or upgrade
   			an extension, you are trusting its publisher. It is your responsibility to review the
@@ -97,7 +97,7 @@ func NewCmdExtension(f *cmdutil.Factory) *cobra.Command {
 				Use:   "search [<query>]",
 				Short: "Search extensions to the GitHub CLI",
 				Long: heredoc.Docf(`
-					Search for gh extensions.
+					Search for gm extensions.
 
 					With no arguments, this command prints out the first 30 extensions
 					available to install sorted by number of stars. More extensions can
@@ -112,41 +112,41 @@ func NewCmdExtension(f *cmdutil.Factory) *cobra.Command {
 					word "installed" but otherwise the order and content of the columns
 					are the same.
 
-					This command behaves similarly to %[1]sgh search repos%[1]s but does not
+					This command behaves similarly to %[1]sgm search repos%[1]s but does not
 					support as many search qualifiers. For a finer grained search of
 					extensions, try using:
 
-						gh search repos --topic "gh-extension"
+						gm search repos --topic "gh-extension"
 
-					and adding qualifiers as needed. See %[1]sgh help search repos%[1]s to learn
+					and adding qualifiers as needed. See %[1]sgm help search repos%[1]s to learn
 					more about repository search.
 
 					For listing just the extensions that are already installed locally,
 					see:
 
-						gh ext list
+						gm ext list
 				`, "`"),
 				Example: heredoc.Doc(`
 					# List the first 30 extensions sorted by star count, descending
-					$ gh ext search
+					$ gm ext search
 
 					# List more extensions
-					$ gh ext search --limit 300
+					$ gm ext search --limit 300
 
 					# List extensions matching the term "branch"
-					$ gh ext search branch
+					$ gm ext search branch
 
 					# List extensions owned by organization "github"
-					$ gh ext search --owner github
+					$ gm ext search --owner github
 
 					# List extensions, sorting by recently updated, ascending
-					$ gh ext search --sort updated --order asc
+					$ gm ext search --sort updated --order asc
 
 					# List extensions, filtering by license
-					$ gh ext search --license MIT
+					$ gm ext search --license MIT
 
 					# Open search results in the browser
-					$ gh ext search -w
+					$ gm ext search -w
 				`),
 				RunE: func(cmd *cobra.Command, args []string) error {
 					cfg, err := config()
@@ -281,7 +281,7 @@ func NewCmdExtension(f *cmdutil.Factory) *cobra.Command {
 						}
 					}
 
-					t.AddField(fmt.Sprintf("gh %s", c.Name()))
+					t.AddField(fmt.Sprintf("gm %s", c.Name()))
 					t.AddField(repo)
 					version := displayExtensionVersion(c, c.CurrentVersion())
 					if c.IsPinned() {
@@ -300,7 +300,7 @@ func NewCmdExtension(f *cmdutil.Factory) *cobra.Command {
 			var pinFlag string
 			cmd := &cobra.Command{
 				Use:   "install <repository>",
-				Short: "Install a gh extension from a repository",
+				Short: "Install a gm extension from a repository",
 				Long: heredoc.Docf(`
 					Install a GitHub CLI extension from a GitHub or local repository.
 
@@ -334,13 +334,13 @@ func NewCmdExtension(f *cmdutil.Factory) *cobra.Command {
 				`, "`"),
 				Example: heredoc.Doc(`
 					# Install an extension from a remote repository hosted on GitHub
-					$ gh extension install owner/gh-extension
+					$ gm extension install owner/gh-extension
 
 					# Install an extension from a remote repository via full URL
-					$ gh extension install https://my.ghes.com/owner/gh-extension
+					$ gm extension install https://my.ghes.com/owner/gh-extension
 
 					# Install an extension from a local repository in the current working directory
-					$ gh extension install .
+					$ gm extension install .
 				`),
 				Args: cmdutil.MinimumArgs(1, "must specify a repository to install from"),
 				RunE: func(cmd *cobra.Command, args []string) error {
@@ -481,7 +481,7 @@ func NewCmdExtension(f *cmdutil.Factory) *cobra.Command {
 				Short: "Enter a UI for browsing, adding, and removing extensions",
 				Long: heredoc.Docf(`
 					This command will take over your terminal and run a fully interactive
-					interface for browsing, adding, and removing gh extensions. A terminal
+					interface for browsing, adding, and removing gm extensions. A terminal
 					width greater than 100 columns is recommended. Narrow terminals
 					automatically use a single-column layout.
 
@@ -496,9 +496,9 @@ func NewCmdExtension(f *cmdutil.Factory) *cobra.Command {
 
 					For a more traditional way to discover extensions, see:
 
-						gh ext search
+						gm ext search
 
-					along with %[1]sgh ext install%[1]s, %[1]sgh ext remove%[1]s, and %[1]sgh repo view%[1]s.
+					along with %[1]sgm ext install%[1]s, %[1]sgm ext remove%[1]s, and %[1]sgm repo view%[1]s.
 				`, "`"),
 				Args: cobra.NoArgs,
 				RunE: func(cmd *cobra.Command, args []string) error {
@@ -545,14 +545,14 @@ func NewCmdExtension(f *cmdutil.Factory) *cobra.Command {
 			Long: heredoc.Docf(`
 				Execute an extension using the short name. For example, if the extension repository is
 				%[1]sowner/gh-extension%[1]s, you should pass %[1]sextension%[1]s. You can use this command when
-				the short name conflicts with a core gh command.
+				the short name conflicts with a core gm command.
 
 				All arguments after the extension name will be forwarded to the executable
 				of the extension.
 			`, "`"),
 			Example: heredoc.Doc(`
-				# Execute a label extension instead of the core gh label command
-				$ gh extension exec label
+				# Execute a label extension instead of the core gm label command
+				$ gm extension exec label
 			`),
 			Args:               cobra.MinimumNArgs(1),
 			DisableFlagParsing: true,
@@ -582,16 +582,16 @@ func NewCmdExtension(f *cmdutil.Factory) *cobra.Command {
 				Short: "Create a new extension",
 				Example: heredoc.Doc(`
 					# Use interactively
-					$ gh extension create
+					$ gm extension create
 
 					# Create a script-based extension
-					$ gh extension create foobar
+					$ gm extension create foobar
 
 					# Create a Go extension
-					$ gh extension create --precompiled=go foobar
+					$ gm extension create --precompiled=go foobar
 
 					# Create a non-Go precompiled extension
-					$ gh extension create --precompiled=other foobar
+					$ gm extension create --precompiled=other foobar
 				`),
 				Args: cobra.MaximumNArgs(1),
 				RunE: func(cmd *cobra.Command, args []string) error {
@@ -646,7 +646,7 @@ func NewCmdExtension(f *cmdutil.Factory) *cobra.Command {
 					var goBinChecks string
 
 					steps := fmt.Sprintf(
-						"- run 'cd %[1]s; gh extension install .; gh %[2]s' to see your new extension in action",
+						"- run 'cd %[1]s; gm extension install .; gm %[2]s' to see your new extension in action",
 						fullName, extName)
 
 					if tmplType == extensions.GoBinTemplateType {
@@ -655,13 +655,13 @@ func NewCmdExtension(f *cmdutil.Factory) *cobra.Command {
 						%[1]s Built %[2]s binary
 						`, cs.SuccessIcon(), fullName)
 						steps = heredoc.Docf(`
-						- run 'cd %[1]s; gh extension install .; gh %[2]s' to see your new extension in action
-						- run 'go build && gh %[2]s' to see changes in your code as you develop`, fullName, extName)
+						- run 'cd %[1]s; gm extension install .; gm %[2]s' to see your new extension in action
+						- run 'go build && gm %[2]s' to see changes in your code as you develop`, fullName, extName)
 					} else if tmplType == extensions.OtherBinTemplateType {
 						steps = heredoc.Docf(`
-						- run 'cd %[1]s; gh extension install .' to install your extension locally
+						- run 'cd %[1]s; gm extension install .' to install your extension locally
 						- fill in script/build.sh with your compilation script for automated builds
-						- compile a %[1]s binary locally and run 'gh %[2]s' to see changes`, fullName, extName)
+						- compile a %[1]s binary locally and run 'gm %[2]s' to see changes`, fullName, extName)
 					}
 					link := "https://docs.github.com/github-cli/github-cli/creating-github-cli-extensions"
 					out := heredoc.Docf(`
@@ -674,7 +674,7 @@ func NewCmdExtension(f *cmdutil.Factory) *cobra.Command {
 
 						%[4]s
 						%[5]s
-						- run 'gh repo create' to share your extension with others
+						- run 'gm repo create' to share your extension with others
 
 						For more information on writing extensions:
 						%[3]s

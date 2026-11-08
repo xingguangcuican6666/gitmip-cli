@@ -182,8 +182,8 @@ func TestViewRun(t *testing.T) {
 		✓  cool commit  a workflow  trunk   push   3
 		X  cool commit  a workflow  trunk   push   4
 
-		To see more runs for this workflow, try: gh run list --workflow flow.yml
-		To see the YAML for this workflow, try: gh workflow view flow.yml --yaml
+		To see more runs for this workflow, try: gm run list --workflow flow.yml
+		To see the YAML for this workflow, try: gm workflow view flow.yml --yaml
 	`)
 
 	tests := []struct {

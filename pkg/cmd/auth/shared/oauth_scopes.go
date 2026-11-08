@@ -99,7 +99,7 @@ func giteaTokenScopes(httpClient *http.Client, hostname, authToken string) (stri
 }
 
 // HasMinimumScopes performs a GitHub API request and returns an error if the token used in the request
-// lacks the minimum required scopes for performing API operations with gh.
+// lacks the minimum required scopes for performing API operations with gm.
 func HasMinimumScopes(httpClient *http.Client, hostname, authToken string) error {
 	scopesHeader, err := GetScopes(httpClient, hostname, authToken)
 	if err != nil {
@@ -112,7 +112,7 @@ func HasMinimumScopes(httpClient *http.Client, hostname, authToken string) error
 	return HeaderHasMinimumScopes(scopesHeader)
 }
 
-// giteaHeaderHasMinimumScopes reports whether a Gitea token can do the work gh
+// giteaHeaderHasMinimumScopes reports whether a Gitea token can do the work gm
 // does on a repository: read and write repository content, issues and pull
 // requests, and read the organizations the user belongs to.
 //
@@ -155,7 +155,7 @@ func giteaHeaderHasMinimumScopes(scopesHeader string) error {
 }
 
 // HeaderHasMinimumScopes parses the comma separated scopesHeader string and returns an error
-// if it lacks the minimum required scopes for performing API operations with gh.
+// if it lacks the minimum required scopes for performing API operations with gm.
 func HeaderHasMinimumScopes(scopesHeader string) error {
 	if scopesHeader == "" {
 		// if the token reports no scopes, assume that it's an integration token and give up on

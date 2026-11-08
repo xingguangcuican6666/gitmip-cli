@@ -414,7 +414,7 @@ func TestPrMerge_dirty(t *testing.T) {
 		X Pull request OWNER/REPO#123 is not mergeable: the merge commit cannot be cleanly created.
 		To have the pull request merged after all the requirements have been met, add the %[1]s--auto%[1]s flag.
 		Run the following to resolve the merge conflicts locally:
-		  gh pr checkout 123 && git fetch origin trunk && git merge origin/trunk
+		  gm pr checkout 123 && git fetch origin trunk && git merge origin/trunk
 	`, "`"), output.Stderr())
 }
 

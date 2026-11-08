@@ -29,7 +29,7 @@ func TestHelperProcess(t *testing.T) {
 		return
 	}
 	if err := func(args []string) error {
-		// Dispatch tests use this marker argument to inspect the environment gh handed to
+		// Dispatch tests use this marker argument to inspect the environment gm handed to
 		// the extension, rather than echoing the arguments back.
 		if len(args) > 0 && args[len(args)-1] == "print-env" {
 			fmt.Fprintf(os.Stdout, "GH_EXTENSION=%s\n", os.Getenv("GH_EXTENSION"))
@@ -1127,7 +1127,7 @@ func TestManager_Install_binary_unsupported(t *testing.T) {
 	m := newTestManager(dataDir, updateDir, &client, nil, ios)
 
 	err := m.Install(repo, "")
-	assert.EqualError(t, err, "gh-bin-ext unsupported for windows-amd64.\n\nTo request support for windows-amd64, open an issue on the extension's repo by running the following command:\n\n\t`gh issue create -R owner/gh-bin-ext --title \"Add support for the windows-amd64 architecture\" --body \"This extension does not support the windows-amd64 architecture. I tried to install it on a windows-amd64 machine, and it failed due to the lack of an available binary. Would you be able to update the extension's build and release process to include the relevant binary? For more details, see <https://docs.github.com/en/github-cli/github-cli/creating-github-cli-extensions>.\"`")
+	assert.EqualError(t, err, "gh-bin-ext unsupported for windows-amd64.\n\nTo request support for windows-amd64, open an issue on the extension's repo by running the following command:\n\n\t`gm issue create -R owner/gh-bin-ext --title \"Add support for the windows-amd64 architecture\" --body \"This extension does not support the windows-amd64 architecture. I tried to install it on a windows-amd64 machine, and it failed due to the lack of an available binary. Would you be able to update the extension's build and release process to include the relevant binary? For more details, see <https://docs.github.com/en/github-cli/github-cli/creating-github-cli-extensions>.\"`")
 
 	assert.Equal(t, "", stdout.String())
 	assert.Equal(t, "", stderr.String())
@@ -1180,7 +1180,7 @@ func TestManager_Install_rosetta_fallback_not_found(t *testing.T) {
 	}
 
 	err := m.Install(repo, "")
-	assert.EqualError(t, err, "gh-bin-ext unsupported for darwin-arm64. Install Rosetta with `softwareupdate --install-rosetta` to use the available darwin-amd64 binary, or open an issue: `gh issue create -R owner/gh-bin-ext -t'Support darwin-arm64'`")
+	assert.EqualError(t, err, "gh-bin-ext unsupported for darwin-arm64. Install Rosetta with `softwareupdate --install-rosetta` to use the available darwin-amd64 binary, or open an issue: `gm issue create -R owner/gh-bin-ext -t'Support darwin-arm64'`")
 
 	assert.Equal(t, "", stdout.String())
 	assert.Equal(t, "", stderr.String())

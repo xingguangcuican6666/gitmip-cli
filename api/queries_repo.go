@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cli/cli/v2/internal/gh"
+	"github.com/cli/cli/v2/internal/gm"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/cli/cli/v2/internal/ghrepo"
@@ -869,14 +869,14 @@ func (m *RepoMetadataResult) v2ProjectTitleToID(title string) (string, bool) {
 	return "", false
 }
 
-func ProjectTitlesToPaths(client *Client, repo ghrepo.Interface, titles []string, projectsV1Support gh.ProjectsV1Support) ([]string, error) {
+func ProjectTitlesToPaths(client *Client, repo ghrepo.Interface, titles []string, projectsV1Support gm.ProjectsV1Support) ([]string, error) {
 	paths := make([]string, 0, len(titles))
 	matchedPaths := map[string]struct{}{}
 
 	// TODO: ProjectsV1Cleanup
 	// At this point, we only know the names that the user has provided, so we can't push this conditional up the stack.
 	// First we'll try to match against v1 projects, if supported
-	if projectsV1Support == gh.ProjectsV1Supported {
+	if projectsV1Support == gm.ProjectsV1Supported {
 		v1Projects, err := v1Projects(client, repo)
 		if err != nil {
 			return nil, err
@@ -1545,7 +1545,7 @@ func RepoMilestones(client *Client, repo ghrepo.Interface, state string) ([]Repo
 // v1Projects lists the classic projects an issue may be attached to.
 //
 // Gitea has projects but not in this shape: its projects are repository and
-// organization boards addressed by numeric id, with no resource path for gh to
+// organization boards addressed by numeric id, with no resource path for gm to
 // resolve a title against. Reporting none is what makes a `--project` request
 // fail with "'title' not found" rather than attaching an issue to an unrelated
 // board, and the Gitea issue create path rejects project titles outright with a

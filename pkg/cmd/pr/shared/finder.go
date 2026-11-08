@@ -17,8 +17,8 @@ import (
 	ghContext "github.com/cli/cli/v2/context"
 	"github.com/cli/cli/v2/git"
 	fd "github.com/cli/cli/v2/internal/featuredetection"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	o "github.com/cli/cli/v2/pkg/option"
 	"github.com/cli/cli/v2/pkg/set"
@@ -240,7 +240,7 @@ func (f *finder) Find(opts FindOptions) (*api.PullRequest, ghrepo.Interface, err
 			opts.Detector = fd.NewDetector(cachedClient, f.baseRefRepo.RepoHost())
 		}
 
-		if opts.Detector.ProjectsV1() == gh.ProjectsV1Unsupported {
+		if opts.Detector.ProjectsV1() == gm.ProjectsV1Unsupported {
 			fields.Remove("projectCards")
 		}
 	}

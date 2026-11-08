@@ -10,8 +10,8 @@ import (
 	"github.com/cli/cli/v2/api"
 	ghContext "github.com/cli/cli/v2/context"
 	"github.com/cli/cli/v2/git"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmd/pr/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -289,7 +289,7 @@ func (m *mergeContext) canMerge() error {
 		}
 		fetchBranch := fmt.Sprintf("%s %s", remote.Name, m.pr.BaseRefName)
 		mergeBranch := fmt.Sprintf("%s %s/%s", mergeOrRebase, remote.Name, m.pr.BaseRefName)
-		cmd := fmt.Sprintf("gh pr checkout %d && git fetch %s && git %s", m.pr.Number, fetchBranch, mergeBranch)
+		cmd := fmt.Sprintf("gm pr checkout %d && git fetch %s && git %s", m.pr.Number, fetchBranch, mergeBranch)
 		_ = m.warnf("Run the following to resolve the merge conflicts locally:\n  %s\n", m.cs.Bold(cmd))
 	}
 	if !m.opts.UseAdmin && allowsAdminOverride(m.pr.MergeStateStatus) {
@@ -804,7 +804,7 @@ func confirmSubmission(client *http.Client, opts *MergeOptions, action shared.Ac
 
 type userEditor struct {
 	io     *iostreams.IOStreams
-	config func() (gh.Config, error)
+	config func() (gm.Config, error)
 }
 
 func (e *userEditor) Edit(filename, startingText string) (string, error) {

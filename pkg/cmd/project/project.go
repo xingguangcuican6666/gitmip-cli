@@ -33,14 +33,14 @@ func NewCmdProject(f *cmdutil.Factory) *cobra.Command {
 			Work with GitHub Projects.
 
 			The minimum required scope for the token is: %[1]sproject%[1]s.
-			You can verify your token scope by running %[1]sgh auth status%[1]s and
-			add the %[1]sproject%[1]s scope by running %[1]sgh auth refresh -s project%[1]s.
+			You can verify your token scope by running %[1]sgm auth status%[1]s and
+			add the %[1]sproject%[1]s scope by running %[1]sgm auth refresh -s project%[1]s.
 		`, "`"),
 		Example: heredoc.Doc(`
-			$ gh project create --owner monalisa --title "Roadmap"
-			$ gh project view 1 --owner cli --web
-			$ gh project field-list 1 --owner cli
-			$ gh project item-list 1 --owner cli
+			$ gm project create --owner monalisa --title "Roadmap"
+			$ gm project view 1 --owner cli --web
+			$ gm project field-list 1 --owner cli
+			$ gm project item-list 1 --owner cli
 		`),
 		GroupID: "core",
 	}

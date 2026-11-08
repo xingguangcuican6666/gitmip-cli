@@ -20,7 +20,7 @@ func TestFakeHelperConfigContract(t *testing.T) {
 			// it's worth to parallelize these tests, sinced it's not even possible to parallelize the real Helperconfig
 			// ones due to them using t.Setenv
 			fhc = &gitcredentials.FakeHelperConfig{
-				SelfExecutablePath: "/path/to/gh",
+				SelfExecutablePath: "/path/to/gm",
 				Helpers:            map[string]gitcredentials.Helper{},
 			}
 			return fhc

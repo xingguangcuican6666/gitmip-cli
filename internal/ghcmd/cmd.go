@@ -21,8 +21,8 @@ import (
 	"github.com/cli/cli/v2/internal/build"
 	"github.com/cli/cli/v2/internal/ci"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
+	"github.com/cli/cli/v2/internal/gm"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/internal/telemetry"
 	"github.com/cli/cli/v2/internal/update"
 	"github.com/cli/cli/v2/pkg/cmd/auth/shared"
@@ -58,7 +58,7 @@ func Main() exitCode {
 	if cfgErr != nil {
 		fmt.Fprintf(os.Stderr, "warning: failed to load config: %s\n", cfgErr)
 	}
-	cfgFunc := func() (gh.Config, error) { return cfg, cfgErr }
+	cfgFunc := func() (gm.Config, error) { return cfg, cfgErr }
 
 	var ioStreams *iostreams.IOStreams
 	if cfgErr == nil {
@@ -68,7 +68,7 @@ func Main() exitCode {
 	}
 	stderr := ioStreams.ErrOut
 
-	ghExecutablePath := executablePath("gh")
+	ghExecutablePath := executablePath("gm")
 
 	additionalCommonDimensions := ghtelemetry.Dimensions{
 		"version":             strings.TrimPrefix(buildVersion, "v"),
@@ -159,7 +159,7 @@ func Main() exitCode {
 		}
 	}
 
-	// Enable running gh from Windows File Explorer's address bar. Without this, the user is told to stop and run from a
+	// Enable running gm from Windows File Explorer's address bar. Without this, the user is told to stop and run from a
 	// terminal. With this, a user can clone a repo (or take other actions) directly from explorer.
 	if len(os.Args) > 1 && os.Args[1] != "" {
 		cobra.MousetrapHelpText = ""
@@ -176,7 +176,7 @@ func Main() exitCode {
 		expandedArgs = os.Args[1:]
 	}
 
-	// translate `gh help <command>` to `gh <command> --help` for extensions.
+	// translate `gm help <command>` to `gm <command> --help` for extensions.
 	if len(expandedArgs) >= 2 && expandedArgs[0] == "help" && isExtensionCommand(rootCmd, expandedArgs[1:]) {
 		expandedArgs = expandedArgs[1:]
 		expandedArgs = append(expandedArgs, "--help")
@@ -215,13 +215,13 @@ func Main() exitCode {
 
 		if strings.Contains(err.Error(), "Incorrect function") {
 			fmt.Fprintln(stderr, "You appear to be running in MinTTY without pseudo terminal support.")
-			fmt.Fprintln(stderr, "To learn about workarounds for this error, run:  gh help mintty")
+			fmt.Fprintln(stderr, "To learn about workarounds for this error, run:  gm help mintty")
 			return exitError
 		}
 
 		var httpErr api.HTTPError
 		if errors.As(err, &httpErr) && httpErr.StatusCode == 401 {
-			authCommand := "gh auth login"
+			authCommand := "gm auth login"
 			if cfg, cfgErr := cmdFactory.Config(); cfgErr == nil {
 				authCommand = authRecoveryCommand(cfg, httpErr)
 			}
@@ -248,7 +248,7 @@ func Main() exitCode {
 			return exitOK
 		}
 		fmt.Fprintf(stderr, "\n\n%s %s → %s\n",
-			ansi.Color("A new release of gh is available:", "yellow"),
+			ansi.Color("A new release of gm is available:", "yellow"),
 			ansi.Color(strings.TrimPrefix(buildVersion, "v"), "cyan"),
 			ansi.Color(strings.TrimPrefix(newRelease.Version, "v"), "cyan"))
 		if isHomebrew {
@@ -300,18 +300,18 @@ func printError(out io.Writer, cs *iostreams.ColorScheme, err error, cmd *cobra.
 	}
 }
 
-func authRecoveryCommand(cfg gh.Config, httpErr api.HTTPError) string {
+func authRecoveryCommand(cfg gm.Config, httpErr api.HTTPError) string {
 	if httpErr.RequestURL == nil {
-		return "gh auth login"
+		return "gm auth login"
 	}
 
 	hostname := ghauth.NormalizeHostname(httpErr.RequestURL.Hostname())
 	cred := cfg.Authentication().ActiveToken(hostname)
 	if shared.AuthTokenRefreshable(cred.Token, cred.Source) {
-		return fmt.Sprintf("gh auth refresh -h %s", hostname)
+		return fmt.Sprintf("gm auth refresh -h %s", hostname)
 	}
 
-	return fmt.Sprintf("gh auth login -h %s", hostname)
+	return fmt.Sprintf("gm auth login -h %s", hostname)
 }
 
 func checkForUpdate(ctx context.Context, f *cmdutil.Factory, currentVersion string) (*update.ReleaseInfo, error) {
@@ -330,7 +330,7 @@ func isRecentRelease(publishedAt time.Time) bool {
 	return !publishedAt.IsZero() && time.Since(publishedAt) < time.Hour*24
 }
 
-// Check whether the gh binary was found under the Homebrew prefix
+// Check whether the gm binary was found under the Homebrew prefix
 func isUnderHomebrew(ghBinary string) bool {
 	brewExe, err := safeexec.LookPath("brew")
 	if err != nil {
@@ -346,7 +346,7 @@ func isUnderHomebrew(ghBinary string) bool {
 	return strings.HasPrefix(ghBinary, brewBinPrefix)
 }
 
-func newIOStreams(cfg gh.Config, invokingAgent agents.AgentName) *iostreams.IOStreams {
+func newIOStreams(cfg gm.Config, invokingAgent agents.AgentName) *iostreams.IOStreams {
 	io := iostreams.System()
 
 	if _, ghPromptDisabled := os.LookupEnv("GH_PROMPT_DISABLED"); ghPromptDisabled {
@@ -429,17 +429,17 @@ func executablePath(executableName string) string {
 // PATH, return the absolute location to the program.
 //
 // The idea is that the result of this function is callable in the future and refers to the same
-// installation of gh, even across upgrades. This is needed primarily for Homebrew, which installs software
-// under a location such as `/usr/local/Cellar/gh/1.13.1/bin/gh` and symlinks it from `/usr/local/bin/gh`.
+// installation of gm, even across upgrades. This is needed primarily for Homebrew, which installs software
+// under a location such as `/usr/local/Cellar/gm/1.13.1/bin/gm` and symlinks it from `/usr/local/bin/gm`.
 // When the version is upgraded, Homebrew will often delete older versions, but keep the symlink. Because of
-// this, we want to refer to the `gh` binary as `/usr/local/bin/gh` and not as its internal Homebrew
+// this, we want to refer to the `gm` binary as `/usr/local/bin/gm` and not as its internal Homebrew
 // location.
 //
-// None of this would be needed if we could just refer to GitHub CLI as `gh`, i.e. without using an absolute
+// None of this would be needed if we could just refer to GitHub CLI as `gm`, i.e. without using an absolute
 // path. However, for some reason Homebrew does not include `/usr/local/bin` in PATH when it invokes git
-// commands to update its taps. If `gh` (no path) is being used as git credential helper, as set up by `gh
+// commands to update its taps. If `gm` (no path) is being used as git credential helper, as set up by `gm
 // auth login`, running `brew update` will print out authentication errors as git is unable to locate
-// Homebrew-installed `gh`
+// Homebrew-installed `gm`
 func executable(fallback string) string {
 	exe, err := os.Executable()
 	if err != nil {
@@ -478,7 +478,7 @@ func executable(fallback string) string {
 	return exe
 }
 
-func mightBeGHESUser(cfg gh.Config) bool {
+func mightBeGHESUser(cfg gm.Config) bool {
 	if os.Getenv("GH_ENTERPRISE_TOKEN") != "" || os.Getenv("GITHUB_ENTERPRISE_TOKEN") != "" {
 		return true
 	}

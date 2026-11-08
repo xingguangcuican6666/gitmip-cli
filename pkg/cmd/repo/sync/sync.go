@@ -59,16 +59,16 @@ func NewCmdSync(f *cmdutil.Factory, runF func(*SyncOptions) error) *cobra.Comman
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Sync local repository from remote parent
-			$ gh repo sync
+			$ gm repo sync
 
 			# Sync local repository from remote parent on specific branch
-			$ gh repo sync --branch v1
+			$ gm repo sync --branch v1
 
 			# Sync remote fork from its parent
-			$ gh repo sync owner/cli-fork
+			$ gm repo sync owner/cli-fork
 
 			# Sync remote repository from another remote repository
-			$ gh repo sync owner/repo --source owner2/repo2
+			$ gm repo sync owner/repo --source owner2/repo2
 		`),
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(c *cobra.Command, args []string) error {
@@ -267,7 +267,7 @@ func executeLocalRepoSync(srcRepo ghrepo.Interface, remote string, opts *SyncOpt
 					if worktree.Prunable {
 						return fmt.Errorf("can't sync %q because stale worktree metadata still associates it with %s\ntip: run `git worktree prune` and retry", branch, worktree.Path)
 					}
-					return fmt.Errorf("can't sync %q because it's checked out in another worktree at %s\ntip: run `gh repo sync` from that worktree instead", branch, worktree.Path)
+					return fmt.Errorf("can't sync %q because it's checked out in another worktree at %s\ntip: run `gm repo sync` from that worktree instead", branch, worktree.Path)
 				}
 				return err
 			}

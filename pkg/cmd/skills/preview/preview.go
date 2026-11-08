@@ -11,9 +11,9 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
 	"github.com/cli/cli/v2/internal/ghinstance"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/internal/skills/discovery"
 	"github.com/cli/cli/v2/internal/skills/frontmatter"
@@ -80,19 +80,19 @@ func NewCmdPreview(f *cmdutil.Factory, telemetry ghtelemetry.EventRecorder, runF
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Preview a specific skill
-			$ gh skill preview github/awesome-copilot documentation-writer
+			$ gm skill preview github/awesome-copilot documentation-writer
 
 			# Preview a skill at a specific version
-			$ gh skill preview github/awesome-copilot documentation-writer@v1.2.0
+			$ gm skill preview github/awesome-copilot documentation-writer@v1.2.0
 
 			# Preview a skill at a specific commit SHA
-			$ gh skill preview github/awesome-copilot documentation-writer@abc123def456
+			$ gm skill preview github/awesome-copilot documentation-writer@abc123def456
 
 			# Preview from a non-standard nested path (efficient, skips full discovery)
-			$ gh skill preview monalisa/skills-repo packages/agent-skills/code-review
+			$ gm skill preview monalisa/skills-repo packages/agent-skills/code-review
 
 			# Browse and preview interactively
-			$ gh skill preview github/awesome-copilot
+			$ gm skill preview github/awesome-copilot
 		`),
 		Aliases: []string{"show"},
 		Args:    cobra.RangeArgs(1, 2),

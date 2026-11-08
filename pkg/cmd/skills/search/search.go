@@ -14,8 +14,8 @@ import (
 
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
-	"github.com/cli/cli/v2/internal/gh"
-	"github.com/cli/cli/v2/internal/gh/ghtelemetry"
+	"github.com/cli/cli/v2/internal/gm"
+	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/internal/skills/discovery"
@@ -52,9 +52,9 @@ type SearchOptions struct {
 	IO             *iostreams.IOStreams
 	Telemetry      ghtelemetry.EventRecorder
 	HttpClient     func() (*http.Client, error)
-	Config         func() (gh.Config, error)
+	Config         func() (gm.Config, error)
 	Prompter       prompter.Prompter
-	ExecutablePath string // path to the current gh binary for install subprocess
+	ExecutablePath string // path to the current gm binary for install subprocess
 	Exporter       cmdutil.Exporter
 
 	// User inputs
@@ -93,16 +93,16 @@ func NewCmdSearch(f *cmdutil.Factory, telemetry ghtelemetry.EventRecorder, runF 
 		`, "`"),
 		Example: heredoc.Doc(`
 			# Search for skills related to terraform
-			$ gh skill search terraform
+			$ gm skill search terraform
 
 			# Search for skills from a specific owner
-			$ gh skill search terraform --owner hashicorp
+			$ gm skill search terraform --owner hashicorp
 
 			# View the second page of results
-			$ gh skill search terraform --page 2
+			$ gm skill search terraform --page 2
 
 			# Limit results to 5
-			$ gh skill search terraform --limit 5
+			$ gm skill search terraform --limit 5
 		`),
 		Args: cmdutil.MinimumArgs(1, "cannot search: query argument required"),
 		RunE: func(c *cobra.Command, args []string) error {
@@ -569,7 +569,7 @@ func promptInstall(opts *SearchOptions, skills []skillResult) error {
 		fmt.Fprintf(opts.IO.ErrOut, "\n%s Installing %s from %s...\n",
 			cs.Blue("::"), displayName, s.Repo)
 
-		//nolint:gosec // executable is the current gh binary
+		//nolint:gosec // executable is the current gm binary
 		cmd := exec.Command(opts.ExecutablePath, installCommandArgs(s, host.ID, scope)...)
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = opts.IO.Out

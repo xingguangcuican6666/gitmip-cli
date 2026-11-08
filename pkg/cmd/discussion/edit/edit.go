@@ -55,16 +55,16 @@ func NewCmdEdit(f *cmdutil.Factory, runF func(*EditOptions) error) *cobra.Comman
 		`),
 		Example: heredoc.Doc(`
 			# Edit interactively
-			$ gh discussion edit 123
+			$ gm discussion edit 123
 
 			# Update title, body, and category
-			$ gh discussion edit 123 --title "Updated title" --body "Updated body" --category "Ideas"
+			$ gm discussion edit 123 --title "Updated title" --body "Updated body" --category "Ideas"
 
 			# Update body from a file
-			$ gh discussion edit 123 --body-file body.md
+			$ gm discussion edit 123 --body-file body.md
 
 			# Add and remove labels
-			$ gh discussion edit 123 --add-label "bug,help wanted" --remove-label "stale"
+			$ gm discussion edit 123 --add-label "bug,help wanted" --remove-label "stale"
 		`),
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {

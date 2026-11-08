@@ -11,8 +11,8 @@ import (
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/browser"
 	fd "github.com/cli/cli/v2/internal/featuredetection"
-	"github.com/cli/cli/v2/internal/gh"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/text"
 	issueShared "github.com/cli/cli/v2/pkg/cmd/issue/shared"
@@ -25,7 +25,7 @@ import (
 
 type ListOptions struct {
 	HttpClient func() (*http.Client, error)
-	Config     func() (gh.Config, error)
+	Config     func() (gm.Config, error)
 	IO         *iostreams.IOStreams
 	BaseRepo   func() (ghrepo.Interface, error)
 	Browser    browser.Browser
@@ -73,14 +73,14 @@ func NewCmdList(f *cmdutil.Factory, runF func(*ListOptions) error) *cobra.Comman
 			<https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/filtering-and-searching-issues-and-pull-requests#building-advanced-filters-for-issues>
 		`, "`"),
 		Example: heredoc.Doc(`
-			$ gh issue list --label "bug" --label "help wanted"
-			$ gh issue list --author monalisa
-			$ gh issue list --app dependabot
-			$ gh issue list --assignee "@me"
-			$ gh issue list --milestone "The big 1.0"
-			$ gh issue list --search "error no:assignee sort:created-asc"
-			$ gh issue list --state all
-			$ gh issue list --type Bug
+			$ gm issue list --label "bug" --label "help wanted"
+			$ gm issue list --author monalisa
+			$ gm issue list --app dependabot
+			$ gm issue list --assignee "@me"
+			$ gm issue list --milestone "The big 1.0"
+			$ gm issue list --search "error no:assignee sort:created-asc"
+			$ gm issue list --state all
+			$ gm issue list --type Bug
 		`),
 		Aliases: []string{"ls"},
 		Args:    cmdutil.NoArgsQuoteReminder,

@@ -462,7 +462,7 @@ func TestCommentableRunUploadsAndWritesBodies(t *testing.T) {
 			// Given a pending event when operation counts are under test
 			attachmentRecorder := &telemetry.InvocationRecorderSpy{}
 			if tt.wantOperations != nil {
-				opts.AttachEvent = attachments.BeginTelemetry(attachmentRecorder, "gh test", len(tt.attach))
+				opts.AttachEvent = attachments.BeginTelemetry(attachmentRecorder, "gm test", len(tt.attach))
 			}
 
 			host := tt.host

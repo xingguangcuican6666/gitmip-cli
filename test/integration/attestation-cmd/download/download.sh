@@ -11,7 +11,7 @@ os=$1
 # Get the root directory of the repository
 rootDir="$(git rev-parse --show-toplevel)"
 
-ghBuildPath="$rootDir/bin/gh"
+ghBuildPath="$rootDir/bin/gm"
 
 artifactPath="$rootDir/pkg/cmd/attestation/test/data/gh_2.60.1_windows_arm64.zip"
 

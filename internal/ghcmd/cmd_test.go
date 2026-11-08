@@ -13,8 +13,8 @@ import (
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/agents"
 	"github.com/cli/cli/v2/internal/config"
-	"github.com/cli/cli/v2/internal/gh"
-	ghmock "github.com/cli/cli/v2/internal/gh/mock"
+	"github.com/cli/cli/v2/internal/gm"
+	ghmock "github.com/cli/cli/v2/internal/gm/mock"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
 	ghAPI "github.com/cli/go-gh/v2/pkg/api"
@@ -109,10 +109,10 @@ check your internet connection or https://githubstatus.com
 				  $ gh spend --amount 1
 
 				LEARN MORE
-				  Use ` + "`gh <command> <subcommand> --help`" + ` for more information about a command.
+				  Use ` + "`gm <command> <subcommand> --help`" + ` for more information about a command.
 				  Read the manual at https://cli.github.com/manual
-				  Learn about exit codes using ` + "`gh help exit-codes`" + `
-				  Learn about accessibility experiences using ` + "`gh help accessibility`" + `
+				  Learn about exit codes using ` + "`gm help exit-codes`" + `
+				  Learn about accessibility experiences using ` + "`gm help accessibility`" + `
 
 			`),
 		},
@@ -139,10 +139,10 @@ check your internet connection or https://githubstatus.com
 				  $ gh spend --amount 1
 
 				LEARN MORE
-				  Use ` + "`gh <command> <subcommand> --help`" + ` for more information about a command.
+				  Use ` + "`gm <command> <subcommand> --help`" + ` for more information about a command.
 				  Read the manual at https://cli.github.com/manual
-				  Learn about exit codes using ` + "`gh help exit-codes`" + `
-				  Learn about accessibility experiences using ` + "`gh help accessibility`" + `
+				  Learn about exit codes using ` + "`gm help exit-codes`" + `
+				  Learn about accessibility experiences using ` + "`gm help accessibility`" + `
 
 			`),
 		},
@@ -172,7 +172,7 @@ func Test_newIOStreams_pager(t *testing.T) {
 	tests := []struct {
 		name      string
 		env       map[string]string
-		config    gh.Config
+		config    gm.Config
 		wantPager string
 	}{
 		{
@@ -222,7 +222,7 @@ func Test_newIOStreams_pager(t *testing.T) {
 					t.Setenv(k, v)
 				}
 			}
-			var cfg gh.Config
+			var cfg gm.Config
 			if tt.config != nil {
 				cfg = tt.config
 			} else {
@@ -237,7 +237,7 @@ func Test_newIOStreams_pager(t *testing.T) {
 func Test_newIOStreams_prompt(t *testing.T) {
 	tests := []struct {
 		name           string
-		config         gh.Config
+		config         gm.Config
 		promptDisabled bool
 		env            map[string]string
 	}{
@@ -263,7 +263,7 @@ func Test_newIOStreams_prompt(t *testing.T) {
 					t.Setenv(k, v)
 				}
 			}
-			var cfg gh.Config
+			var cfg gm.Config
 			if tt.config != nil {
 				cfg = tt.config
 			} else {
@@ -278,7 +278,7 @@ func Test_newIOStreams_prompt(t *testing.T) {
 func Test_newIOStreams_spinnerDisabled(t *testing.T) {
 	tests := []struct {
 		name            string
-		config          gh.Config
+		config          gm.Config
 		invokingAgent   agents.AgentName
 		spinnerDisabled bool
 		env             map[string]string
@@ -369,7 +369,7 @@ func Test_newIOStreams_spinnerDisabled(t *testing.T) {
 			for k, v := range tt.env {
 				t.Setenv(k, v)
 			}
-			var cfg gh.Config
+			var cfg gm.Config
 			if tt.config != nil {
 				cfg = tt.config
 			} else {
@@ -384,7 +384,7 @@ func Test_newIOStreams_spinnerDisabled(t *testing.T) {
 func Test_newIOStreams_accessiblePrompterEnabled(t *testing.T) {
 	tests := []struct {
 		name                      string
-		config                    gh.Config
+		config                    gm.Config
 		accessiblePrompterEnabled bool
 		env                       map[string]string
 	}{
@@ -435,7 +435,7 @@ func Test_newIOStreams_accessiblePrompterEnabled(t *testing.T) {
 			for k, v := range tt.env {
 				t.Setenv(k, v)
 			}
-			var cfg gh.Config
+			var cfg gm.Config
 			if tt.config != nil {
 				cfg = tt.config
 			} else {
@@ -450,7 +450,7 @@ func Test_newIOStreams_accessiblePrompterEnabled(t *testing.T) {
 func Test_newIOStreams_colorLabels(t *testing.T) {
 	tests := []struct {
 		name               string
-		config             gh.Config
+		config             gm.Config
 		colorLabelsEnabled bool
 		env                map[string]string
 	}{
@@ -511,7 +511,7 @@ func Test_newIOStreams_colorLabels(t *testing.T) {
 					t.Setenv(k, v)
 				}
 			}
-			var cfg gh.Config
+			var cfg gm.Config
 			if tt.config != nil {
 				cfg = tt.config
 			} else {
@@ -596,35 +596,35 @@ func Test_mightBeGHESUser(t *testing.T) {
 	}
 }
 
-func pagerConfig() gh.Config {
+func pagerConfig() gm.Config {
 	return config.NewMockConfigFromString("pager: CONFIG_PAGER")
 }
 
-func disablePromptConfig() gh.Config {
+func disablePromptConfig() gm.Config {
 	return config.NewMockConfigFromString("prompt: disabled")
 }
 
-func enableAccessiblePrompterConfig() gh.Config {
+func enableAccessiblePrompterConfig() gm.Config {
 	return config.NewMockConfigFromString("accessible_prompter: enabled")
 }
 
-func disableAccessiblePrompterConfig() gh.Config {
+func disableAccessiblePrompterConfig() gm.Config {
 	return config.NewMockConfigFromString("accessible_prompter: disabled")
 }
 
-func disableSpinnersConfig() gh.Config {
+func disableSpinnersConfig() gm.Config {
 	return config.NewMockConfigFromString("spinner: disabled")
 }
 
-func enableSpinnersConfig() gh.Config {
+func enableSpinnersConfig() gm.Config {
 	return config.NewMockConfigFromString("spinner: enabled")
 }
 
-func disableColorLabelsConfig() gh.Config {
+func disableColorLabelsConfig() gm.Config {
 	return config.NewMockConfigFromString("color_labels: disabled")
 }
 
-func enableColorLabelsConfig() gh.Config {
+func enableColorLabelsConfig() gm.Config {
 	return config.NewMockConfigFromString("color_labels: enabled")
 }
 
@@ -641,27 +641,27 @@ func Test_authRecoveryCommand(t *testing.T) {
 			token:      "gho_abc123",
 			source:     "oauth_token",
 			requestURL: "https://api.github.com/graphql",
-			want:       "gh auth refresh -h github.com",
+			want:       "gm auth refresh -h github.com",
 		},
 		{
 			name:       "stored pat",
 			token:      "github_pat_abc123",
 			source:     "oauth_token",
 			requestURL: "https://api.github.com/graphql",
-			want:       "gh auth login -h github.com",
+			want:       "gm auth login -h github.com",
 		},
 		{
 			name:       "env token",
 			token:      "gho_abc123",
 			source:     "GH_TOKEN",
 			requestURL: "https://api.github.com/graphql",
-			want:       "gh auth login -h github.com",
+			want:       "gm auth login -h github.com",
 		},
 		{
 			name:   "missing request url",
 			token:  "gho_abc123",
 			source: "oauth_token",
-			want:   "gh auth login",
+			want:   "gm auth login",
 		},
 	}
 
@@ -670,7 +670,7 @@ func Test_authRecoveryCommand(t *testing.T) {
 			authCfg := config.NewMockConfig().Authentication()
 			authCfg.SetActiveToken(tt.token, tt.source)
 			cfg := &ghmock.ConfigMock{
-				AuthenticationFunc: func() gh.AuthConfig {
+				AuthenticationFunc: func() gm.AuthConfig {
 					return authCfg
 				},
 			}
