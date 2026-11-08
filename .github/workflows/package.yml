@@ -77,39 +77,43 @@ jobs:
       - name: Package
         run: script/package "${{ matrix.goos }}" "${{ matrix.goarch }}" "${{ inputs.version }}"
 
-      # script/package verifies what it wrote and exits non-zero otherwise, but it
-      # only asks pacman about the Arch package when pacman is installed. The
-      # runner image is not Arch, so install pacman as a reader here and let it
-      # decide whether these are packages or tarballs with a confusing name. A
-      # plain tarball parses fine with tar and is rejected by pacman, which is
-      # exactly the failure this step exists to catch.
+      # script/package already verified the archive it wrote, including .PKGINFO
+      # contents, and asks pacman to load the package when pacman is installed.
+      # The runner image is not Arch and does not ship pacman, so this step proves
+      # the file is a readable zstd tarball whose first entry is a parseable
+      # .PKGINFO. That is what separates a package from a plain tarball, which is
+      # the failure this packaging fixed.
       - name: Verify Arch package
         if: matrix.goos == 'linux'
         run: |
           set -euo pipefail
-          if ! sudo apt-get update -qq \
-            || ! sudo apt-get install -y -qq pacman-package-manager; then
-            # The packaging is not at fault when a reader tool cannot be
-            # installed, so this is a warning rather than a failure, but it stays
-            # visible in the run instead of passing quietly.
-            echo "::warning title=Arch package load check skipped::pacman-package-manager could not be installed on $ImageOS; only the structural checks in script/package ran"
-            exit 0
-          fi
-          set -euo pipefail
-          # pacman is only a reader here: -Qp and -Qlp open the package file and
-          # never touch the system database, so a minimal config is enough and
-          # keeps the check independent of whatever pacman.conf the runner image
-          # happens to ship.
-          cfg="$(mktemp)"
-          printf '[options]\nArchitecture = auto\n' > "$cfg"
           for pkg in dist/*.pkg.tar.zst; do
-            pacman --config "$cfg" -Qp "$pkg"
-            pacman --config "$cfg" -Qlp "$pkg" \
-              | grep -qE '^gm /usr/(bin/gm|share/man/man1/gm\.1)$' \
-              || { echo "missing required paths in $pkg"; exit 1; }
             (cd dist && sha256sum -c "$(basename "$pkg").sha256")
+            file "$pkg" | grep -q "Zstandard compressed data" \
+              || { echo "$pkg is not zstd compressed"; exit 1; }
+            # Capture before matching: grep -q closes the pipe on the first match,
+            # and under pipefail the writer's SIGPIPE would fail the step.
+            entries="$(tar --zstd -tf "$pkg")"
+            [ "$(printf '%s\n' "$entries" | head -1)" = ".PKGINFO" ] \
+              || { echo "$pkg does not start with .PKGINFO"; exit 1; }
+            printf '%s\n' "$entries" | grep -qx 'usr/bin/gm' \
+              || { echo "$pkg has no usr/bin/gm"; exit 1; }
+            printf '%s\n' "$entries" | grep -qx 'usr/share/man/man1/gm.1' \
+              || { echo "$pkg has no man page"; exit 1; }
+            printf '%s\n' "$entries" | grep -qx 'usr/share/licenses/gm/LICENSE' \
+              || { echo "$pkg has no license file"; exit 1; }
+            # pacman reads .PKGINFO as "key = value" lines; the arch must agree with
+            # the file name and the package must name itself gm.
+            info="$(tar --zstd -xOf "$pkg" .PKGINFO)"
+            printf '%s\n' "$info" | grep -qx 'pkgname = gm' \
+              || { echo "$pkg has a wrong pkgname"; exit 1; }
+            pkgarch="${pkg##*-1-}"
+            pkgarch="${pkgarch%.pkg.tar.zst}"
+            printf '%s\n' "$info" | grep -qx "arch = $pkgarch" \
+              || { echo "$pkg arch disagrees with .PKGINFO"; exit 1; }
+            echo "verified $pkg ($(printf '%s\n' "$entries" | wc -l) entries)"
           done
-          rm -f "$cfg"
+
       - name: Upload packages
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
