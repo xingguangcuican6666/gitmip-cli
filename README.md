@@ -22,6 +22,38 @@ hosts:
 Everything else works as it does upstream. See `docs/gitea-port.md` for what
 Gitea can and cannot serve.
 
+## Installing a build
+
+CI publishes two kinds of artifact per target, both from the `Package` workflow
+(`.github/workflows/package.yml`) and both built by `script/package`:
+
+- `gm-<version>-1-<arch>.pkg.tar.zst`, an Arch Linux package. Install this with
+  pacman:
+
+  ```sh
+  sudo pacman -U gm-2.103.3-1-x86_64.pkg.tar.zst
+  ```
+
+  It puts `gm` in `/usr/bin`, its man pages under `/usr/share/man/man1`, its
+  license under `/usr/share/licenses/gm`, and bash, fish and zsh completions on
+  the paths each shell searches.
+
+- `gitmip-cli_<version>_<os>_<arch>.tar.gz`, a portable archive holding the same
+  binary, LICENSE and man pages under one directory. Unpack it and put `gm` on
+  your PATH yourself, or use `make install`, which writes the same layout the
+  package does but under `/usr/local` rather than `/usr`.
+
+A `.tar.gz` is not an Arch package. `pacman -U` on one fails with "missing
+package metadata", because there is no `.PKGINFO` for pacman to read; install the
+`.pkg.tar.zst` instead.
+
+Each artifact ships a matching `.sha256`. The bundled `gitmip-cli-dist` artifact
+holds every target's package plus `gitmip-cli_checksums.txt` covering all of
+them.
+
+Arch packages are only built for `linux` targets, since pacman installs only on
+Arch. For macOS and Windows, use the portable archive.
+
 ---
 
 # GitHub CLI

@@ -101,22 +101,51 @@ jobs:
         # archives with the same name and the same contents.
         run: script/package "${{ matrix.goos }}" "${{ matrix.goarch }}"
 
-      - name: Verify archive
+      # script/package already verifies each package it writes, structurally and
+      # against pacman when pacman is installed. What a load check catches that the
+      # structural checks do not is a package pacman refuses to parse, which is the
+      # failure this packaging existed to fix.
+      #
+      # The runner image is not an Arch system, so pacman is usually absent and
+      # this step reports that rather than pretending it checked. Where the runner
+      # is Debian based it is installed, because that check is the whole point.
+      - name: Verify Arch package
+        if: matrix.goos == 'linux'
         run: |
           set -euo pipefail
-          archive=$(ls dist/gitmip-cli_*_${{ matrix.goos }}_${{ matrix.goarch }}.tar.gz)
-          (cd dist && sha256sum -c "$(basename "$archive").sha256")
-          tar -tzf "$archive" > /tmp/contents
-          grep -q "/gm\(.exe\)\?$" /tmp/contents || { echo "no gm binary in $archive"; exit 1; }
-          grep -q "/LICENSE$" /tmp/contents || { echo "no LICENSE in $archive"; exit 1; }
-          grep -q "/share/man/man1/gm.1$" /tmp/contents || { echo "no man pages in $archive"; exit 1; }
-          echo "verified $archive ($(wc -l < /tmp/contents) entries)"
-
-      - name: Upload archive
+          if ! command -v pacman >/dev/null 2>&1; then
+            if command -v apt-get >/dev/null 2>&1; then
+              sudo apt-get update -qq \
+                && sudo apt-get install -y -qq pacman-package-manager \
+                || true
+            fi
+          fi
+          if ! command -v pacman >/dev/null 2>&1; then
+            echo "pacman unavailable on this runner; script/package verified these packages structurally but did not load one"
+            exit 0
+          fi
+          set -euo pipefail
+          # pacman is only a reader here: -Qp and -Qlp open the package file and
+          # never touch the system database, so a minimal config is enough and
+          # keeps the check independent of whatever pacman.conf the runner image
+          # happens to ship.
+          cfg="$(mktemp)"
+          printf '[options]\nArchitecture = auto\n' > "$cfg"
+          for pkg in dist/*.pkg.tar.zst; do
+            pacman --config "$cfg" -Qp "$pkg"
+            pacman --config "$cfg" -Qlp "$pkg" \
+              | grep -qE '^gm /usr/(bin/gm|share/man/man1/gm\.1)$' \
+              || { echo "missing required paths in $pkg"; exit 1; }
+            (cd dist && sha256sum -c "$(basename "$pkg").sha256")
+          done
+          rm -f "$cfg"
+      - name: Upload packages
         uses: actions/upload-artifact@v4
         with:
           name: gitmip-cli_${{ matrix.goos }}_${{ matrix.goarch }}
           path: |
             dist/*.tar.gz
             dist/*.tar.gz.sha256
+            dist/*.pkg.tar.zst
+            dist/*.pkg.tar.zst.sha256
           if-no-files-found: error

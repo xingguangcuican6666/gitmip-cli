@@ -77,26 +77,48 @@ jobs:
       - name: Package
         run: script/package "${{ matrix.goos }}" "${{ matrix.goarch }}" "${{ inputs.version }}"
 
-      # The archive is verified rather than assumed: a package step that produced
-      # an empty or foreign-architecture tarball would otherwise upload as success.
-      - name: Verify archive
+      # script/package verifies what it wrote and exits non-zero otherwise, but it
+      # only asks pacman about the Arch package when pacman is installed. The
+      # runner image is not Arch, so install pacman as a reader here and let it
+      # decide whether these are packages or tarballs with a confusing name. A
+      # plain tarball parses fine with tar and is rejected by pacman, which is
+      # exactly the failure this step exists to catch.
+      - name: Verify Arch package
+        if: matrix.goos == 'linux'
         run: |
           set -euo pipefail
-          archive=$(ls dist/gitmip-cli_*_${{ matrix.goos }}_${{ matrix.goarch }}.tar.gz)
-          (cd dist && sha256sum -c "$(basename "$archive").sha256")
-          tar -tzf "$archive" > /tmp/contents
-          grep -q "/gm\(\.exe\)\?$" /tmp/contents || { echo "no gm binary in $archive"; exit 1; }
-          grep -q "/LICENSE$" /tmp/contents || { echo "no LICENSE in $archive"; exit 1; }
-          grep -q "/share/man/man1/gm.1$" /tmp/contents || { echo "no man pages in $archive"; exit 1; }
-          echo "verified $archive ($(wc -l < /tmp/contents) entries)"
-
-      - name: Upload archive
+          if ! sudo apt-get update -qq \
+            || ! sudo apt-get install -y -qq pacman-package-manager; then
+            # The packaging is not at fault when a reader tool cannot be
+            # installed, so this is a warning rather than a failure, but it stays
+            # visible in the run instead of passing quietly.
+            echo "::warning title=Arch package load check skipped::pacman-package-manager could not be installed on $ImageOS; only the structural checks in script/package ran"
+            exit 0
+          fi
+          set -euo pipefail
+          # pacman is only a reader here: -Qp and -Qlp open the package file and
+          # never touch the system database, so a minimal config is enough and
+          # keeps the check independent of whatever pacman.conf the runner image
+          # happens to ship.
+          cfg="$(mktemp)"
+          printf '[options]\nArchitecture = auto\n' > "$cfg"
+          for pkg in dist/*.pkg.tar.zst; do
+            pacman --config "$cfg" -Qp "$pkg"
+            pacman --config "$cfg" -Qlp "$pkg" \
+              | grep -qE '^gm /usr/(bin/gm|share/man/man1/gm\.1)$' \
+              || { echo "missing required paths in $pkg"; exit 1; }
+            (cd dist && sha256sum -c "$(basename "$pkg").sha256")
+          done
+          rm -f "$cfg"
+      - name: Upload packages
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: gitmip-cli_${{ matrix.goos }}_${{ matrix.goarch }}
           path: |
             dist/*.tar.gz
             dist/*.tar.gz.sha256
+            dist/*.pkg.tar.zst
+            dist/*.pkg.tar.zst.sha256
           if-no-files-found: error
           retention-days: 7
 
@@ -119,7 +141,7 @@ jobs:
           set -euo pipefail
           cd dist
           rm -f *.sha256
-          sha256sum *.tar.gz > gitmip-cli_checksums.txt
+          sha256sum *.tar.gz *.pkg.tar.zst > gitmip-cli_checksums.txt
           cat gitmip-cli_checksums.txt
 
       - name: Upload bundle

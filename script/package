@@ -5,26 +5,40 @@
 # Usage:
 #   script/package <goos> <goarch> [version]
 #
-# Writes dist/gitmip-cli_<version>_<goos>_<goarch>.tar.gz holding the gm binary,
-# the man pages and LICENSE, next to a .sha256 checksum file for it. The version
-# defaults to `git describe --tags --always` and is stamped into the binary too,
-# so the archive name and `gm --version` agree.
+# Writes into dist/, each next to a .sha256 checksum file:
 #
-# Both packaging workflows call this script rather than inlining the build, so
-# the two hosts cannot drift apart on what an archive contains.
+#   gitmip-cli_<version>_<goos>_<goarch>.tar.gz   portable archive, every target
+#   gm-<pkgver>-1-<pkgarch>.pkg.tar.zst           Arch Linux package, linux only
+#
+# The version defaults to `git describe --tags --always` and is stamped into the
+# binary too, so the package name and `gm --version` agree.
+#
+# Every package it writes is verified before the script exits 0, so a caller
+# cannot upload an archive that is missing its binary or, in the Arch case,
+# its metadata. Both packaging workflows call this script rather than inlining
+# the build, so the two hosts cannot drift apart on what a package contains.
 
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-if [ $# -lt 2 ]; then
+usage() {
   echo "usage: script/package <goos> <goarch> [version]" >&2
   exit 1
-fi
+}
+
+[ $# -ge 2 ] || usage
 
 goos="$1"
 goarch="$2"
-version="${3:-$(git describe --tags --always)}"
+version="${3:-}"
+
+# An empty version means "use git describe", which is what an unset workflow
+# input expands to. Treating that as a value would name every archive with a
+# dangling underscore.
+if [ -z "$version" ]; then
+  version="$(git describe --tags --always)"
+fi
 
 exe=""
 if [ "$goos" = windows ]; then
@@ -33,43 +47,144 @@ fi
 
 name="gitmip-cli_${version}_${goos}_${goarch}"
 
+# sha256sum writes and reads the same "<hash>  <file>" format shasum does, and
+# macOS ships only the latter.
+checksum() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    (cd dist && sha256sum "$1" > "$1.sha256")
+  else
+    (cd dist && shasum -a 256 "$1" > "$1.sha256")
+  fi
+}
+
+check_checksum() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    (cd dist && sha256sum -c "$1.sha256") >/dev/null
+  else
+    (cd dist && shasum -a 256 -c "$1.sha256") >/dev/null
+  fi
+}
+
+fail() {
+  echo "package: $1" >&2
+  exit 1
+}
+
+# ---------------------------------------------------------------- build
+
 hostdir="$(mktemp -d)"
 trap 'rm -rf "$hostdir"' EXIT
 hostbuild="${hostdir}/build"
 
 # script/build.go has to be compiled for the host before it can drive a build for
-# another target: `go run` would honour GOOS and produce an executable this
+# another target: `go run` honours GOOS, so it would produce an executable this
 # machine cannot run. This mirrors the `script/build` rule in the Makefile.
 env GOOS= GOARCH= GOARM= GOFLAGS= CGO_ENABLED= go build -o "$hostbuild" script/build.go
 
-# The man pages are plain roff, identical on every platform, and gen-docs built
-# for a foreign GOOS cannot execute here, so they are generated once with the
-# host toolchain and copied into each target's package.
-if [ ! -f share/man/man1/gm.1 ]; then
-  env GOOS= GOARCH= GOARM= CGO_ENABLED= "$hostbuild" manpages
-fi
+# The man pages and the completions are plain text and identical on every
+# platform, but the programs that generate them cannot run once compiled for a
+# foreign GOOS. So they are generated with the host toolchain, once, and copied
+# into each target's package.
+env GOOS= GOARCH= GOARM= CGO_ENABLED= "$hostbuild" manpages
 
-# bin/gm is removed first because script/build.go skips the rebuild when the
-# binary on disk is newer than every source file, which would otherwise leave the
-# previous target's architecture in this package.
+env GOOS= GOARCH= GOARM= CGO_ENABLED=0 GH_VERSION="$version" "$hostbuild" bin/gm
+mkdir -p share/bash-completion/completions share/fish/vendor_completions.d share/zsh/site-functions
+bin/gm completion -s bash > share/bash-completion/completions/gm
+bin/gm completion -s fish > share/fish/vendor_completions.d/gm.fish
+bin/gm completion -s zsh > share/zsh/site-functions/_gm
+
+# bin/gm now holds a host binary; remove it so the cross build below cannot be
+# skipped by script/build.go, which considers a newer-than-sources binary up to
+# date and would leave the wrong architecture in the package.
 rm -f bin/gm bin/gm.exe
 GOOS="$goos" GOARCH="$goarch" CGO_ENABLED=0 GH_VERSION="$version" \
   "$hostbuild" "bin/gm${exe}"
 
+# ---------------------------------------------------------------- archive
+
+# Both the portable archive and the Arch package carry the same binary, so stage
+# it once instead of building it into one and unpacking it out again.
+binary="${hostdir}/gm${exe}"
+mv "bin/gm${exe}" "$binary"
+
+mkdir -p dist
 rm -rf "dist/${name}"
 mkdir -p "dist/${name}/share/man/man1"
-mv "bin/gm${exe}" "dist/${name}/gm${exe}"
+cp "$binary" "dist/${name}/gm${exe}"
 cp LICENSE "dist/${name}/"
 cp share/man/man1/*.1 "dist/${name}/share/man/man1/"
-
+# Remove the old archive and checksum first: a rerun must replace them, not
+# append to a stale checksum that would then fail verification.
+rm -f "dist/${name}.tar.gz" "dist/${name}.tar.gz.sha256"
 tar -czf "dist/${name}.tar.gz" -C dist "$name"
 rm -rf "dist/${name}"
+checksum "${name}.tar.gz"
 
-# macOS has no sha256sum; shasum writes the same "<hash>  <file>" format.
-if command -v sha256sum >/dev/null 2>&1; then
-  (cd dist && sha256sum "${name}.tar.gz" > "${name}.tar.gz.sha256")
-else
-  (cd dist && shasum -a 256 "${name}.tar.gz" > "${name}.tar.gz.sha256")
+# ---------------------------------------------------------------- Arch package
+
+archpkg=""
+if [ "$goos" = linux ]; then
+  # Staged as the install layout, which is the layout the `make install` target
+  # writes, plus the completions that only matter once a shell loads them.
+  stage="${hostdir}/stage"
+  mkdir -p "$stage/usr/bin" \
+    "$stage/usr/share/man/man1" \
+    "$stage/usr/share/licenses/gm" \
+    "$stage/usr/share/bash-completion/completions" \
+    "$stage/usr/share/fish/vendor_completions.d" \
+    "$stage/usr/share/zsh/site-functions"
+  cp "$binary" "$stage/usr/bin/gm"
+  cp LICENSE "$stage/usr/share/licenses/gm/LICENSE"
+  cp share/man/man1/*.1 "$stage/usr/share/man/man1/"
+  cp share/bash-completion/completions/gm "$stage/usr/share/bash-completion/completions/gm"
+  cp share/fish/vendor_completions.d/gm.fish "$stage/usr/share/fish/vendor_completions.d/gm.fish"
+  # Arch's zsh has site-functions on its fpath, so the vendor-completions
+  # fallback that goreleaser adds for .deb is not needed here.
+  cp share/zsh/site-functions/_gm "$stage/usr/share/zsh/site-functions/_gm"
+
+  archpkg="$(./script/archpkg "$stage" "$version" "$goarch" dist)"
 fi
 
-ls -l "dist/${name}.tar.gz" "dist/${name}.tar.gz.sha256"
+# ---------------------------------------------------------------- verify
+
+check_checksum "${name}.tar.gz" || fail "checksum mismatch for ${name}.tar.gz"
+
+tar -tzf "dist/${name}.tar.gz" > "${hostdir}/contents"
+grep -q "/gm\(\.exe\)\?\$" "${hostdir}/contents" || fail "no gm binary in ${name}.tar.gz"
+grep -q "/LICENSE\$" "${hostdir}/contents" || fail "no LICENSE in ${name}.tar.gz"
+grep -q "/share/man/man1/gm.1\$" "${hostdir}/contents" || fail "no man pages in ${name}.tar.gz"
+
+echo "verified dist/${name}.tar.gz ($(wc -l < "${hostdir}/contents") entries)"
+
+if [ -n "$archpkg" ]; then
+  base="$(basename "$archpkg")"
+  check_checksum "$base" || fail "checksum mismatch for ${base}"
+
+  tar --zstd -tf "$archpkg" > "${hostdir}/pkg-contents" \
+    || fail "not a readable zstd tarball: ${base}"
+  grep -qx '\.PKGINFO' "${hostdir}/pkg-contents" || fail "no .PKGINFO in ${base}"
+  grep -qx 'usr/bin/gm' "${hostdir}/pkg-contents" || fail "no usr/bin/gm in ${base}"
+  grep -qx 'usr/share/man/man1/gm.1' "${hostdir}/pkg-contents" \
+    || fail "no man pages in ${base}"
+
+  tar --zstd -xOf "$archpkg" .PKGINFO > "${hostdir}/pkginfo"
+  grep -qx 'pkgname = gm' "${hostdir}/pkginfo" || fail "wrong pkgname in ${base}"
+  pkgarch="${base#*-1-}"
+  pkgarch="${pkgarch%.pkg.tar.zst}"
+  grep -qx "arch = ${pkgarch}" "${hostdir}/pkginfo" \
+    || fail "arch in .PKGINFO does not match the file name ${base}"
+
+  # pacman is the authority on whether this is a loadable package, which is what
+  # a plain tarball silently is not. Where it is not installed the structural
+  # checks above still apply; say so rather than implying pacman passed.
+  if command -v pacman >/dev/null 2>&1; then
+    pacman -Qp "$archpkg" >/dev/null || fail "pacman rejected ${base}"
+    pacman -Qip "$archpkg" | sed -n '1,5p' | sed 's/^/  pacman: /'
+  else
+    echo "  pacman not installed; skipped the load check for ${base}"
+  fi
+
+  echo "verified ${archpkg} ($(wc -l < "${hostdir}/pkg-contents") entries)"
+fi
+
+ls -l dist/
