@@ -322,7 +322,7 @@ Gitea 有而 `gh` 没有的能力，移植时顺手补上：
 
 按依赖关系排，每一步都能独立验证。第 1-7 步已落地（`issue`/`pr` 主线在第 5 步），第 8 步改为运行时拒绝、只剩 `repo autolink` 与 `repo credits` 未加守卫，第 9 步未开始。
 
-1. ✅ **传输与主机层**。新增 `internal/hosttype`，以 hosts.yml 里的 `host_type: gitea` 声明主机类别（默认按主机名形状推断，github.com/ghe.com 恒为 GitHub；无环境变量开关，与 `GH_HOST` 的既有约定一致——主机类别是配置的一部分，不是每次调用的临时状态）。`RESTPrefix` 返回 `/api/v1`，`GraphQLEndpoint` 对 Gitea 主机报错，`pkg/cmd/api/http.go` 不再拼 `/api/v3` 前缀。已实测 `gh api --hostname gitea.com version` 返回 `{"version":"29.0.0+dev-160-g55186ca39b"}`。
+1. ✅ **传输与主机层**。新增 `internal/hosttype`，以 hosts.yml 里的 `host_type: gitea` 声明主机类别（没有设置或值无法识别时一律按 GitHub 处理，也就是 github.com、ghe.com 与 GHES 共用的默认；不按主机名形状推断，也没有环境变量开关，主机类别是配置的一部分，不是每次调用的临时状态）。`RESTPrefix` 返回 `/api/v1`，`GraphQLEndpoint` 对 Gitea 主机报错，`pkg/cmd/api/http.go` 不再拼 `/api/v3` 前缀。已实测 `gh api --hostname gitea.com version` 返回 `{"version":"29.0.0+dev-160-g55186ca39b"}`。
 2. ✅ **分页与错误**。`pagination.go` 在 Gitea 主机上用 `limit`/`page`，上限取 50（实测 `limit=100` 只返回 50 条），错误体按 `{"message","url"}` 解析。已实测翻页。
 3. ✅ **认证**。三条路径都已走通：
    - 交互式 `gm auth login` 选 "Gitea or Forgejo server" 时，先把 `host_type: gitea` 写进 hosts.yml，再用用户名和密码调用 `POST /users/{username}/tokens` 创建 PAT（Basic 认证；有 2FA 的账号先不带码请求，被拒后再提示 `X-Gitea-OTP` 重试一次；空码不消耗尝试次数）。密码只发给这一个端点，不落盘。主机拒绝密码登录（401 `auth required`、WebAuthn 已注册、或 403 `doer should be the site admin or be same as the target user`，即 `ENABLE_BASIC_AUTHENTICATION=false`）时，提示去 `/user/settings/applications` 创建令牌并转入粘贴流程。
