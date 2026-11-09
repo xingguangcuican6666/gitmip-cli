@@ -16,6 +16,7 @@ import (
 	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	ghmock "github.com/cli/cli/v2/internal/gm/mock"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/internal/telemetry"
 	"github.com/cli/cli/v2/pkg/cmd/auth/shared/gitcredentials"
@@ -270,6 +271,7 @@ func Test_refreshRun(t *testing.T) {
 		wantStoredRefreshToken string
 		wantStderrContains     string
 		wantStderrOmits        string
+		giteaHost              bool
 	}{
 		{
 			name:    "no hosts configured",
@@ -702,9 +704,27 @@ func Test_refreshRun(t *testing.T) {
 			opts:    &RefreshOptions{},
 			wantErr: "error refreshing credentials for test-user, received credentials for not-test-user, did you use the correct account in the browser?",
 		},
+		{
+			name: "Gitea host is refused instead of reaching the browser flow",
+			cfgHosts: []string{
+				"git.example.com",
+			},
+			giteaHost: true,
+			opts: &RefreshOptions{
+				Hostname: "git.example.com",
+			},
+			wantErr: "host git.example.com is a Gitea host, whose tokens cannot be refreshed or re-scoped; run 'gm auth login -h git.example.com' to sign in again",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.giteaHost {
+				restore := hosttype.SetHostTypeOverride(map[string]hosttype.Type{
+					"git.example.com": hosttype.Gitea,
+				})
+				t.Cleanup(restore)
+			}
+
 			aa := authArgs{}
 			tt.opts.AuthFlow = func(_ *http.Client, _ *iostreams.IOStreams, hostname string, scopes []string, interactive, clipboard, requestRefreshToken bool) (*authflow.AuthResult, error) {
 				aa.hostname = hostname

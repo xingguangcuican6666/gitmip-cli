@@ -11,6 +11,7 @@ import (
 	"github.com/cli/cli/v2/internal/authflow"
 	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmd/auth/shared"
 	"github.com/cli/cli/v2/pkg/cmd/auth/shared/gitcredentials"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -175,6 +176,14 @@ func refreshRun(opts *RefreshOptions) error {
 		}
 	} else if !slices.Contains(candidates, hostname) {
 		return fmt.Errorf("not logged in to %s. use 'gm auth login' to authenticate with this host", hostname)
+	}
+
+	// A Gitea token carries the scopes it was created with, and there is no
+	// OAuth flow to re-issue it with different ones. Refreshing would only run
+	// GitHub's device flow against a server that has no such endpoint, so point
+	// at the command that can actually change the token instead.
+	if hosttype.IsGitea(hostname) {
+		return fmt.Errorf("host %s is a Gitea host, whose tokens cannot be refreshed or re-scoped; run 'gm auth login -h %s' to sign in again", hostname, hostname)
 	}
 
 	// Resolve whether to request an expiring token. An explicit --expiring or --expiring=false wins; otherwise refresh
