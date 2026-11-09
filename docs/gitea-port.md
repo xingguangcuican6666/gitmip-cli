@@ -327,7 +327,7 @@ Gitea 有而 `gh` 没有的能力，移植时顺手补上：
    - `gm auth login --with-token` 走通。
    - 非交互式（无 TTY 且未给 `--with-token`）与 `--web` 在 Gitea 主机上明确报错，不再落到会 404 的 device flow。
 
-   `HasMinimumScopes` 对 Gitea 主机改读 `GET /token` 的 `scopes` 数组，并按 `write:*` 蕴含 `read:*`、`all` 蕴含一切的规则校验；`gm auth status` 显示实际 scope 名。登录提示里的令牌页 URL 与最小 scope 列表也按主机类型切换（Gitea 是 `/user/settings/applications`，scope 名是 `write:repository` 等）。
+   `HasMinimumScopes` 对 Gitea 主机改读 `GET /token` 的 `scopes` 数组，并按 `write:*` 蕴含 `read:*`、`all` 蕴含一切的规则校验；`gm auth status` 对 Gitea 主机同样显示 scope 行（Gitea 令牌无 `ghp_`/`gho_` 前缀，改由主机类型决定是否显示），缺失 scope 时也按 Gitea 词表判断，并提示 `gm auth login` 而非 `gm auth refresh`（后者在 Gitea 上会直接报错）。登录提示里的令牌页 URL 与最小 scope 列表也按主机类型切换（Gitea 是 `/user/settings/applications`，scope 名是 `write:repository` 等）。
 4. ✅ **纯 REST 命令族**，均带单元测试并对 `gitea.com` 实测：
    - `repo view`：`GET /repos/{o}/{r}` 映射到 `api.Repository`；README 走 `GET /contents` 列目录再取文件（Gitea 无 `/readme` 端点）
    - `repo list`：`GET /users/{username}` 解析 owner 数字 id，再 `GET /repos/search?uid=&exclusive=true`；语言过滤在本地逐页做，主题过滤仅支持单个

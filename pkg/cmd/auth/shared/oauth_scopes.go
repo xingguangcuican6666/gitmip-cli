@@ -98,7 +98,7 @@ func giteaTokenScopes(httpClient *http.Client, hostname, authToken string) (stri
 	return strings.Join(token.Scopes, ","), nil
 }
 
-// HasMinimumScopes performs a GitHub API request and returns an error if the token used in the request
+// HasMinimumScopes performs an API request and returns an error if the token used in the request
 // lacks the minimum required scopes for performing API operations with gm.
 func HasMinimumScopes(httpClient *http.Client, hostname, authToken string) error {
 	scopesHeader, err := GetScopes(httpClient, hostname, authToken)
@@ -106,6 +106,16 @@ func HasMinimumScopes(httpClient *http.Client, hostname, authToken string) error
 		return err
 	}
 
+	return HeaderHasMinimumScopesForHost(hostname, scopesHeader)
+}
+
+// HeaderHasMinimumScopesForHost parses the comma separated scopesHeader string and returns an error
+// if it lacks the minimum required scopes for performing API operations with gm on hostname.
+//
+// The two host kinds name scopes differently, so the list must be read with the
+// vocabulary of the host that produced it: a Gitea list holds resource scopes
+// such as "write:repository", which say nothing in GitHub's terms.
+func HeaderHasMinimumScopesForHost(hostname, scopesHeader string) error {
 	if hosttype.IsGitea(hostname) {
 		return giteaHeaderHasMinimumScopes(scopesHeader)
 	}

@@ -14,6 +14,7 @@ import (
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/config"
 	"github.com/cli/cli/v2/internal/gm"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/text"
 	"github.com/cli/cli/v2/pkg/cmd/auth/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -104,16 +105,21 @@ func (e authEntry) String(cs *iostreams.ColorScheme) string {
 			}
 		}
 
-		if expectScopes(e.Token) {
+		if expectScopes(e.Host, e.Token) {
 			sb.WriteString(fmt.Sprintf("  - Token scopes: %s\n", cs.Bold(displayScopes(e.Scopes))))
-			if err := shared.HeaderHasMinimumScopes(e.Scopes); err != nil {
+			if err := shared.HeaderHasMinimumScopesForHost(e.Host, e.Scopes); err != nil {
 				if missingScopesError, ok := errors.AsType[*shared.MissingScopesError](err); ok {
 					missingScopes := strings.Join(missingScopesError.MissingScopes, ",")
 					sb.WriteString(fmt.Sprintf("  %s Missing required token scopes: %s\n",
 						cs.WarningIcon(),
 						cs.Bold(displayScopes(missingScopes))))
-					refreshInstructions := fmt.Sprintf("gm auth refresh -h %s", e.Host)
-					sb.WriteString(fmt.Sprintf("  - To request missing scopes, run: %s\n", cs.Bold(refreshInstructions)))
+					// A Gitea token keeps the scopes it was created with, and refresh refuses such a
+					// host, so signing in again is the way to obtain a token that carries more.
+					command := fmt.Sprintf("gm auth refresh -h %s", e.Host)
+					if hosttype.IsGitea(e.Host) {
+						command = fmt.Sprintf("gm auth login -h %s", e.Host)
+					}
+					sb.WriteString(fmt.Sprintf("  - To request missing scopes, run: %s\n", cs.Bold(command)))
 				}
 			}
 		}
@@ -436,9 +442,18 @@ func displayScopes(scopes string) string {
 	return strings.Join(list, ", ")
 }
 
+// expectScopes reports whether the token's scopes are reliable enough to
+// display. Gitea answers GET /token with the scopes of whatever token was
+// presented, so its tokens need no prefix heuristic; GitHub reports scopes
+// only for classic personal access and OAuth tokens, which are recognized by
+// their prefixes.
+//
 // TODO: this matches a token prefix itself. It could ask
 // gm.AuthConfig.ActiveTokenType instead.
-func expectScopes(token string) bool {
+func expectScopes(hostname, token string) bool {
+	if hosttype.IsGitea(hostname) {
+		return true
+	}
 	return strings.HasPrefix(token, "ghp_") || strings.HasPrefix(token, "gho_")
 }
 

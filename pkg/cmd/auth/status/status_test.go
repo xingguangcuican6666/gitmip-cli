@@ -15,6 +15,7 @@ import (
 	"github.com/cli/cli/v2/internal/config"
 	"github.com/cli/cli/v2/internal/gm"
 	ghmock "github.com/cli/cli/v2/internal/gm/mock"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/httpmock"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -276,6 +277,54 @@ func Test_statusRun(t *testing.T) {
 				  - Git operations protocol: ssh
 				  - Token: gho_******
 				  - Token scopes: none
+			`),
+		},
+		{
+			name: "Gitea host displays its own scopes",
+			opts: StatusOptions{},
+			cfgStubs: func(t *testing.T, c gm.Config) {
+				restore := hosttype.SetHostTypeOverride(map[string]hosttype.Type{
+					"gitea.example.com": hosttype.Gitea,
+				})
+				t.Cleanup(restore)
+				login(t, c, "gitea.example.com", "tea", "0123456789abcdef", "https")
+			},
+			httpStubs: func(reg *httpmock.Registry) {
+				reg.Register(httpmock.REST("GET", "api/v1/token"), httpmock.StringResponse(
+					`{"id":1,"name":"cli","scopes":["write:repository","write:issue","read:organization","write:user"]}`))
+			},
+			wantOut: heredoc.Doc(`
+				gitea.example.com
+				  ✓ Logged in to gitea.example.com account tea (GH_CONFIG_DIR/hosts.yml)
+				  - Active account: true
+				  - Git operations protocol: https
+				  - Token: ****************
+				  - Token scopes: 'write:repository', 'write:issue', 'read:organization', 'write:user'
+			`),
+		},
+		{
+			name: "Gitea host with insufficient scopes points at login, not refresh",
+			opts: StatusOptions{},
+			cfgStubs: func(t *testing.T, c gm.Config) {
+				restore := hosttype.SetHostTypeOverride(map[string]hosttype.Type{
+					"gitea.example.com": hosttype.Gitea,
+				})
+				t.Cleanup(restore)
+				login(t, c, "gitea.example.com", "tea", "0123456789abcdef", "https")
+			},
+			httpStubs: func(reg *httpmock.Registry) {
+				reg.Register(httpmock.REST("GET", "api/v1/token"), httpmock.StringResponse(
+					`{"id":1,"name":"cli","scopes":["read:repository"]}`))
+			},
+			wantOut: heredoc.Doc(`
+				gitea.example.com
+				  ✓ Logged in to gitea.example.com account tea (GH_CONFIG_DIR/hosts.yml)
+				  - Active account: true
+				  - Git operations protocol: https
+				  - Token: ****************
+				  - Token scopes: 'read:repository'
+				  ! Missing required token scopes: 'write:repository', 'read:organization', 'read:user'
+				  - To request missing scopes, run: gm auth login -h gitea.example.com
 			`),
 		},
 		{

@@ -108,6 +108,53 @@ func Test_HeaderHasMinimumScopes(t *testing.T) {
 	}
 }
 
+func Test_HeaderHasMinimumScopesForHost(t *testing.T) {
+	restore := hosttype.SetHostTypeOverride(map[string]hosttype.Type{
+		"git.example.com": hosttype.Gitea,
+	})
+	t.Cleanup(restore)
+
+	tests := []struct {
+		name     string
+		hostname string
+		scopes   string
+		wantErr  string
+	}{
+		{
+			name:     "GitHub host reads GitHub scope names",
+			hostname: "github.com",
+			scopes:   "repo, read:org",
+		},
+		{
+			name:     "GitHub host rejects a Gitea scope list",
+			hostname: "github.com",
+			scopes:   "write:repository, read:organization",
+			wantErr:  "missing required scopes 'repo', 'read:org'",
+		},
+		{
+			name:     "Gitea host reads Gitea scope names",
+			hostname: "git.example.com",
+			scopes:   "write:repository, read:organization, read:user",
+		},
+		{
+			name:     "Gitea host rejects a GitHub scope list",
+			hostname: "git.example.com",
+			scopes:   "repo, read:org",
+			wantErr:  "missing required scopes 'read:repository', 'write:repository', 'read:organization', 'read:user'",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := HeaderHasMinimumScopesForHost(tt.hostname, tt.scopes)
+			if tt.wantErr != "" {
+				assert.EqualError(t, err, tt.wantErr)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
 func Test_HasMinimumScopesGitea(t *testing.T) {
 	restore := hosttype.SetHostTypeOverride(map[string]hosttype.Type{
 		"git.example.com": hosttype.Gitea,
