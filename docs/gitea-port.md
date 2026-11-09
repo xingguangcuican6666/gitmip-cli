@@ -41,7 +41,7 @@
 
 ## 二、要丢掉的
 
-### 2.1 整族删除（Gitea 完全无对应 API）
+### 2.1 整族不可用（Gitea 完全无对应 API）
 
 | 命令 | 依据 |
 | --- | --- |
@@ -55,22 +55,24 @@
 | `gh copilot` | 无 copilot 相关端点；现有实现还依赖 `github.com/github/copilot-cli` 下载源 |
 | `gh skills` | 依赖 `/search/code` 与 GitHub 专有的 skills 分发 |
 
-以上 9 族建议直接从 `root.go` 摘除，同时移除对应 `pkg/cmd/<family>` 目录与 `pkg/cmd/factory` 中仅供其使用的装配。
+以上 9 族没有从 `root.go` 摘除。`gist`、`codespace`、`agent-task`、`discussion`、`ruleset`、`cache` 六族由 `cmdutil.RefuseFamilyOnGitea` 在 `root.go` 里包装每个叶子命令（`project` 虽不在上表，也按同样方式拒绝：Gitea 有看板，但"把 issue 移到列"与"item + 类型化字段"不是同一个模型）：主机解析为 Gitea 时报 `X is a GitHub feature and has no counterpart on Gitea, which <host> serves`，主机解析顺序与命令本身一致，`-R`/`GH_REPO` 优先于配置的默认主机。
 
-### 2.2 子命令删除（族保留，部分子命令无后端）
+`attestation` 与 `skills` 的联网子命令由各自的 `IsHostSupported`/`ValidateSupportedHost` 拒绝（`skills list` 只扫描本地，不校验主机），Gitea 主机同样命中，但文案是 GHES 措辞。`copilot`、`send-telemetry`、`accessibility` 没有主机守卫：它们请求的是写死的 GitHub 端点（copilot-cli 下载源、`cafe.github.com`、`accessibility.github.com`），不会把请求发往用户实例。
 
-| 子命令 | 原因 | 建议 |
+### 2.2 子命令不可用（族保留，部分子命令无后端）
+
+| 子命令 | 原因 | 现状 |
 | --- | --- | --- |
-| `gh search code` | 无全局 `/search`，亦无代码搜索端点 | 删除 |
-| `gh search commits` | 无提交搜索端点 | 删除 |
-| `gh repo autolink` | 无 `/autolinks` | 删除 |
-| `gh repo credits` | 依赖 `repos/{o}/{r}/contributors`，Gitea 规范中不存在（实测确认） | 删除，或改为基于 `/commits` 本地聚合（语义不等价，不建议） |
-| `gh issue transfer` | 无 issue 跨仓库转移端点 | 删除 |
-| `gh issue develop` | linked branch 是 GitHub 专有模型，Gitea 无对应端点 | 删除 |
-| `gh pr revert` | 依赖 GraphQL `revertPullRequest`，Gitea 无 revert API | 删除 |
-| `gh pr ready` | 需要把草稿转正式；`CreatePullRequestOption` 与 `EditPullRequestOption` 都没有 `draft` 字段 | 删除。Gitea 只能读 `PullRequest.draft`，无法通过 API 写入 |
-| `gh ssh-key` 的 signing key 路径 | 代码走 `user/ssh_signing_keys`（`pkg/cmd/ssh-key/shared/user_keys.go:51`），Gitea 无该端点 | 改用 `/user/keys`，删除签名密钥相关分支 |
-| `gh api graphql` | 无 GraphQL 端点 | 删除该子路径与 `pkg/cmd/api/http.go:17` 的特殊分支 |
+| `gh search code` | 无全局 `/search`，亦无代码搜索端点 | 已改为：Gitea 主机上报 `Gitea has no code search API` |
+| `gh search commits` | 无提交搜索端点 | 已改为：Gitea 主机上报 `Gitea has no commit search API` |
+| `gh repo autolink` | 无 `/autolinks` | 尚未处理：Gitea 上 404 后报 "Perhaps you are missing admin rights"，需加主机守卫 |
+| `gh repo credits` | 依赖 `repos/{o}/{r}/contributors`，Gitea 规范中不存在（实测确认） | 尚未处理：Gitea 上 404；不建议改为本地聚合（语义不等价） |
+| `gh issue transfer` | 无 issue 跨仓库转移端点 | 已改为：Gitea 主机上报 `Gitea has no endpoint for transferring an issue between repositories` |
+| `gh issue develop` | linked branch 是 GitHub 专有模型，Gitea 无对应端点 | 已改为：Gitea 主机上报 "the `gm issue develop` command is not available on Gitea, which has no linked branches" |
+| `gh pr revert` | 依赖 GraphQL `revertPullRequest`，Gitea 无 revert API | 已改为：Gitea 主机上报 `Gitea has no revert endpoint`，并提示用 git 手动回退后开 PR |
+| `gh pr ready` | 需要把草稿转正式；`CreatePullRequestOption` 与 `EditPullRequestOption` 都没有 `draft` 字段 | 已改为：Gitea 主机上报 `Gitea does not expose a draft toggle in its API`。Gitea 只能读 `PullRequest.draft`，无法通过 API 写入 |
+| `gh ssh-key` 的 signing key 路径 | 代码走 `user/ssh_signing_keys`（`pkg/cmd/ssh-key/shared/user_keys.go:51`），Gitea 无该端点 | 已改为：Gitea 主机上报 `Gitea keeps no separate signing-key collection`；普通 key 仍走 `/user/keys` |
+| `gh api graphql` | 无 GraphQL 端点 | 已改为：Gitea 主机上报 `the GraphQL API is not supported on Gitea host` |
 | `gh auth refresh` | 依赖 GitHub OAuth refresh token 轮换 | 已改为：Gitea 主机上直接报错并提示 `gm auth login -h <host>` 重新登录，不再进入 device flow |
 
 ### 2.3 机制性删除
@@ -274,14 +276,14 @@
 | Run 路径参数 | `{run_id}` | `{run}` |
 | Run 日志 | `GET .../runs/{run_id}/logs` | `GET .../runs/{run}/logs`（同名同义） |
 | 工件下载 | `GET .../artifacts/{id}/zip` | 同名 |
-| Workflow dispatch | body `{ref, inputs}`，另有 `return_run_details` | `CreateActionWorkflowDispatch{ref*, inputs}`，无 `return_run_details` |
+| Workflow dispatch | body `{ref, inputs}`，另有 `return_run_details` | body `CreateActionWorkflowDispatch{ref*, inputs}`；`ref` 必须是完整 ref（`refs/heads/<branch>`），Gitea 用 `git.RefName` 解析，裸分支名会被拒。`return_run_details` 是**查询参数**而非 body 字段，且 `refs/heads/` 前缀要由客户端补 |
 | Enable/Disable | `PUT .../workflows/{id}/enable` | 同名同义 |
 | Attempts 重跑 | `POST .../attempts/{n}/rerun` | 无该端点（Gitea 有 `.../attempts/{attempt}` 只读） |
 | 缓存 | `/actions/caches` 全套 | 无 |
 | Environment | `/environments` 12 个操作 | 无 |
 | Runner | repo/org/user/admin 四级 | 同名四级，另有 `actions/tasks` |
 
-`gh run watch` 需要日志流式读取，Gitea 返回的是整包 zip 或纯文本，轮询行为要重新设计。
+`gh run watch` 只轮询 `GetRun`/`GetJobs`/`GetAnnotations`，不读日志，因此在 Gitea 上无需重新设计：前两者走 Gitea 的 runs 与 jobs 端点，annotations 在 Gitea 上直接返回空集（没有 check-runs 端点）。`gh run view --log` 走 `runs/{run}/logs` 拿到整包 zip；Gitea 的 zip 条目名是 `<workflow-stem>_<job-name>_<task-id>.log`，不匹配 `pkg/cmd/run/view/logs.go` 里的三种 GitHub 命名正则，于是每个 job 都回落到 `actions/jobs/{job_id}/logs` 的纯文本响应，超过 25 个 job 时报 "too many API requests needed to fetch logs"，需用 `--job` 收窄。
 
 ---
 
@@ -318,7 +320,7 @@ Gitea 有而 `gh` 没有的能力，移植时顺手补上：
 
 ## 五、落地顺序
 
-按依赖关系排，每一步都能独立验证。第 1-7 步已落地（`issue`/`pr` 主线在第 5 步），第 8-9 步未开始。
+按依赖关系排，每一步都能独立验证。第 1-7 步已落地（`issue`/`pr` 主线在第 5 步），第 8 步改为运行时拒绝、只剩 `repo autolink` 与 `repo credits` 未加守卫，第 9 步未开始。
 
 1. ✅ **传输与主机层**。新增 `internal/hosttype`，以 hosts.yml 里的 `host_type: gitea` 声明主机类别（默认按主机名形状推断，github.com/ghe.com 恒为 GitHub；无环境变量开关，与 `GH_HOST` 的既有约定一致——主机类别是配置的一部分，不是每次调用的临时状态）。`RESTPrefix` 返回 `/api/v1`，`GraphQLEndpoint` 对 Gitea 主机报错，`pkg/cmd/api/http.go` 不再拼 `/api/v3` 前缀。已实测 `gh api --hostname gitea.com version` 返回 `{"version":"29.0.0+dev-160-g55186ca39b"}`。
 2. ✅ **分页与错误**。`pagination.go` 在 Gitea 主机上用 `limit`/`page`，上限取 50（实测 `limit=100` 只返回 50 条），错误体按 `{"message","url"}` 解析。已实测翻页。
@@ -355,8 +357,12 @@ Gitea 有而 `gh` 没有的能力，移植时顺手补上：
    - `search repos` / `search issues`：走 `/repos/search` 与 `/repos/issues/search`。Gitea 的搜索是"关键词 + 具名参数"而非查询串，所以只有关键词进 `q`，`label:`/`milestone:`/`state:`/`type:`/`assigned:`/`created:`/`mentioned:`/`review-requested:` 各自映射到独立参数。没有对应参数的限定符（日期范围、`comments:`、`reactions:`、`involves:`、`commenter:`、`review:`、`team:`、`project:`、`no` 取反、`language:` 等）直接报错，不静默丢弃。`author:`/`assignee:`/`mentions:`/`review-requested:` 只接受 `@me`（Gitea 只有 viewer 布尔）；`repo:` 与多个 `label:` 也拒绝。总数读 `X-Total-Count`，每页 50。
    - `search code` / `search commits`：拒绝，Gitea 没有代码索引与提交索引。
    - `status`：保留三个 goroutine，只换 loader。分配与待评审各发一次 issue search（Gitea 一次只接受一个 viewer 布尔），mentions 走 `/notifications`，活动走 activity feed（`op_type` 词表替换 GitHub 的事件类型）。`--org` 与 `--exclude` 在本地过滤，跨仓库搜索没有可用的 owner 过滤。所有内容都以登录用户为中心，未认证时在开头一次性报错。
-7. ✅ **`secret`、`actions` 族**的 secret 部分（见第 4 步）。`actions` 子命令族（run/job/workflow）未开始。
-8. ⬜ **删除清单**。最后统一摘除 2.1/2.2 的命令与 `root.go` 注册。
+7. ✅ **`secret` 与 `actions` 族**。secret 部分见第 4 步；`actions` 子命令族（run/job/workflow）已移植：
+   - `run list` 走 `actions/tasks`，Gitea 的 task 列表除分页外不接受过滤，branch/commit/event/status/workflow 都在本地逐页过滤，返回的总数是服务器的未过滤总数；`run view`/`run cancel`/`run delete`/`run download` 走 `actions/runs/{run}` 与同名子路径。
+   - `--attempt` 明确拒绝（`Gitea keeps no per-attempt run history`）；`run view --log` 与 `run watch` 的行为见 3.10。
+   - `run rerun` 在 Gitea 上不带 body；`--job` 改走 `runs/{runID}/jobs/{jobID}/rerun`，job 没有 run id 时报错。
+   - `workflow list`/`view`/`enable`/`disable` 走 `actions/workflows` 同名端点；`workflow run` 的 ref 补成 `refs/heads/` 全 ref，`return_run_details` 改放查询参数（见 3.10）。
+8. ⬜ **删除清单**。实际策略已改为运行时拒绝（见 2.1），2.2 里已改写的子命令（`auth refresh`、`ssh-key` signing 路径、`api graphql`、`pr ready`/`pr revert`、`issue develop`/`issue transfer`、`search code`/`search commits`）均在 Gitea 主机上直接报错，不再需要摘除。尚未加守卫的只有 `repo autolink` 与 `repo credits`：前者在 Gitea 上 404 后报 "Perhaps you are missing admin rights"，后者 404 `contributors`。`repo` 根命令没有 `EnableRepoOverride`，所以 `repo credits` 不接受 `-R`（`repo autolink` 自己注册了它）。
 9. ⬜ **新增清单**。按实际需求挑选，不影响主线。
 
 ### 实现约定
