@@ -3,6 +3,7 @@ package login
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 	"regexp"
 	"runtime"
@@ -704,7 +705,7 @@ func Test_loginRun_Survey(t *testing.T) {
 			prompterStubs: func(pm *prompter.PrompterMock) {
 				pm.SelectFunc = func(prompt, _ string, opts []string) (int, error) {
 					switch prompt {
-					case "Where do you use GitHub?":
+					case "Where do you use GitHub or Gitea?":
 						return prompter.IndexFor(opts, "Other")
 					case "What is your preferred protocol for Git operations on this host?":
 						return prompter.IndexFor(opts, "HTTPS")
@@ -726,6 +727,61 @@ func Test_loginRun_Survey(t *testing.T) {
 			wantErrOut: regexp.MustCompile("Tip: you can generate a Personal Access Token here https://brad.vickers/settings/tokens"),
 		},
 		{
+			name: "choose Gitea",
+			// Selecting a Gitea server has to record host_type in hosts.yml, and
+			// the login that follows has to use the Gitea API rather than
+			// GitHub's browser flow.
+			wantHosts: heredoc.Doc(`
+                gitea.example.com:
+                    host_type: gitea
+                    users:
+                        jillv:
+                            oauth_token: def456
+                    git_protocol: https
+                    oauth_token: def456
+                    user: jillv
+            `),
+			opts: &LoginOptions{
+				Interactive:     true,
+				InsecureStorage: true,
+			},
+			prompterStubs: func(pm *prompter.PrompterMock) {
+				pm.SelectFunc = func(prompt, _ string, opts []string) (int, error) {
+					switch prompt {
+					case "Where do you use GitHub or Gitea?":
+						return prompter.IndexFor(opts, "Gitea or Forgejo server")
+					case "What is your preferred protocol for Git operations on this host?":
+						return prompter.IndexFor(opts, "HTTPS")
+					case "How would you like to authenticate?":
+						return prompter.IndexFor(opts, "Login with your username and password")
+					}
+					return -1, prompter.NoSuchPromptErr(prompt)
+				}
+				pm.InputHostnameFunc = func() (string, error) {
+					// Mixed case checks that the host_type key is written in the
+					// same lowercase form the rest of login uses.
+					return "Gitea.Example.COM", nil
+				}
+				pm.InputFunc = func(prompt, _ string) (string, error) {
+					require.Equal(t, "Gitea username:", prompt)
+					return "jillv", nil
+				}
+				pm.PasswordFunc = func(prompt string) (string, error) {
+					require.Equal(t, "Gitea password:", prompt)
+					return "hunter2", nil
+				}
+			},
+			httpStubs: func(reg *httpmock.Registry) {
+				reg.Register(
+					httpmock.REST("POST", "api/v1/users/jillv/tokens"),
+					httpmock.StatusJSONResponse(http.StatusCreated, map[string]any{"sha1": "def456"}))
+				reg.Register(
+					httpmock.REST("GET", "api/v1/user"),
+					httpmock.StringResponse(`{"login":"jillv"}`))
+			},
+			wantErrOut: regexp.MustCompile("Logged in as jillv"),
+		},
+		{
 			name: "choose github.com",
 			wantHosts: heredoc.Doc(`
                 github.com:
@@ -743,7 +799,7 @@ func Test_loginRun_Survey(t *testing.T) {
 			prompterStubs: func(pm *prompter.PrompterMock) {
 				pm.SelectFunc = func(prompt, _ string, opts []string) (int, error) {
 					switch prompt {
-					case "Where do you use GitHub?":
+					case "Where do you use GitHub or Gitea?":
 						return prompter.IndexFor(opts, "GitHub.com")
 					case "What is your preferred protocol for Git operations on this host?":
 						return prompter.IndexFor(opts, "HTTPS")
@@ -773,7 +829,7 @@ func Test_loginRun_Survey(t *testing.T) {
 			prompterStubs: func(pm *prompter.PrompterMock) {
 				pm.SelectFunc = func(prompt, _ string, opts []string) (int, error) {
 					switch prompt {
-					case "Where do you use GitHub?":
+					case "Where do you use GitHub or Gitea?":
 						return prompter.IndexFor(opts, "GitHub.com")
 					case "What is your preferred protocol for Git operations on this host?":
 						return prompter.IndexFor(opts, "SSH")
@@ -1046,12 +1102,12 @@ func Test_loginRun_expiringHint(t *testing.T) {
 func Test_promptForHostname(t *testing.T) {
 	tests := []struct {
 		name          string
-		options       []string
 		selectedIndex int
 		// This is so we can test that the options in the function don't change
 		expectedSelection string
 		inputHostname     string
 		expect            string
+		wantHostType      string
 	}{
 		{
 			name:              "select 'GitHub.com'",
@@ -1060,8 +1116,16 @@ func Test_promptForHostname(t *testing.T) {
 			expect:            "github.com",
 		},
 		{
-			name:              "select 'Other'",
+			name:              "select 'Gitea or Forgejo server'",
 			selectedIndex:     1,
+			expectedSelection: "Gitea or Forgejo server",
+			inputHostname:     "Git.Example.COM",
+			expect:            "git.example.com",
+			wantHostType:      "gitea",
+		},
+		{
+			name:              "select 'Other'",
+			selectedIndex:     2,
 			expectedSelection: "Other",
 			inputHostname:     "github.enterprise.com",
 			expect:            "github.enterprise.com",
@@ -1069,6 +1133,8 @@ func Test_promptForHostname(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			cfg, readConfigs := config.NewIsolatedTestConfig(t, "")
+
 			promptMock := &prompter.PrompterMock{
 				SelectFunc: func(_ string, _ string, options []string) (int, error) {
 					if options[tt.selectedIndex] != tt.expectedSelection {
@@ -1083,9 +1149,21 @@ func Test_promptForHostname(t *testing.T) {
 			opts := &LoginOptions{
 				Prompter: promptMock,
 			}
-			hostname, err := promptForHostname(opts)
+			hostname, err := promptForHostname(cfg, opts)
 			require.NoError(t, err)
 			require.Equal(t, tt.expect, hostname)
+
+			// The host type is only written for a host the user declared to be
+			// Gitea; every other choice leaves the default in place. The
+			// default is also reported by GetOrDefault, so the assertion reads
+			// what was persisted rather than the resolved value.
+			var hosts bytes.Buffer
+			readConfigs(io.Discard, &hosts)
+			if tt.wantHostType == "" {
+				require.NotContains(t, hosts.String(), "host_type")
+			} else {
+				require.Contains(t, hosts.String(), "host_type: "+tt.wantHostType)
+			}
 		})
 	}
 }

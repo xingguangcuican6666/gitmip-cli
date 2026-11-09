@@ -14,6 +14,7 @@ import (
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/authflow"
 	"github.com/cli/cli/v2/internal/browser"
+	"github.com/cli/cli/v2/internal/gitea"
 	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
 	"github.com/cli/cli/v2/internal/hosttype"
@@ -86,6 +87,19 @@ func Login(opts *LoginOptions) error {
 	hostname := opts.Hostname
 	httpClient := opts.HTTPClient
 	cs := opts.IO.ColorScheme()
+	isGitea := hosttype.IsGitea(hostname)
+
+	// Gitea serves no OAuth device flow, so neither the browser login nor a
+	// non-interactive login that would fall back to it can work there. Saying
+	// so up front is clearer than letting the flow reach a 404.
+	if isGitea {
+		if opts.Web {
+			return fmt.Errorf("host %s is a Gitea host, which has no browser login flow; log in with your username and password instead", hostname)
+		}
+		if !opts.Interactive {
+			return fmt.Errorf("host %s is a Gitea host, which has no browser login flow; pass a token with --with-token", hostname)
+		}
+	}
 
 	// Choose how to authenticate before anything that depends on expiring intent. A pasted token can never be
 	// expiring, so the effective intent is only known once the method is chosen.
@@ -95,10 +109,18 @@ func Login(opts *LoginOptions) error {
 		// that request. A config-derived preference does not suppress paste: choosing it yields a non-expiring token.
 		authMode = 0
 	} else if opts.Interactive {
+		prompt := "How would you like to authenticate GitHub CLI?"
 		options := []string{"Login with a web browser", "Paste an authentication token"}
+		if isGitea {
+			// Gitea has no browser flow. Signing in with a username and password
+			// creates a token through the API instead, and there is no GitHub
+			// CLI to name in the prompt.
+			prompt = "How would you like to authenticate?"
+			options = []string{"Login with your username and password", "Paste an authentication token"}
+		}
 		var err error
 		authMode, err = opts.Prompter.Select(
-			"How would you like to authenticate GitHub CLI?",
+			prompt,
 			options[0],
 			options)
 		if err != nil {
@@ -157,6 +179,12 @@ func Login(opts *LoginOptions) error {
 
 	var keyToUpload string
 	keyTitle := defaultSSHKeyTitle
+	// The prompts below name the account the key is added to, which is not
+	// always a GitHub one.
+	accountName := "GitHub"
+	if isGitea {
+		accountName = "Gitea"
+	}
 	if opts.Interactive && !opts.SkipSSHKeyPrompt && gitProtocol == "ssh" {
 		pubKeys, err := opts.sshContext.LocalPublicKeys()
 		if err != nil {
@@ -166,7 +194,7 @@ func Login(opts *LoginOptions) error {
 		if len(pubKeys) > 0 {
 			options := append(pubKeys, "Skip")
 			keyChoice, err := opts.Prompter.Select(
-				"Upload your SSH public key to your GitHub account?",
+				fmt.Sprintf("Upload your SSH public key to your %s account?", accountName),
 				options[0],
 				options)
 			if err != nil {
@@ -176,7 +204,7 @@ func Login(opts *LoginOptions) error {
 				keyToUpload = pubKeys[keyChoice]
 			}
 		} else if opts.sshContext.HasKeygen() {
-			sshChoice, err := opts.Prompter.Confirm("Generate a new SSH key to add to your GitHub account?", true)
+			sshChoice, err := opts.Prompter.Confirm(fmt.Sprintf("Generate a new SSH key to add to your %s account?", accountName), true)
 			if err != nil {
 				return err
 			}
@@ -203,7 +231,11 @@ func Login(opts *LoginOptions) error {
 				return err
 			}
 
-			additionalScopes = append(additionalScopes, "admin:public_key")
+			// admin:public_key is a GitHub scope. Gitea grants key upload
+			// through the write:user scope the created token already carries.
+			if !isGitea {
+				additionalScopes = append(additionalScopes, "admin:public_key")
+			}
 		}
 	}
 
@@ -211,7 +243,27 @@ func Login(opts *LoginOptions) error {
 	var username string
 	var refreshableCredential *gm.Credential
 
-	if authMode == 0 {
+	switch {
+	case authMode == 0 && isGitea:
+		token, err := giteaPasswordLogin(opts, hostname, httpClient)
+		if err != nil {
+			if _, ok := errors.AsType[gitea.PasswordLoginUnavailableError](err); !ok {
+				return err
+			}
+			// The host does not sign anyone in with a password, so the same
+			// credentials will never work. Point at the token page and continue
+			// with the paste flow, which is the only way in.
+			fmt.Fprintf(opts.IO.ErrOut, "%s %s does not accept password login. Create a personal access token instead: %s\n",
+				cs.WarningIcon(), hostname, gitea.PersonalAccessTokenURL(hostname))
+			authToken, err = pasteToken(opts, hostname, httpClient, true, additionalScopes)
+			if err != nil {
+				return err
+			}
+		} else {
+			authToken = token
+			fmt.Fprintf(opts.IO.ErrOut, "%s Authentication complete.\n", cs.SuccessIcon())
+		}
+	case authMode == 0:
 		authFlow := opts.AuthFlow
 		if authFlow == nil {
 			authFlow = authflow.AuthFlow
@@ -224,21 +276,11 @@ func Login(opts *LoginOptions) error {
 		username = result.Username
 		refreshableCredential = result.Refreshable
 		fmt.Fprintf(opts.IO.ErrOut, "%s Authentication complete.\n", cs.SuccessIcon())
-	} else {
-		minimumScopes := append([]string{"repo", "read:org"}, additionalScopes...)
-		fmt.Fprint(opts.IO.ErrOut, heredoc.Docf(`
-			Tip: you can generate a Personal Access Token here https://%s/settings/tokens
-			The minimum required scopes are %s.
-		`, hostname, scopesSentence(minimumScopes)))
-
+	default:
 		var err error
-		authToken, err = opts.Prompter.AuthToken()
+		authToken, err = pasteToken(opts, hostname, httpClient, isGitea, additionalScopes)
 		if err != nil {
 			return err
-		}
-
-		if err := HasMinimumScopes(httpClient, hostname, authToken); err != nil {
-			return fmt.Errorf("error validating token: %w", err)
 		}
 	}
 
@@ -321,9 +363,9 @@ func Login(opts *LoginOptions) error {
 		}
 
 		if uploaded {
-			fmt.Fprintf(opts.IO.ErrOut, "%s Uploaded the SSH key to your GitHub account: %s\n", cs.SuccessIcon(), cs.Bold(keyToUpload))
+			fmt.Fprintf(opts.IO.ErrOut, "%s Uploaded the SSH key to your %s account: %s\n", cs.SuccessIcon(), accountName, cs.Bold(keyToUpload))
 		} else {
-			fmt.Fprintf(opts.IO.ErrOut, "%s SSH key already existed on your GitHub account: %s\n", cs.SuccessIcon(), cs.Bold(keyToUpload))
+			fmt.Fprintf(opts.IO.ErrOut, "%s SSH key already existed on your %s account: %s\n", cs.SuccessIcon(), accountName, cs.Bold(keyToUpload))
 		}
 	}
 
@@ -341,6 +383,81 @@ func scopesSentence(scopes []string) string {
 		quoted[i] = fmt.Sprintf("'%s'", s)
 	}
 	return strings.Join(quoted, ", ")
+}
+
+// pasteToken asks for an existing token and checks that it carries the scopes
+// gm needs.
+//
+// The tip differs per host because the two issue scopes differently: GitHub
+// grants coarse categories from the tokens page, while Gitea grants
+// resource scopes from its applications page. The additional scopes only exist
+// in GitHub's vocabulary (they come from the credential-helper and SSH key
+// prompts), so a Gitea tip lists the scopes gm asks for when it creates a
+// token itself.
+func pasteToken(opts *LoginOptions, hostname string, httpClient *http.Client, isGitea bool, additionalScopes []string) (string, error) {
+	tokenURL := fmt.Sprintf("https://%s/settings/tokens", hostname)
+	minimumScopes := append([]string{"repo", "read:org"}, additionalScopes...)
+	if isGitea {
+		tokenURL = gitea.PersonalAccessTokenURL(hostname)
+		minimumScopes = gitea.TokenScopes
+	}
+	fmt.Fprint(opts.IO.ErrOut, heredoc.Docf(`
+		Tip: you can generate a Personal Access Token here %s
+		The minimum required scopes are %s.
+	`, tokenURL, scopesSentence(minimumScopes)))
+
+	authToken, err := opts.Prompter.AuthToken()
+	if err != nil {
+		return "", err
+	}
+
+	if err := HasMinimumScopes(httpClient, hostname, authToken); err != nil {
+		return "", fmt.Errorf("error validating token: %w", err)
+	}
+	return authToken, nil
+}
+
+// giteaPasswordLogin signs in with a username and password and creates a token
+// for gm to store in their place.
+//
+// Gitea has no OAuth device flow, so exchanging the password for a token once is
+// the only way to sign in without the user creating a token by hand. The
+// password is sent to the token endpoint and nowhere else, and is never stored.
+//
+// Gitea answers a wrong password and a missing two-factor code with the same
+// message. Asking for a code and retrying is the only way to tell them apart.
+// An empty code does not consume an attempt, so the prompt costs nothing when
+// the password itself was wrong; an empty answer means "no code", and the
+// original rejection is returned rather than a second identical request.
+func giteaPasswordLogin(opts *LoginOptions, hostname string, httpClient *http.Client) (string, error) {
+	username, err := opts.Prompter.Input("Gitea username:", "")
+	if err != nil {
+		return "", err
+	}
+	password, err := opts.Prompter.Password("Gitea password:")
+	if err != nil {
+		return "", err
+	}
+
+	token, err := gitea.CreateToken(httpClient, hostname, username, password, gitea.TokenName(), "")
+	if err == nil {
+		return token, nil
+	}
+
+	rejected, ok := errors.AsType[gitea.PasswordRejectedError](err)
+	if !ok || !rejected.CanRetryWithOTP() {
+		return "", err
+	}
+
+	otp, err := opts.Prompter.Password("Two-factor authentication code (leave empty if not enabled):")
+	if err != nil {
+		return "", err
+	}
+	if otp == "" {
+		return "", rejected
+	}
+
+	return gitea.CreateToken(httpClient, hostname, username, password, gitea.TokenName(), otp)
 }
 
 func sshKeyUpload(httpClient *http.Client, hostname, keyFile string, title string) (bool, error) {

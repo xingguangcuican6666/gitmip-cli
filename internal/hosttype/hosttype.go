@@ -35,10 +35,10 @@ const (
 	Gitea Type = "gitea"
 )
 
-const (
-	hostsKey    = "hosts"
-	hostTypeKey = "host_type"
-)
+// ConfigKey is the hosts.yml key under a host that records its type.
+const ConfigKey = "host_type"
+
+const hostsKey = "hosts"
 
 // resolved caches the host type per normalized hostname. go-gh already caches
 // the parsed config files for the life of the process, so this only avoids
@@ -117,7 +117,7 @@ func lookup(normalized string) Type {
 		return GitHub
 	}
 
-	configured, err := cfg.Get([]string{hostsKey, normalized, hostTypeKey})
+	configured, err := cfg.Get([]string{hostsKey, normalized, ConfigKey})
 	if err != nil {
 		return GitHub
 	}

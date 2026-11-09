@@ -182,3 +182,39 @@ func TestForCachesResolution(t *testing.T) {
 	require.Equal(t, GitHub, For("github.com"))
 	assert.Equal(t, 2, readCount)
 }
+
+func TestForget(t *testing.T) {
+	// Forget exists for the login command, which writes host_type and then
+	// needs the new value in the same process. Without it the cached
+	// resolution from before the write would keep answering.
+	configured := "hosts:\n    git.example.com:\n        user: octocat\n"
+	originalRead := readConfig
+	readConfig = func() *ghConfig.Config {
+		return ghConfig.ReadFromString(configured)
+	}
+	resolved.Range(func(key, _ any) bool {
+		resolved.Delete(key)
+		return true
+	})
+	t.Cleanup(func() {
+		readConfig = originalRead
+		resolved.Range(func(key, _ any) bool {
+			resolved.Delete(key)
+			return true
+		})
+	})
+
+	require.Equal(t, GitHub, For("git.example.com"))
+
+	// Simulate the login command writing host_type to configuration.
+	configured = "hosts:\n    git.example.com:\n        host_type: gitea\n"
+
+	Forget("git.example.com")
+	assert.Equal(t, Gitea, For("git.example.com"))
+
+	// The hostname is normalized before it reaches the cache, so a
+	// differently cased spelling of the same host drops the same entry.
+	configured = "hosts:\n    git.example.com:\n        user: octocat\n"
+	Forget("Git.Example.COM")
+	assert.Equal(t, GitHub, For("git.example.com"))
+}

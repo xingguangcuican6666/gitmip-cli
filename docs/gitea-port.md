@@ -84,7 +84,7 @@
 | 遥测上报 | `pkg/cmd/send-telemetry/send_telemetry.go:21` | 硬编码 `cafe.github.com`。私有部署应删除该命令 |
 | 自动更新 | `internal/update/update.go:121` | 硬编码 `api.github.com/repos/.../releases/latest`。改为自有发布源或删除 |
 | 无障碍合规上报 | `pkg/cmd/accessibility/accessibility.go:15` | 硬编码 `accessibility.github.com`。删除 |
-| OAuth device flow | `internal/authflow/flow.go:23` | 硬编码 GitHub 的 client ID `178c6fc778ccc68e1d6a`。Gitea 的 OAuth2 应用模型不同（`/user/applications/oauth2`），要么自建 OAuth2 应用，要么退化为 PAT-only |
+| OAuth device flow | `internal/authflow/flow.go:23` | 硬编码 GitHub 的 client ID `178c6fc778ccc68e1d6a`。Gitea 的 OAuth2 应用模型不同（`/user/applications/oauth2`）。已改为：Gitea 主机走原生密码登录，用 Basic 认证调用 `POST /users/{username}/tokens` 换一个 PAT；密码登录被禁用的实例回退到粘贴 PAT |
 
 ---
 
@@ -322,7 +322,12 @@ Gitea 有而 `gh` 没有的能力，移植时顺手补上：
 
 1. ✅ **传输与主机层**。新增 `internal/hosttype`，以 hosts.yml 里的 `host_type: gitea` 声明主机类别（默认按主机名形状推断，github.com/ghe.com 恒为 GitHub；无环境变量开关，与 `GH_HOST` 的既有约定一致——主机类别是配置的一部分，不是每次调用的临时状态）。`RESTPrefix` 返回 `/api/v1`，`GraphQLEndpoint` 对 Gitea 主机报错，`pkg/cmd/api/http.go` 不再拼 `/api/v3` 前缀。已实测 `gh api --hostname gitea.com version` 返回 `{"version":"29.0.0+dev-160-g55186ca39b"}`。
 2. ✅ **分页与错误**。`pagination.go` 在 Gitea 主机上用 `limit`/`page`，上限取 50（实测 `limit=100` 只返回 50 条），错误体按 `{"message","url"}` 解析。已实测翻页。
-3. ✅ **认证**。`gh auth login --with-token` 走通；`HasMinimumScopes` 对 Gitea 主机改读 `GET /token` 的 `scopes` 数组，并按 `write:*` 蕴含 `read:*`、`all` 蕴含一切的规则校验；`gh auth status` 显示实际 scope 名。device flow 未接（需自建 OAuth2 应用）。
+3. ✅ **认证**。三条路径都已走通：
+   - 交互式 `gm auth login` 选 "Gitea or Forgejo server" 时，先把 `host_type: gitea` 写进 hosts.yml，再用用户名和密码调用 `POST /users/{username}/tokens` 创建 PAT（Basic 认证；有 2FA 的账号先不带码请求，被拒后再提示 `X-Gitea-OTP` 重试一次；空码不消耗尝试次数）。密码只发给这一个端点，不落盘。主机拒绝密码登录（401 `auth required`、WebAuthn 已注册、或 403 `doer should be the site admin or be same as the target user`，即 `ENABLE_BASIC_AUTHENTICATION=false`）时，提示去 `/user/settings/applications` 创建令牌并转入粘贴流程。
+   - `gm auth login --with-token` 走通。
+   - 非交互式（无 TTY 且未给 `--with-token`）与 `--web` 在 Gitea 主机上明确报错，不再落到会 404 的 device flow。
+
+   `HasMinimumScopes` 对 Gitea 主机改读 `GET /token` 的 `scopes` 数组，并按 `write:*` 蕴含 `read:*`、`all` 蕴含一切的规则校验；`gm auth status` 显示实际 scope 名。登录提示里的令牌页 URL 与最小 scope 列表也按主机类型切换（Gitea 是 `/user/settings/applications`，scope 名是 `write:repository` 等）。
 4. ✅ **纯 REST 命令族**，均带单元测试并对 `gitea.com` 实测：
    - `repo view`：`GET /repos/{o}/{r}` 映射到 `api.Repository`；README 走 `GET /contents` 列目录再取文件（Gitea 无 `/readme` 端点）
    - `repo list`：`GET /users/{username}` 解析 owner 数字 id，再 `GET /repos/search?uid=&exclusive=true`；语言过滤在本地逐页做，主题过滤仅支持单个

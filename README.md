@@ -13,11 +13,16 @@ go run script/build.go   # Windows: bin/gm.exe
 To point `gm` at a Gitea instance, declare the host type in `hosts.yml`:
 
 ```yaml
-hosts:
-    gitea.example.com:
-        host_type: gitea
-        git_protocol: https
+gitea.example.com:
+    host_type: gitea
+    git_protocol: https
 ```
+
+`gm auth login` also offers "Gitea or Forgejo server" when it asks where you
+use GitHub or Gitea, and writes this entry for you. On a host declared this
+way, `gm auth login` signs in with your username and password and creates a
+personal access token through the API, so no OAuth2 application is needed. A
+host that does not accept password login falls back to asking for a token.
 
 Everything else works as it does upstream. See `docs/gitea-port.md` for what
 Gitea can and cannot serve.

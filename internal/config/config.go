@@ -32,8 +32,8 @@ const (
 	gitProtocolKey         = "git_protocol"
 	hostsKey               = "hosts" // used by cli/go-gh to locate authenticated host tokens
 	httpUnixSocketKey      = "http_unix_socket"
-	oauthTokenKey          = "oauth_token" // used by cli/go-gh to locate authenticated host tokens
-	hostTypeKey            = "host_type"   // used by internal/hosttype to pick the API shape for a host
+	oauthTokenKey          = "oauth_token"      // used by cli/go-gh to locate authenticated host tokens
+	hostTypeKey            = hosttype.ConfigKey // the key internal/hosttype reads to pick the API shape for a host
 	pagerKey               = "pager"
 	promptKey              = "prompt"
 	preferEditorPromptKey  = "prefer_editor_prompt"

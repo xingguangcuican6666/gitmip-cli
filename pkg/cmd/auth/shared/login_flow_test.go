@@ -12,8 +12,10 @@ import (
 	"github.com/cli/cli/v2/internal/authflow"
 	"github.com/cli/cli/v2/internal/browser"
 	"github.com/cli/cli/v2/internal/config"
+	"github.com/cli/cli/v2/internal/gitea"
 	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/prompter"
 	"github.com/cli/cli/v2/internal/run"
 	"github.com/cli/cli/v2/internal/telemetry"
@@ -157,6 +159,7 @@ func TestLogin(t *testing.T) {
 	tests := []struct {
 		name         string
 		opts         LoginOptions
+		giteaHost    bool
 		httpStubs    func(*testing.T, *httpmock.Registry)
 		runStubs     func(*testing.T, *run.CommandStubber, *LoginOptions)
 		wantsConfig  map[string]string
@@ -538,10 +541,247 @@ func TestLogin(t *testing.T) {
 				assert.Contains(t, stderr, "Received expiring refreshable token\n")
 			},
 		},
+		{
+			name:      "Gitea: username and password create a token",
+			giteaHost: true,
+			opts: LoginOptions{
+				Hostname:         "git.example.com",
+				Interactive:      true,
+				GitProtocol:      "ssh",
+				SkipSSHKeyPrompt: true,
+				Prompter: &prompter.PrompterMock{
+					SelectFunc: func(prompt, _ string, options []string) (int, error) {
+						if prompt != "How would you like to authenticate?" {
+							return -1, prompter.NoSuchPromptErr(prompt)
+						}
+						return prompter.IndexFor(options, "Login with your username and password")
+					},
+					InputFunc: func(prompt, _ string) (string, error) {
+						require.Equal(t, "Gitea username:", prompt)
+						return "monalisa", nil
+					},
+					PasswordFunc: func(prompt string) (string, error) {
+						require.Equal(t, "Gitea password:", prompt)
+						return "hunter2", nil
+					},
+				},
+			},
+			httpStubs: func(t *testing.T, reg *httpmock.Registry) {
+				reg.Register(
+					httpmock.REST("POST", "api/v1/users/monalisa/tokens"),
+					httpmock.StatusJSONResponse(http.StatusCreated, map[string]any{"sha1": "GITEA_TOKEN"}))
+				reg.Register(
+					httpmock.REST("GET", "api/v1/user"),
+					httpmock.StringResponse(`{"login":"monalisa"}`))
+			},
+			wantsConfig: map[string]string{
+				"git.example.com:user":         "monalisa",
+				"git.example.com:oauth_token":  "GITEA_TOKEN",
+				"git.example.com:git_protocol": "ssh",
+			},
+			stderr: heredoc.Doc(`
+				✓ Authentication complete.
+				- gm config set -h git.example.com git_protocol ssh
+				✓ Configured git protocol
+				✓ Logged in as monalisa
+			`),
+		},
+		{
+			name:      "Gitea: a rejected password is retried with a two-factor code",
+			giteaHost: true,
+			opts: LoginOptions{
+				Hostname:         "git.example.com",
+				Interactive:      true,
+				GitProtocol:      "ssh",
+				SkipSSHKeyPrompt: true,
+				Prompter: &prompter.PrompterMock{
+					SelectFunc: func(prompt, _ string, options []string) (int, error) {
+						return prompter.IndexFor(options, "Login with your username and password")
+					},
+					InputFunc: func(_, _ string) (string, error) {
+						return "monalisa", nil
+					},
+					PasswordFunc: func(prompt string) (string, error) {
+						if prompt == "Two-factor authentication code (leave empty if not enabled):" {
+							return "123456", nil
+						}
+						return "hunter2", nil
+					},
+				},
+			},
+			httpStubs: func(t *testing.T, reg *httpmock.Registry) {
+				reg.Register(
+					httpmock.REST("POST", "api/v1/users/monalisa/tokens"),
+					httpmock.StatusJSONResponse(http.StatusUnauthorized, map[string]string{
+						"message": "invalid username, password or token",
+					}))
+				reg.Register(
+					httpmock.REST("POST", "api/v1/users/monalisa/tokens"),
+					func(req *http.Request) (*http.Response, error) {
+						// The retry has to carry the code, or the server would answer
+						// the same rejection again.
+						require.Equal(t, "123456", req.Header.Get("X-Gitea-OTP"))
+						return httpmock.StatusJSONResponse(http.StatusCreated, map[string]any{"sha1": "GITEA_TOKEN"})(req)
+					})
+				reg.Register(
+					httpmock.REST("GET", "api/v1/user"),
+					httpmock.StringResponse(`{"login":"monalisa"}`))
+			},
+			wantsConfig: map[string]string{
+				"git.example.com:user":         "monalisa",
+				"git.example.com:oauth_token":  "GITEA_TOKEN",
+				"git.example.com:git_protocol": "ssh",
+			},
+			stderr: heredoc.Doc(`
+				✓ Authentication complete.
+				- gm config set -h git.example.com git_protocol ssh
+				✓ Configured git protocol
+				✓ Logged in as monalisa
+			`),
+		},
+		{
+			name:      "Gitea: an empty two-factor code ends the login with the rejection",
+			giteaHost: true,
+			opts: LoginOptions{
+				Hostname:         "git.example.com",
+				Interactive:      true,
+				GitProtocol:      "ssh",
+				SkipSSHKeyPrompt: true,
+				Prompter: &prompter.PrompterMock{
+					SelectFunc: func(prompt, _ string, options []string) (int, error) {
+						return prompter.IndexFor(options, "Login with your username and password")
+					},
+					InputFunc: func(_, _ string) (string, error) {
+						return "monalisa", nil
+					},
+					PasswordFunc: func(prompt string) (string, error) {
+						if prompt == "Two-factor authentication code (leave empty if not enabled):" {
+							return "", nil
+						}
+						return "hunter2", nil
+					},
+				},
+			},
+			httpStubs: func(t *testing.T, reg *httpmock.Registry) {
+				reg.Register(
+					httpmock.REST("POST", "api/v1/users/monalisa/tokens"),
+					httpmock.StatusJSONResponse(http.StatusUnauthorized, map[string]string{
+						"message": "invalid username, password or token",
+					}))
+			},
+			wantsErr: "git.example.com rejected the username or password",
+		},
+		{
+			name:      "Gitea: a host without password login falls back to pasting a token",
+			giteaHost: true,
+			opts: LoginOptions{
+				Hostname:         "git.example.com",
+				Interactive:      true,
+				GitProtocol:      "ssh",
+				SkipSSHKeyPrompt: true,
+				Prompter: &prompter.PrompterMock{
+					SelectFunc: func(prompt, _ string, options []string) (int, error) {
+						return prompter.IndexFor(options, "Login with your username and password")
+					},
+					InputFunc: func(_, _ string) (string, error) {
+						return "monalisa", nil
+					},
+					PasswordFunc: func(_ string) (string, error) {
+						return "hunter2", nil
+					},
+					AuthTokenFunc: func() (string, error) {
+						return "ATOKEN", nil
+					},
+				},
+			},
+			httpStubs: func(t *testing.T, reg *httpmock.Registry) {
+				reg.Register(
+					httpmock.REST("POST", "api/v1/users/monalisa/tokens"),
+					httpmock.StatusJSONResponse(http.StatusUnauthorized, map[string]string{"message": "auth required"}))
+				reg.Register(
+					httpmock.REST("GET", "api/v1/token"),
+					httpmock.StatusJSONResponse(http.StatusOK, map[string]any{"scopes": gitea.TokenScopes}))
+				reg.Register(
+					httpmock.REST("GET", "api/v1/user"),
+					httpmock.StringResponse(`{"login":"monalisa"}`))
+			},
+			wantsConfig: map[string]string{
+				"git.example.com:user":         "monalisa",
+				"git.example.com:oauth_token":  "ATOKEN",
+				"git.example.com:git_protocol": "ssh",
+			},
+			stderrAssert: func(t *testing.T, opts *LoginOptions, stderr string) {
+				assert.Contains(t, stderr, "! git.example.com does not accept password login. Create a personal access token instead: https://git.example.com/user/settings/applications\n")
+				// The tip has to name Gitea's own token page and scope vocabulary,
+				// not GitHub's.
+				assert.Contains(t, stderr, "Tip: you can generate a Personal Access Token here https://git.example.com/user/settings/applications\n")
+				assert.Contains(t, stderr, "The minimum required scopes are 'write:repository', 'write:issue', 'read:organization', 'write:user'.\n")
+			},
+		},
+		{
+			name:      "Gitea: pasting a token names Gitea's token page",
+			giteaHost: true,
+			opts: LoginOptions{
+				Hostname:         "git.example.com",
+				Interactive:      true,
+				GitProtocol:      "ssh",
+				SkipSSHKeyPrompt: true,
+				Prompter: &prompter.PrompterMock{
+					SelectFunc: func(prompt, _ string, options []string) (int, error) {
+						return prompter.IndexFor(options, "Paste an authentication token")
+					},
+					AuthTokenFunc: func() (string, error) {
+						return "ATOKEN", nil
+					},
+				},
+			},
+			httpStubs: func(t *testing.T, reg *httpmock.Registry) {
+				reg.Register(
+					httpmock.REST("GET", "api/v1/token"),
+					httpmock.StatusJSONResponse(http.StatusOK, map[string]any{"scopes": []string{"all"}}))
+				reg.Register(
+					httpmock.REST("GET", "api/v1/user"),
+					httpmock.StringResponse(`{"login":"monalisa"}`))
+			},
+			wantsConfig: map[string]string{
+				"git.example.com:user":         "monalisa",
+				"git.example.com:oauth_token":  "ATOKEN",
+				"git.example.com:git_protocol": "ssh",
+			},
+			stderr: heredoc.Doc(`
+				Tip: you can generate a Personal Access Token here https://git.example.com/user/settings/applications
+				The minimum required scopes are 'write:repository', 'write:issue', 'read:organization', 'write:user'.
+				- gm config set -h git.example.com git_protocol ssh
+				✓ Configured git protocol
+				✓ Logged in as monalisa
+			`),
+		},
+		{
+			name:      "Gitea: --web is refused",
+			giteaHost: true,
+			opts: LoginOptions{
+				Hostname: "git.example.com",
+				Web:      true,
+			},
+			wantsErr: "host git.example.com is a Gitea host, which has no browser login flow; log in with your username and password instead",
+		},
+		{
+			name:      "Gitea: a non-interactive login without a token is refused",
+			giteaHost: true,
+			opts: LoginOptions{
+				Hostname: "git.example.com",
+			},
+			wantsErr: "host git.example.com is a Gitea host, which has no browser login flow; pass a token with --with-token",
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.giteaHost {
+				restore := hosttype.SetHostTypeOverride(map[string]hosttype.Type{tt.opts.Hostname: hosttype.Gitea})
+				t.Cleanup(restore)
+			}
+
 			reg := &httpmock.Registry{}
 			defer reg.Verify(t)
 			if tt.httpStubs != nil {

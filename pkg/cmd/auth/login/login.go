@@ -13,6 +13,7 @@ import (
 	"github.com/cli/cli/v2/internal/ghinstance"
 	"github.com/cli/cli/v2/internal/gm"
 	"github.com/cli/cli/v2/internal/gm/ghtelemetry"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmd/auth/shared"
 	"github.com/cli/cli/v2/pkg/cmd/auth/shared/gitcredentials"
 	"github.com/cli/cli/v2/pkg/cmdutil"
@@ -71,18 +72,25 @@ func NewCmdLogin(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder, r
 	cmd := &cobra.Command{
 		Use:   "login",
 		Args:  cobra.ExactArgs(0),
-		Short: "Log in to a GitHub account",
+		Short: "Log in to a GitHub or Gitea account",
 		Long: heredoc.Docf(`
-			Authenticate with a GitHub host.
+			Authenticate with a GitHub or Gitea host.
 
 			The default hostname is %[1]sgithub.com%[1]s. This can be overridden using the %[1]s--hostname%[1]s
 			flag.
 
-			The default authentication mode is a web-based browser flow. After completion, an
+			For a GitHub host, the default authentication mode is a web-based browser flow. After completion, an
 			authentication token will be stored securely in the system credential store.
 			If a credential store is not found or there is an issue using it gm will fallback
 			to writing the token to a plain text file. See %[1]sgm auth status%[1]s for its
 			stored location.
+
+			Gitea serves no browser login flow. On a host declared with %[1]shost_type: gitea%[1]s in
+			%[1]shosts.yml%[1]s, which the interactive prompt records when you choose
+			%[1]sGitea or Forgejo server%[1]s, the interactive login asks for a username and password and
+			creates a personal access token through the API instead. The password is sent only to that
+			endpoint and is never stored. A host that does not accept password login falls back to asking
+			for a token. %[1]s--web%[1]s is refused for such a host.
 
 			Alternatively, use %[1]s--with-token%[1]s to pass in a personal access token (classic) on standard input.
 			The minimum required scopes for the token are: %[1]srepo%[1]s, %[1]sread:org%[1]s, and %[1]sgist%[1]s.
@@ -178,7 +186,7 @@ func NewCmdLogin(f *cmdutil.Factory, telemetry ghtelemetry.InvocationRecorder, r
 		},
 	}
 
-	cmd.Flags().StringVarP(&opts.Hostname, "hostname", "h", "", "The hostname of the GitHub instance to authenticate with")
+	cmd.Flags().StringVarP(&opts.Hostname, "hostname", "h", "", "The hostname of the GitHub or Gitea instance to authenticate with")
 	cmd.Flags().StringSliceVarP(&opts.Scopes, "scopes", "s", nil, "Additional authentication scopes to request")
 	cmd.Flags().BoolVar(&tokenStdin, "with-token", false, "Read token from standard input")
 	cmd.Flags().BoolVarP(&opts.Web, "web", "w", false, "Open a browser to authenticate")
@@ -208,7 +216,7 @@ func loginRun(opts *LoginOptions) error {
 	hostname := opts.Hostname
 	if opts.Interactive && hostname == "" {
 		var err error
-		hostname, err = promptForHostname(opts)
+		hostname, err = promptForHostname(cfg, opts)
 		if err != nil {
 			return err
 		}
@@ -295,20 +303,41 @@ func loginRun(opts *LoginOptions) error {
 	})
 }
 
-func promptForHostname(opts *LoginOptions) (string, error) {
-	options := []string{"GitHub.com", "Other"}
+// promptForHostname asks which host to sign in to.
+//
+// Choosing a Gitea server records host_type for the host before the login flow
+// starts, because that setting is what tells the rest of gm which API the host
+// serves; without it the flow would try GitHub's browser login against a server
+// that has none. The cache is dropped for the same reason: the resolution may
+// already have been read and cached for this host in this process.
+func promptForHostname(cfg gm.Config, opts *LoginOptions) (string, error) {
+	options := []string{"GitHub.com", "Gitea or Forgejo server", "Other"}
 	hostType, err := opts.Prompter.Select(
-		"Where do you use GitHub?",
+		"Where do you use GitHub or Gitea?",
 		options[0],
 		options)
 	if err != nil {
 		return "", err
 	}
 
-	isGitHubDotCom := hostType == 0
-	if isGitHubDotCom {
+	switch hostType {
+	case 0:
 		return ghinstance.Default(), nil
+	case 1:
+		hostname, err := opts.Prompter.InputHostname()
+		if err != nil {
+			return "", err
+		}
+		// Config lookups are case sensitive, and loginRun lowercases the
+		// hostname before using it, so the key has to be written the same way.
+		hostname = strings.ToLower(hostname)
+		cfg.Set(hostname, hosttype.ConfigKey, string(hosttype.Gitea))
+		if err := cfg.Write(); err != nil {
+			return "", err
+		}
+		hosttype.Forget(hostname)
+		return hostname, nil
+	default:
+		return opts.Prompter.InputHostname()
 	}
-
-	return opts.Prompter.InputHostname()
 }

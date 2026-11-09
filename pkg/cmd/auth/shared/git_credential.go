@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/cli/cli/v2/git"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmd/auth/shared/gitcredentials"
 	"github.com/cli/cli/v2/pkg/iostreams"
 )
@@ -60,7 +61,11 @@ func (flow *GitCredentialFlow) Prompt(hostname string, expiring bool) error {
 	}
 
 	// Prompt the user for whether they want to configure git with the newly obtained token
-	result, err := flow.Prompter.Confirm("Authenticate Git with your GitHub credentials?", true)
+	accountName := "GitHub"
+	if hosttype.IsGitea(hostname) {
+		accountName = "Gitea"
+	}
+	result, err := flow.Prompter.Confirm(fmt.Sprintf("Authenticate Git with your %s credentials?", accountName), true)
 	if err != nil {
 		return err
 	}

@@ -20,8 +20,6 @@ func withGiteaCreateHost(t *testing.T) {
 	t.Cleanup(restore)
 }
 
-var giteaCreateRepo = ghrepo.NewWithHost("gitea", "tea", "git.example.com")
-
 func TestRepoCreateGitea(t *testing.T) {
 	withGiteaCreateHost(t)
 	reg := &httpmock.Registry{}
