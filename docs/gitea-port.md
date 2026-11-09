@@ -276,7 +276,7 @@
 | Run 路径参数 | `{run_id}` | `{run}` |
 | Run 日志 | `GET .../runs/{run_id}/logs` | `GET .../runs/{run}/logs`（同名同义） |
 | 工件下载 | `GET .../artifacts/{id}/zip` | 同名 |
-| Workflow dispatch | body `{ref, inputs}`，另有 `return_run_details` | body `CreateActionWorkflowDispatch{ref*, inputs}`；`ref` 必须是完整 ref（`refs/heads/<branch>`），Gitea 用 `git.RefName` 解析，裸分支名会被拒。`return_run_details` 是**查询参数**而非 body 字段，且 `refs/heads/` 前缀要由客户端补 |
+| Workflow dispatch | body `{ref, inputs}`，另有 `return_run_details` | body `CreateActionWorkflowDispatch{ref*, inputs}`；`ref` 必填，裸名字一律当**分支**解析（`git.RefNameFromBranch`），所以 tag 必须传完整的 `refs/tags/...`，否则会被当成同名分支而 404。`return_run_details` 是**查询参数**而非 body 字段，缺省或 false 时返回 204 |
 | Enable/Disable | `PUT .../workflows/{id}/enable` | 同名同义 |
 | Attempts 重跑 | `POST .../attempts/{n}/rerun` | 无该端点（Gitea 有 `.../attempts/{attempt}` 只读） |
 | 缓存 | `/actions/caches` 全套 | 无 |
