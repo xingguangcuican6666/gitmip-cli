@@ -283,7 +283,7 @@
 | Environment | `/environments` 12 个操作 | 无 |
 | Runner | repo/org/user/admin 四级 | 同名四级，另有 `actions/tasks` |
 
-`gh run watch` 只轮询 `GetRun`/`GetJobs`/`GetAnnotations`，不读日志，因此在 Gitea 上无需重新设计：前两者走 Gitea 的 runs 与 jobs 端点，annotations 在 Gitea 上直接返回空集（没有 check-runs 端点）。`gh run view --log` 走 `runs/{run}/logs` 拿到整包 zip；Gitea 的 zip 条目名是 `<workflow-stem>_<job-name>_<task-id>.log`，不匹配 `pkg/cmd/run/view/logs.go` 里的三种 GitHub 命名正则，于是每个 job 都回落到 `actions/jobs/{job_id}/logs` 的纯文本响应，超过 25 个 job 时报 "too many API requests needed to fetch logs"，需用 `--job` 收窄。
+`gh run watch` 只轮询 `GetRun`/`GetJobs`/`GetAnnotations`，不读日志，因此在 Gitea 上无需重新设计：前两者走 Gitea 的 runs 与 jobs 端点，annotations 在 Gitea 上直接返回空集（没有 check-runs 端点）。`gh run view --log` 走 `runs/{run}/logs` 拿到整包 zip；Gitea 的 zip 条目名由 `util.FileNameJoinFields(PathBaseStem(workflowID), jobName, taskID, ".log")` 生成，形如 `<workflow-stem>-<job-name>-<task-id>.log`（分隔符是 `-`，字段内的 `.`/`-` 先被替换成 `_`），扩展名是 `.log` 而非 `.txt`，不匹配 `pkg/cmd/run/view/logs.go` 里的三种 GitHub 命名正则，于是每个 job 都回落到 `actions/jobs/{job_id}/logs` 的纯文本响应，超过 25 个 job 时报 "too many API requests needed to fetch logs"，需用 `--job` 收窄。
 
 ---
 
