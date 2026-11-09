@@ -351,7 +351,10 @@ Gitea 有而 `gh` 没有的能力，移植时顺手补上：
    - ✅ `pr update-branch`：`POST /pulls/{index}/update`（Gitea 语义是 merge 基线进 head），`--rebase` 拒绝。behind 计数不能靠反向 compare：`owner:branch...base` 在 Gitea 上 404，改用 PR 自己的 `merge_base` 与 base 比较。
    - ✅ `pr create`：`POST /pulls` + `CreatePullRequestOption`（`base`/`head`/`title`/`body`/`assignees`/`labels`/`milestone`/`reviewers`）。`--draft` 与 `--project` 拒绝（无字段）。
    - ✅ `pr revert`：拒绝。Gitea 无 revert 端点。
-6. ⬜ **`search` 与 `status`**。限定符降级，明确报错而非静默忽略。`gh search` 可接 `/repos/search`、`/repos/issues/search`、`/users/search`；issue search 支持 `created`/`assigned`/`mentioned`/`review_requested`/`reviewed` 布尔参数，但没有 GitHub 的 `key:value` 语法。
+6. ✅ **`search` 与 `status`**。限定符降级，明确报错而非静默忽略。
+   - `search repos` / `search issues`：走 `/repos/search` 与 `/repos/issues/search`。Gitea 的搜索是"关键词 + 具名参数"而非查询串，所以只有关键词进 `q`，`label:`/`milestone:`/`state:`/`type:`/`assigned:`/`created:`/`mentioned:`/`review-requested:` 各自映射到独立参数。没有对应参数的限定符（日期范围、`comments:`、`reactions:`、`involves:`、`commenter:`、`review:`、`team:`、`project:`、`no` 取反、`language:` 等）直接报错，不静默丢弃。`author:`/`assignee:`/`mentions:`/`review-requested:` 只接受 `@me`（Gitea 只有 viewer 布尔）；`repo:` 与多个 `label:` 也拒绝。总数读 `X-Total-Count`，每页 50。
+   - `search code` / `search commits`：拒绝，Gitea 没有代码索引与提交索引。
+   - `status`：保留三个 goroutine，只换 loader。分配与待评审各发一次 issue search（Gitea 一次只接受一个 viewer 布尔），mentions 走 `/notifications`，活动走 activity feed（`op_type` 词表替换 GitHub 的事件类型）。`--org` 与 `--exclude` 在本地过滤，跨仓库搜索没有可用的 owner 过滤。所有内容都以登录用户为中心，未认证时在开头一次性报错。
 7. ✅ **`secret`、`actions` 族**的 secret 部分（见第 4 步）。`actions` 子命令族（run/job/workflow）未开始。
 8. ⬜ **删除清单**。最后统一摘除 2.1/2.2 的命令与 `root.go` 注册。
 9. ⬜ **新增清单**。按实际需求挑选，不影响主线。
