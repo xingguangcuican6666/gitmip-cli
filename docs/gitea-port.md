@@ -71,7 +71,7 @@
 | `gh pr ready` | 需要把草稿转正式；`CreatePullRequestOption` 与 `EditPullRequestOption` 都没有 `draft` 字段 | 删除。Gitea 只能读 `PullRequest.draft`，无法通过 API 写入 |
 | `gh ssh-key` 的 signing key 路径 | 代码走 `user/ssh_signing_keys`（`pkg/cmd/ssh-key/shared/user_keys.go:51`），Gitea 无该端点 | 改用 `/user/keys`，删除签名密钥相关分支 |
 | `gh api graphql` | 无 GraphQL 端点 | 删除该子路径与 `pkg/cmd/api/http.go:17` 的特殊分支 |
-| `gh auth refresh` | 依赖 GitHub OAuth refresh token 轮换 | 删除或改为重新登录 |
+| `gh auth refresh` | 依赖 GitHub OAuth refresh token 轮换 | 已改为：Gitea 主机上直接报错并提示 `gm auth login -h <host>` 重新登录，不再进入 device flow |
 
 ### 2.3 机制性删除
 
