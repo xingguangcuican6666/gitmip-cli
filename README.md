@@ -27,15 +27,16 @@ Gitea can and cannot serve.
 CI publishes two kinds of artifact per target, both from the `Package` workflow
 (`.github/workflows/package.yml`) and both built by `script/package`:
 
-- `gm-<version>-1-<arch>.pkg.tar.zst`, an Arch Linux package. Install this with
-  pacman:
+- `gitmip-cli-<version>-1-<arch>.pkg.tar.zst`, an Arch Linux package. Install
+  this with pacman:
 
   ```sh
-  sudo pacman -U gm-2.103.3-1-x86_64.pkg.tar.zst
+  sudo pacman -U gitmip-cli-2.103.3-1-x86_64.pkg.tar.zst
   ```
 
-  It puts `gm` in `/usr/bin`, its man pages under `/usr/share/man/man1`, its
-  license under `/usr/share/licenses/gm`, and bash, fish and zsh completions on
+  The package is `gitmip-cli`, the project; the command it installs is `gm`. It
+  puts `gm` in `/usr/bin`, its man pages under `/usr/share/man/man1`, its license
+  under `/usr/share/licenses/gitmip-cli`, and bash, fish and zsh completions on
   the paths each shell searches.
 
 - `gitmip-cli_<version>_<os>_<arch>.tar.gz`, a portable archive holding the same

@@ -8,7 +8,7 @@
 # Writes into dist/, each next to a .sha256 checksum file:
 #
 #   gitmip-cli_<version>_<goos>_<goarch>.tar.gz   portable archive, every target
-#   gm-<pkgver>-1-<pkgarch>.pkg.tar.zst           Arch Linux package, linux only
+#   gitmip-cli-<pkgver>-1-<pkgarch>.pkg.tar.zst   Arch Linux package, linux only
 #
 # The version defaults to `git describe --tags --always` and is stamped into the
 # binary too, so the package name and `gm --version` agree.
@@ -129,12 +129,12 @@ if [ "$goos" = linux ]; then
   stage="${hostdir}/stage"
   mkdir -p "$stage/usr/bin" \
     "$stage/usr/share/man/man1" \
-    "$stage/usr/share/licenses/gm" \
+    "$stage/usr/share/licenses/gitmip-cli" \
     "$stage/usr/share/bash-completion/completions" \
     "$stage/usr/share/fish/vendor_completions.d" \
     "$stage/usr/share/zsh/site-functions"
   cp "$binary" "$stage/usr/bin/gm"
-  cp LICENSE "$stage/usr/share/licenses/gm/LICENSE"
+  cp LICENSE "$stage/usr/share/licenses/gitmip-cli/LICENSE"
   cp share/man/man1/*.1 "$stage/usr/share/man/man1/"
   cp share/bash-completion/completions/gm "$stage/usr/share/bash-completion/completions/gm"
   cp share/fish/vendor_completions.d/gm.fish "$stage/usr/share/fish/vendor_completions.d/gm.fish"
@@ -166,9 +166,12 @@ if [ -n "$archpkg" ]; then
   grep -qx 'usr/bin/gm' "${hostdir}/pkg-contents" || fail "no usr/bin/gm in ${base}"
   grep -qx 'usr/share/man/man1/gm.1' "${hostdir}/pkg-contents" \
     || fail "no man pages in ${base}"
+  grep -qx 'usr/share/licenses/gitmip-cli/LICENSE' "${hostdir}/pkg-contents" \
+    || fail "no license file in ${base}"
 
   tar --zstd -xOf "$archpkg" .PKGINFO > "${hostdir}/pkginfo"
-  grep -qx 'pkgname = gm' "${hostdir}/pkginfo" || fail "wrong pkgname in ${base}"
+  grep -qx 'pkgname = gitmip-cli' "${hostdir}/pkginfo" \
+    || fail "wrong pkgname in ${base}"
   pkgarch="${base#*-1-}"
   pkgarch="${pkgarch%.pkg.tar.zst}"
   grep -qx "arch = ${pkgarch}" "${hostdir}/pkginfo" \

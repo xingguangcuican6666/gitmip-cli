@@ -126,12 +126,12 @@ jobs:
               || { echo "$pkg has no usr/bin/gm"; exit 1; }
             printf '%s\n' "$entries" | grep -qx 'usr/share/man/man1/gm.1' \
               || { echo "$pkg has no man page"; exit 1; }
-            printf '%s\n' "$entries" | grep -qx 'usr/share/licenses/gm/LICENSE' \
+            printf '%s\n' "$entries" | grep -qx 'usr/share/licenses/gitmip-cli/LICENSE' \
               || { echo "$pkg has no license file"; exit 1; }
             # pacman reads .PKGINFO as "key = value" lines; the arch must agree with
             # the file name and the package must name itself gm.
             info="$(tar --zstd -xOf "$pkg" .PKGINFO)"
-            printf '%s\n' "$info" | grep -qx 'pkgname = gm' \
+            printf '%s\n' "$info" | grep -qx 'pkgname = gitmip-cli' \
               || { echo "$pkg has a wrong pkgname"; exit 1; }
             pkgarch="${pkg##*-1-}"
             pkgarch="${pkgarch%.pkg.tar.zst}"
