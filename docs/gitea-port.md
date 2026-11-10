@@ -148,6 +148,8 @@
 
 另外 `pkg/cmd/factory/default.go` 的仓库解析（`BaseRepoFunc:83`、`SmartBaseRepoFunc:161`）假定远端走 GitHub 的 host 映射，Gitea 实例通常没有 `api.` 子域，需要按主机名直接映射到同一域名的 `/api/v1`。
 
+**默认仓库的解析本身也走 GraphQL。** `context.ResolvedRemotes.BaseRepo` 在可以交互（TTY）时调用 `NetworkRepos`，后者把全部远端交给 `api.RepoNetwork`，用一次 GraphQL 查询同时取回各仓库、它们的 parent 和 viewer 权限。非 TTY 时该方法直接取第一个远端，不发请求，所以这个缺陷只在交互式运行里显形：`gm pr list`、`gm issue list`、`gm repo view` 在 Gitea 主机上都会以 `host <host> does not support the GraphQL API` 失败，而管道或重定向下同样的命令正常。`api.RepoFindForks` 是同一类问题，用于 `gm pr create` 在 `HeadRepos()` 为空时查找 viewer 自己的 fork。两者的 Gitea 分支见 3.5 末尾。
+
 ### 3.5 GraphQL → REST 重写清单
 
 这是最大的一块。逐族给出替换目标：
@@ -206,6 +208,13 @@
 **`gh status`**：`pkg/cmd/status/status.go:401-443` 的 GraphQL `search(type: ISSUE)` 改为 `GET /repos/issues/search`，用 `assigned`、`review_requested`、`mentioned`、`created_by` 四个布尔/字符串参数组合出三段视图。
 
 **其余 REST 族**（`gh run`、`gh workflow`、`gh secret`、`gh variable`、`gh api`、`gh ssh-key`、`gh gpg-key`、`gh browse`、`gh auth`）改动较小，见 3.8。
+
+**仓库网络与 fork 查找**（3.4 末尾描述的默认仓库解析）：
+
+| 函数 | 替换为 |
+| --- | --- |
+| `RepoNetwork` | 逐个 `GET /repos/{o}/{r}`，响应里的 `parent` 与 `permissions` 正好是网络要发现的两段关系。读不到的仓库按 GitHub 的 `NOT_FOUND` 同样处理，留一个 `nil` 占位以保持调用方顺序；`/user` 401 时 viewer 登录名留空，公开仓库仍可解析 |
+| `RepoFindForks` | `GET /repos/search?uid=<viewer>&mode=fork`，按 `parent.full_name` 匹配后再过 `ViewerCanPush()`。**不能用 `/repos/{o}/{r}/forks`**：该端点没有 affiliation 过滤，实测对 gitea/tea 返回 148 条他人只读 fork，要翻上百页才轮到自己 |
 
 ### 3.6 字段与枚举映射
 
@@ -268,6 +277,7 @@
 | 作用域 | repo / org / user / environment / codespaces / dependabot | repo / org / user（三级），无 environment |
 | 用户级列表 | `GET /user/actions/secrets` | **不存在**。Gitea 只有按名 `PUT`/`DELETE /user/actions/secrets/{secretname}`，无法列出 |
 | Variables | 同上多维度 | repo / org / user 三级，端点齐全，`UpdateVariableOption` 支持改名 |
+| 按仓库选择 | org secret/variable 的 `--repos`、`--no-repos-selected`、`--visibility=selected` | **无对应模型**：org 级 secret/variable 对组织内全部仓库生效，没有按仓库的名单。静默接受会扩大访问范围到用户排除掉的仓库，因此一律明确报错。`variable set` 的 `--repos` 还会在 `getRepoIds` 里撞上 GraphQL，报错同样发生在那次查找之前 |
 
 ### 3.10 Actions
 
@@ -341,6 +351,7 @@ Gitea 有而 `gh` 没有的能力，移植时顺手补上：
    - `variable`：list/get/set/delete 全部改 REST。响应是裸数组，值字段叫 `data`；名字在路径里，创建 POST、更新 PUT，409 触发更新；无时间戳与 visibility
    - `secret`：`PUT /actions/secrets/{name}` 明文提交，无 public-key 端点，故无加密、`--no-store` 明确报错；无 Codespaces/Dependabot/Agents/environment 存储，`--app` 只接受 `actions`
    - 另加 `internal/featuredetection` 的 Gitea 检测器：所有能力位按实际情况返回常量，不再发 GraphQL 内省请求
+   - 默认仓库解析：`api.RepoNetwork`（TTY 下每条命令解析默认仓库的必经之路）与 `api.RepoFindForks`（`pr create` 在 `HeadRepos()` 为空时查找自己的 fork）都加了 Gitea 分支，见 3.5 末尾。此前 `repo view`、`pr list`、`issue list` 等命令只在交互式运行时以 `host <host> does not support the GraphQL API` 失败，非 TTY 下同样的命令正常，因此容易漏掉
 5. 🟡 **`pr` 与 `issue` 的 GraphQL 重写**。工作量最大，按子命令分批，每批保留原有单元测试作为行为契约（`httpmock` 层从 GraphQL 断言改为 REST 断言）。
    - ✅ `issue` 全族：list / view / create / close / reopen / delete / edit / lock / unlock / pin / unpin / comment / status。`transfer` 与 `develop` 明确拒绝（Gitea 无端点），且拒绝发生在查找 issue 之前。
    - ✅ `pr view` / `pr list` / `pr diff` / `pr comment` / `pr merge` / `pr checkout`。
