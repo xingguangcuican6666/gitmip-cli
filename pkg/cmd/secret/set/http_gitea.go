@@ -31,6 +31,15 @@ import (
 var errGiteaNoStoreUnsupported = errors.New(
 	"`--no-store` is not supported on Gitea, which takes the secret value in plaintext rather than encrypted against a server key")
 
+// errGiteaSelectedVisibilityUnsupported explains why a selected-repository
+// visibility cannot be set on Gitea. Gitea has no per-secret repository list:
+// the secret applies to every repository in the organization, so honoring the
+// flag silently would widen access to repositories the user excluded, and
+// `--no-repos-selected` would widen it to everything. Refusing is the only
+// answer that does not misstate what was stored.
+var errGiteaSelectedVisibilityUnsupported = errors.New(
+	"Gitea secrets apply to every repository in the organization, so `--repos`, `--no-repos-selected` and `--visibility=selected` are not supported")
+
 // giteaCreateOrUpdateSecretOption is Gitea's request body for PUT /secrets/{name}.
 type giteaCreateOrUpdateSecretOption struct {
 	Data string `json:"data"`
@@ -97,6 +106,9 @@ func giteaSecretPath(entity shared.SecretEntity, orgName string, baseRepo ghrepo
 func setRunGitea(opts *SetOptions, client *api.Client, host string, baseRepo ghrepo.Interface, orgName string, secrets map[string][]byte, app shared.App, entity shared.SecretEntity) error {
 	if opts.DoNotStore {
 		return errGiteaNoStoreUnsupported
+	}
+	if opts.Visibility == shared.Selected {
+		return errGiteaSelectedVisibilityUnsupported
 	}
 
 	var errs []error

@@ -187,3 +187,43 @@ func TestSetRunGiteaReportsEachSecret(t *testing.T) {
 	assert.Contains(t, out, "Set Actions secret A for gitea/tea")
 	assert.Contains(t, out, "Set Actions secret B for gitea/tea")
 }
+
+// Gitea has no per-secret repository list: an organization secret applies to
+// every repository in the organization. Honoring `--repos` would either widen
+// access to repositories the user excluded or narrow it to none, so the flag is
+// refused rather than silently reinterpreted.
+func TestSetRunGiteaRejectsSelectedVisibility(t *testing.T) {
+	withGiteaHost(t)
+
+	ios, _, _, _ := iostreams.Test()
+	opts := &SetOptions{IO: ios, Visibility: string(shared.Selected), RepositoryNames: []string{"repo1"}}
+
+	reg := &httpmock.Registry{}
+	defer reg.Verify(t)
+
+	client := api.NewClientFromHTTP(&http.Client{Transport: reg})
+	err := setRunGitea(opts, client, "git.example.com", giteaSecretRepo, "",
+		map[string][]byte{"TOKEN": []byte("v")}, shared.Actions, shared.Organization)
+	require.ErrorIs(t, err, errGiteaSelectedVisibilityUnsupported)
+}
+
+// The ordinary organization secret carries the default visibility and must
+// still be written; only an explicit selection is refused.
+func TestSetRunGiteaAcceptsDefaultVisibility(t *testing.T) {
+	withGiteaHost(t)
+
+	ios, _, _, _ := iostreams.Test()
+	opts := &SetOptions{IO: ios, Visibility: string(shared.Private)}
+
+	reg := &httpmock.Registry{}
+	defer reg.Verify(t)
+	reg.Register(
+		httpmock.REST("PUT", "api/v1/orgs/gitea/actions/secrets/TOKEN"),
+		httpmock.StatusStringResponse(204, ""),
+	)
+
+	client := api.NewClientFromHTTP(&http.Client{Transport: reg})
+	err := setRunGitea(opts, client, "git.example.com", giteaSecretRepo, "gitea",
+		map[string][]byte{"TOKEN": []byte("v")}, shared.Actions, shared.Organization)
+	require.NoError(t, err)
+}

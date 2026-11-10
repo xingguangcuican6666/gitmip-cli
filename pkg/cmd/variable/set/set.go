@@ -14,6 +14,7 @@ import (
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/ghrepo"
 	"github.com/cli/cli/v2/internal/gm"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmd/variable/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -174,6 +175,15 @@ func setRun(opts *SetOptions) error {
 	entity, err := shared.GetVariableEntity(orgName, envName)
 	if err != nil {
 		return err
+	}
+
+	// A Gitea variable applies to the whole organization or repository it is
+	// defined on; there is no per-repository selection to set. Refusing here
+	// keeps a selection the user asked for from being silently broadened to
+	// everything in scope, and avoids the GraphQL id lookup a Gitea host
+	// cannot answer.
+	if hosttype.IsGitea(host) && opts.Visibility == shared.Selected {
+		return fmt.Errorf("Gitea variables apply to every repository in scope, so `--repos` and `--visibility=selected` are not supported")
 	}
 
 	opts.IO.StartProgressIndicator()

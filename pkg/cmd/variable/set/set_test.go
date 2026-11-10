@@ -19,6 +19,7 @@ import (
 	"github.com/cli/cli/v2/pkg/iostreams"
 	"github.com/google/shlex"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewCmdSet(t *testing.T) {
@@ -558,4 +559,67 @@ func Test_getVariablesFromOptions(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Gitea has no per-variable repository selection, and the id lookup the GitHub
+// path performs is GraphQL. Both reasons are answered by refusing the flag
+// before any request, rather than letting a GraphQL call fail on a host that
+// has none.
+func Test_setRun_giteaRejectsSelectedVisibility(t *testing.T) {
+	withGiteaHost(t)
+
+	reg := &httpmock.Registry{}
+	defer reg.Verify(t)
+
+	ios, _, _, _ := iostreams.Test()
+	opts := &SetOptions{
+		HttpClient: func() (*http.Client, error) {
+			return &http.Client{Transport: reg}, nil
+		},
+		Config: func() (gm.Config, error) {
+			return config.NewMockConfig(), nil
+		},
+		BaseRepo: func() (ghrepo.Interface, error) {
+			return ghrepo.NewWithHost("gitea", "tea", "git.example.com"), nil
+		},
+		IO:              ios,
+		VariableName:    "cool_variable",
+		Body:            "a variable",
+		Visibility:      shared.Selected,
+		RepositoryNames: []string{"tea"},
+	}
+
+	err := setRun(opts)
+	require.EqualError(t, err, "Gitea variables apply to every repository in scope, so `--repos` and `--visibility=selected` are not supported")
+}
+
+// A Gitea repository variable carries no visibility at all, so the default
+// value must still be written rather than refused.
+func Test_setRun_giteaAcceptsDefaultVisibility(t *testing.T) {
+	withGiteaHost(t)
+
+	reg := &httpmock.Registry{}
+	defer reg.Verify(t)
+	reg.Register(
+		httpmock.REST("POST", "api/v1/repos/gitea/tea/actions/variables/cool_variable"),
+		httpmock.StatusStringResponse(201, ""),
+	)
+
+	ios, _, _, _ := iostreams.Test()
+	opts := &SetOptions{
+		HttpClient: func() (*http.Client, error) {
+			return &http.Client{Transport: reg}, nil
+		},
+		Config: func() (gm.Config, error) {
+			return config.NewMockConfig(), nil
+		},
+		BaseRepo: func() (ghrepo.Interface, error) {
+			return ghrepo.NewWithHost("gitea", "tea", "git.example.com"), nil
+		},
+		IO:           ios,
+		VariableName: "cool_variable",
+		Body:         "a variable",
+	}
+
+	require.NoError(t, setRun(opts))
 }
