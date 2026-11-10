@@ -545,3 +545,289 @@ func TestSetRepositoryArchivedGitea(t *testing.T) {
 		})
 	}
 }
+
+// The network lookup is what a Gitea host hits when a command resolves its
+// default repository with a prompt available. Each remote is read on its own,
+// and the parent relationship Gitea reports is what lets the caller offer the
+// upstream as the default.
+func TestRepoNetworkGitea(t *testing.T) {
+	withGiteaHost(t)
+
+	reg := &httpmock.Registry{}
+	defer reg.Verify(t)
+
+	reg.Register(
+		httpmock.REST("GET", "api/v1/user"),
+		httpmock.StringResponse(`{"id":1,"login":"myrqs"}`),
+	)
+	reg.Register(
+		httpmock.REST("GET", "api/v1/repos/me/tea"),
+		httpmock.StringResponse(`{
+			"id": 2, "name": "tea", "full_name": "me/tea", "fork": true,
+			"parent": {"id": 550, "name": "tea", "full_name": "gitea/tea",
+				"owner": {"id": 3, "login": "gitea", "type": "Organization"}},
+			"permissions": {"admin": false, "push": true, "pull": true}
+		}`),
+	)
+	reg.Register(
+		httpmock.REST("GET", "api/v1/repos/me/other"),
+		httpmock.StringResponse(`{
+			"id": 9, "name": "other", "full_name": "me/other",
+			"permissions": {"admin": false, "push": false, "pull": true}
+		}`),
+	)
+
+	client := NewClientFromHTTP(&http.Client{Transport: reg})
+	result, err := RepoNetwork(client, []ghrepo.Interface{
+		ghrepo.NewWithHost("me", "tea", "git.example.com"),
+		ghrepo.NewWithHost("me", "other", "git.example.com"),
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, "myrqs", result.ViewerLogin)
+	require.Len(t, result.Repositories, 2)
+
+	// Ordering matches the remotes given, so the caller's first remote stays first.
+	assert.Equal(t, "me/tea", result.Repositories[0].NameWithOwner)
+	assert.True(t, result.Repositories[0].ViewerCanPush())
+	require.NotNil(t, result.Repositories[0].Parent)
+	assert.Equal(t, "gitea/tea", result.Repositories[0].Parent.NameWithOwner)
+	assert.Equal(t, "git.example.com", result.Repositories[0].Parent.RepoHost())
+
+	assert.Equal(t, "me/other", result.Repositories[1].NameWithOwner)
+	assert.False(t, result.Repositories[1].ViewerCanPush())
+}
+
+// A remote that no longer exists must not fail the whole lookup: GitHub
+// tolerates NOT_FOUND per repository, and the nil placeholder keeps the
+// ordering the caller relies on.
+func TestRepoNetworkGiteaToleratesNotFound(t *testing.T) {
+	withGiteaHost(t)
+
+	reg := &httpmock.Registry{}
+	defer reg.Verify(t)
+
+	reg.Register(
+		httpmock.REST("GET", "api/v1/user"),
+		httpmock.StringResponse(`{"id":1,"login":"myrqs"}`),
+	)
+	reg.Register(
+		httpmock.REST("GET", "api/v1/repos/me/gone"),
+		httpmock.StatusStringResponse(404, `{"message":"not found"}`),
+	)
+	reg.Register(
+		httpmock.REST("GET", "api/v1/repos/me/tea"),
+		httpmock.StringResponse(`{"id": 2, "name": "tea", "full_name": "me/tea",
+			"permissions": {"admin": false, "push": true, "pull": true}}`),
+	)
+
+	result, err := RepoNetwork(NewClientFromHTTP(&http.Client{Transport: reg}), []ghrepo.Interface{
+		ghrepo.NewWithHost("me", "gone", "git.example.com"),
+		ghrepo.NewWithHost("me", "tea", "git.example.com"),
+	})
+	require.NoError(t, err)
+
+	require.Len(t, result.Repositories, 2)
+	assert.Nil(t, result.Repositories[0], "a missing repository stays as a placeholder")
+	require.NotNil(t, result.Repositories[1])
+	assert.Equal(t, "me/tea", result.Repositories[1].NameWithOwner)
+}
+
+// Gitea serves public repositories without a token, so an anonymous run can
+// still resolve the network; it just does not learn who the viewer is.
+func TestRepoNetworkGiteaToleratesAnonymous(t *testing.T) {
+	withGiteaHost(t)
+
+	reg := &httpmock.Registry{}
+	defer reg.Verify(t)
+
+	reg.Register(
+		httpmock.REST("GET", "api/v1/user"),
+		httpmock.StatusStringResponse(401, `{"message":"token is required"}`),
+	)
+	reg.Register(
+		httpmock.REST("GET", "api/v1/repos/gitea/tea"),
+		httpmock.StringResponse(`{"id": 550, "name": "tea", "full_name": "gitea/tea",
+			"permissions": {"admin": false, "push": false, "pull": true}}`),
+	)
+
+	result, err := RepoNetwork(NewClientFromHTTP(&http.Client{Transport: reg}), []ghrepo.Interface{
+		ghrepo.NewWithHost("gitea", "tea", "git.example.com"),
+	})
+	require.NoError(t, err)
+
+	assert.Empty(t, result.ViewerLogin)
+	require.Len(t, result.Repositories, 1)
+	assert.Equal(t, "gitea/tea", result.Repositories[0].NameWithOwner)
+}
+
+// Any failure other than a 401 while identifying the viewer is a real error and
+// must not be swallowed.
+func TestRepoNetworkGiteaPropagatesOtherViewerFailures(t *testing.T) {
+	withGiteaHost(t)
+
+	reg := &httpmock.Registry{}
+	defer reg.Verify(t)
+	reg.Register(
+		httpmock.REST("GET", "api/v1/user"),
+		httpmock.StatusStringResponse(403, `{"message":"forbidden"}`),
+	)
+
+	_, err := RepoNetwork(NewClientFromHTTP(&http.Client{Transport: reg}), []ghrepo.Interface{
+		ghrepo.NewWithHost("me", "tea", "git.example.com"),
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "403")
+}
+
+// A server failure on one repository is not a missing repository; it has to be
+// reported rather than turned into a nil placeholder.
+func TestRepoNetworkGiteaPropagatesRepositoryFailures(t *testing.T) {
+	withGiteaHost(t)
+
+	reg := &httpmock.Registry{}
+	defer reg.Verify(t)
+
+	reg.Register(
+		httpmock.REST("GET", "api/v1/user"),
+		httpmock.StringResponse(`{"id":1,"login":"myrqs"}`),
+	)
+	reg.Register(
+		httpmock.REST("GET", "api/v1/repos/me/tea"),
+		httpmock.StatusStringResponse(500, `{"message":"boom"}`),
+	)
+
+	result, err := RepoNetwork(NewClientFromHTTP(&http.Client{Transport: reg}), []ghrepo.Interface{
+		ghrepo.NewWithHost("me", "tea", "git.example.com"),
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "500")
+	assert.Equal(t, "myrqs", result.ViewerLogin, "what was read before the failure is kept")
+}
+
+// The GitHub path must still issue GraphQL: the dispatch is by host type, not
+// by which function happens to be reachable.
+func TestRepoNetworkGitHubStillUsesGraphQL(t *testing.T) {
+	restore := hosttype.SetHostTypeOverride(nil)
+	t.Cleanup(restore)
+
+	reg := &httpmock.Registry{}
+	defer reg.Verify(t)
+	reg.Register(
+		httpmock.GraphQL(`query RepositoryNetwork\b`),
+		httpmock.StringResponse(`{"data":{"viewer":{"login":"cli"},"repo_000":{"name":"cli","owner":{"login":"cli"},"nameWithOwner":"cli/cli"}}}`),
+	)
+
+	result, err := RepoNetwork(NewClientFromHTTP(&http.Client{Transport: reg}),
+		[]ghrepo.Interface{ghrepo.New("cli", "cli")})
+	require.NoError(t, err)
+	assert.Equal(t, "cli", result.ViewerLogin)
+	require.Len(t, result.Repositories, 1)
+	assert.Equal(t, "cli/cli", result.Repositories[0].NameWithOwner)
+}
+
+// A fork search has to return the viewer's own forks of the requested
+// repository, not every accessible fork. The viewer's repository search is
+// narrowed by uid and mode=fork, then matched against the parent.
+func TestRepoFindForksGitea(t *testing.T) {
+	withGiteaHost(t)
+
+	reg := &httpmock.Registry{}
+	defer reg.Verify(t)
+
+	reg.Register(
+		httpmock.REST("GET", "api/v1/user"),
+		httpmock.StringResponse(`{"id":7,"login":"myrqs"}`),
+	)
+
+	var gotQuery string
+	reg.Register(
+		httpmock.REST("GET", "api/v1/repos/search"),
+		func(req *http.Request) (*http.Response, error) {
+			gotQuery = req.URL.RawQuery
+			return httpmock.StringResponse(`{"ok":true,"data":[
+				{"id":2,"name":"tea","full_name":"myrqs/tea","fork":true,
+				 "parent":{"id":550,"name":"tea","full_name":"gitea/tea"},
+				 "permissions":{"admin":false,"push":true,"pull":true}},
+				{"id":3,"name":"tea","full_name":"myrqs/tea-readonly","fork":true,
+				 "parent":{"id":550,"name":"tea","full_name":"gitea/tea"},
+				 "permissions":{"admin":false,"push":false,"pull":true}},
+				{"id":4,"name":"tea","full_name":"myrqs/other-fork","fork":true,
+				 "parent":{"id":9,"name":"other","full_name":"gitea/other"},
+				 "permissions":{"admin":false,"push":true,"pull":true}}
+			]}`)(req)
+		},
+	)
+
+	forks, err := RepoFindForks(NewClientFromHTTP(&http.Client{Transport: reg}),
+		ghrepo.NewWithHost("gitea", "tea", "git.example.com"), 3)
+	require.NoError(t, err)
+
+	assert.Contains(t, gotQuery, "uid=7")
+	assert.Contains(t, gotQuery, "mode=fork")
+
+	require.Len(t, forks, 1, "only a writable fork of the requested repository counts")
+	assert.Equal(t, "myrqs/tea", forks[0].NameWithOwner)
+	assert.Equal(t, "git.example.com", forks[0].RepoHost())
+}
+
+// The search lists all of the viewer's forks, so matches can start on a later
+// page. The loop must keep going rather than treating a page with no match as
+// the end of the results.
+func TestRepoFindForksGiteaPages(t *testing.T) {
+	withGiteaHost(t)
+
+	reg := &httpmock.Registry{}
+	defer reg.Verify(t)
+
+	reg.Register(
+		httpmock.REST("GET", "api/v1/user"),
+		httpmock.StringResponse(`{"id":7,"login":"myrqs"}`),
+	)
+
+	full := `{"ok":true,"data":[`
+	for i := range giteaPageSize {
+		if i > 0 {
+			full += ","
+		}
+		full += `{"id":9,"full_name":"myrqs/unrelated","fork":true,
+			"parent":{"id":9,"full_name":"gitea/unrelated"},
+			"permissions":{"admin":false,"push":true,"pull":true}}`
+	}
+	full += `]}`
+
+	pages := 0
+	count := func(responder httpmock.Responder) httpmock.Responder {
+		return func(req *http.Request) (*http.Response, error) {
+			pages++
+			return responder(req)
+		}
+	}
+	reg.Register(httpmock.REST("GET", "api/v1/repos/search"), count(httpmock.StringResponse(full)))
+	reg.Register(httpmock.REST("GET", "api/v1/repos/search"), count(httpmock.StringResponse(`{"ok":true,"data":[
+		{"id":2,"full_name":"myrqs/tea","fork":true,
+		 "parent":{"id":550,"full_name":"gitea/tea"},
+		 "permissions":{"admin":false,"push":true,"pull":true}}
+	]}`)))
+
+	forks, err := RepoFindForks(NewClientFromHTTP(&http.Client{Transport: reg}),
+		ghrepo.NewWithHost("gitea", "tea", "git.example.com"), 3)
+	require.NoError(t, err)
+
+	assert.Equal(t, 2, pages)
+	require.Len(t, forks, 1)
+	assert.Equal(t, "myrqs/tea", forks[0].NameWithOwner)
+}
+
+// A limit of zero is the caller asking for nothing; no request is needed.
+func TestRepoFindForksGiteaZeroLimit(t *testing.T) {
+	withGiteaHost(t)
+
+	reg := &httpmock.Registry{}
+	defer reg.Verify(t)
+
+	forks, err := RepoFindForks(NewClientFromHTTP(&http.Client{Transport: reg}),
+		ghrepo.NewWithHost("gitea", "tea", "git.example.com"), 0)
+	require.NoError(t, err)
+	assert.Empty(t, forks)
+}

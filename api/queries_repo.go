@@ -466,11 +466,20 @@ type RepoNetworkResult struct {
 	Repositories []*Repository
 }
 
-// RepoNetwork inspects the relationship between multiple GitHub repositories
+// RepoNetwork inspects the relationship between multiple repositories on one host.
+//
+// The repositories come from the git remotes of a clone, so a Gitea host reaches
+// this function whenever a command resolves its default repository while it can
+// prompt. Gitea has no GraphQL, so that case is answered over REST instead; see
+// repoNetworkGitea.
 func RepoNetwork(client *Client, repos []ghrepo.Interface) (RepoNetworkResult, error) {
 	var hostname string
 	if len(repos) > 0 {
 		hostname = repos[0].RepoHost()
+	}
+
+	if hosttype.IsGitea(hostname) {
+		return repoNetworkGitea(client, repos)
 	}
 
 	queries := make([]string, 0, len(repos))
@@ -691,6 +700,10 @@ func LastCommit(client *Client, repo ghrepo.Interface) (*Commit, error) {
 
 // RepoFindForks finds forks of the repo that are affiliated with the viewer
 func RepoFindForks(client *Client, repo ghrepo.Interface, limit int) ([]*Repository, error) {
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return repoFindForksGitea(client, repo, limit)
+	}
+
 	result := struct {
 		Repository struct {
 			Forks struct {

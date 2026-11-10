@@ -3,11 +3,13 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/cli/cli/v2/internal/ghrepo"
@@ -301,4 +303,106 @@ func SetRepositoryArchivedGitea(client *Client, repo ghrepo.Interface, archived 
 	_, _ = io.Copy(io.Discard, resp.Body)
 	resp.Body.Close()
 	return nil
+}
+
+// repoNetworkGitea answers RepoNetwork for a Gitea host.
+//
+// GitHub resolves the whole network in one GraphQL query keyed repo_000,
+// repo_001, ...; a Gitea host has no such query, so each repository is read
+// separately from GET /repos/{owner}/{repo}. The response already carries the
+// parent repository and the viewer's permission, which are the two relationships
+// the network exists to discover.
+//
+// A repository that cannot be read is treated the way GitHub's NOT_FOUND is: it
+// stays in place as a nil entry, so the result keeps the caller's ordering. Any
+// other failure is returned with whatever was read so far, as the GraphQL path
+// does.
+func repoNetworkGitea(client *Client, repos []ghrepo.Interface) (RepoNetworkResult, error) {
+	var result RepoNetworkResult
+	if len(repos) == 0 {
+		return result, nil
+	}
+	hostname := repos[0].RepoHost()
+
+	// The viewer login is informational here. Gitea serves public repositories
+	// without a token, so an anonymous run can still resolve the network; it just
+	// does not know who the viewer is.
+	login, err := CurrentLoginName(client, hostname)
+	if err != nil && !isGiteaUnauthenticated(err) {
+		return result, err
+	}
+	result.ViewerLogin = login
+
+	for _, repo := range repos {
+		r, err := fetchGiteaRepository(client, repo)
+		if err != nil {
+			if httpErr, ok := errors.AsType[HTTPError](err); ok && httpErr.StatusCode == http.StatusNotFound {
+				result.Repositories = append(result.Repositories, nil)
+				continue
+			}
+			return result, err
+		}
+		result.Repositories = append(result.Repositories, r)
+	}
+
+	return result, nil
+}
+
+// repoFindForksGitea answers RepoFindForks for a Gitea host.
+//
+// GitHub filters the fork list by affiliations [OWNER, COLLABORATOR] server-side.
+// GET /repos/{owner}/{repo}/forks has no such filter: it lists every accessible
+// fork, so a popular repository would take hundreds of pages of other people's
+// read-only forks to reach the viewer's own. Searching the viewer's repositories
+// instead is both the closer match and the cheaper one. /repos/search with
+// uid=<viewer> returns the repositories the viewer owns or contributes to, and
+// mode=fork narrows that to forks. Each result carries its parent, so the forks
+// of the requested repository are picked out by full name.
+//
+// The ViewerCanPush check RepoFindForks applies to GitHub results is kept as a
+// guard, for the same reason: the affiliation filter is expected to imply it.
+func repoFindForksGitea(client *Client, repo ghrepo.Interface, limit int) ([]*Repository, error) {
+	if limit <= 0 {
+		return nil, nil
+	}
+	hostname := repo.RepoHost()
+
+	viewerID, err := CurrentUserID(client, hostname)
+	if err != nil {
+		return nil, err
+	}
+
+	parentName := ghrepo.FullName(repo)
+	var results []*Repository
+	for page := 1; len(results) < limit; page++ {
+		path := fmt.Sprintf("repos/search?uid=%s&mode=fork&limit=%d&page=%d",
+			url.QueryEscape(viewerID), giteaPageSize, page)
+
+		var raw struct {
+			Data []giteaRepository `json:"data"`
+		}
+		if err := client.REST(hostname, http.MethodGet, path, nil, &raw); err != nil {
+			return nil, err
+		}
+
+		for _, fork := range raw.Data {
+			if fork.Parent == nil || !strings.EqualFold(fork.Parent.FullName, parentName) {
+				continue
+			}
+			r := InitRepoHostname(fork.toRepository(), hostname)
+			if !r.ViewerCanPush() {
+				continue
+			}
+			results = append(results, r)
+			if len(results) == limit {
+				break
+			}
+		}
+
+		if len(raw.Data) < giteaPageSize {
+			break
+		}
+	}
+
+	return results, nil
 }
