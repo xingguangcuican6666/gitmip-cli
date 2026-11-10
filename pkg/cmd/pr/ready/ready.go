@@ -17,6 +17,7 @@ import (
 type ReadyOptions struct {
 	HttpClient func() (*http.Client, error)
 	IO         *iostreams.IOStreams
+	BaseRepo   func() (ghrepo.Interface, error)
 
 	Finder shared.PRFinder
 
@@ -45,12 +46,24 @@ func NewCmdReady(f *cmdutil.Factory, runF func(*ReadyOptions) error) *cobra.Comm
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts.Finder = shared.NewFinder(f)
 
+			// support `-R, --repo` override
+			opts.BaseRepo = f.BaseRepo
+
 			if repoOverride, _ := cmd.Flags().GetString("repo"); repoOverride != "" && len(args) == 0 {
 				return cmdutil.FlagErrorf("argument required when using the --repo flag")
 			}
 
 			if len(args) > 0 {
 				opts.SelectorArg = args[0]
+			}
+
+			// A URL names its own host, so the Gitea check in readyRun does not
+			// need the base repository, which cannot be resolved outside a git
+			// repository.
+			if baseRepo, _, _, err := shared.ParseURL(opts.SelectorArg); err == nil {
+				opts.BaseRepo = func() (ghrepo.Interface, error) {
+					return baseRepo, nil
+				}
 			}
 
 			if runF != nil {
@@ -67,6 +80,21 @@ func NewCmdReady(f *cmdutil.Factory, runF func(*ReadyOptions) error) *cobra.Comm
 func readyRun(opts *ReadyOptions) error {
 	cs := opts.IO.ColorScheme()
 
+	baseRepo, err := opts.BaseRepo()
+	if err != nil {
+		return err
+	}
+
+	// Gitea's EditPullRequestOption has no draft field and no endpoint toggles
+	// one, so neither direction of this command can be expressed through its API.
+	// The web UI can, which is why the refusal points there rather than saying
+	// the feature does not exist. It comes before the lookup so that the answer
+	// does not depend on the pull request, and so that a token Gitea rejects
+	// cannot turn it into a 401.
+	if hosttype.IsGitea(baseRepo.RepoHost()) {
+		return fmt.Errorf("Gitea does not expose a draft toggle in its API, so %s cannot change whether a pull request is a draft", ghrepo.FullName(baseRepo))
+	}
+
 	findOptions := shared.FindOptions{
 		Selector: opts.SelectorArg,
 		Fields:   []string{"id", "number", "state", "isDraft"},
@@ -79,14 +107,6 @@ func readyRun(opts *ReadyOptions) error {
 	if !pr.IsOpen() {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Pull request %s#%d is closed. Only draft pull requests can be marked as \"ready for review\"\n", cs.FailureIcon(), ghrepo.FullName(baseRepo), pr.Number)
 		return cmdutil.SilentError
-	}
-
-	// Gitea's EditPullRequestOption has no draft field and no endpoint toggles
-	// one, so neither direction of this command can be expressed through its API.
-	// The web UI can, which is why the refusal points there rather than saying
-	// the feature does not exist.
-	if hosttype.IsGitea(baseRepo.RepoHost()) {
-		return fmt.Errorf("Gitea does not expose a draft toggle in its API, so %s cannot change whether a pull request is a draft", ghrepo.FullName(baseRepo))
 	}
 
 	httpClient, err := opts.HttpClient()

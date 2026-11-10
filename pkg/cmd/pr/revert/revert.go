@@ -17,6 +17,7 @@ import (
 type RevertOptions struct {
 	HttpClient func() (*http.Client, error)
 	IO         *iostreams.IOStreams
+	BaseRepo   func() (ghrepo.Interface, error)
 
 	Finder shared.PRFinder
 
@@ -43,8 +44,20 @@ func NewCmdRevert(f *cmdutil.Factory, runF func(*RevertOptions) error) *cobra.Co
 		RunE: func(cmd *cobra.Command, args []string) error {
 			opts.Finder = shared.NewFinder(f)
 
+			// support `-R, --repo` override
+			opts.BaseRepo = f.BaseRepo
+
 			if len(args) > 0 {
 				opts.SelectorArg = args[0]
+			}
+
+			// A URL names its own host, so the Gitea check in revertRun does not
+			// need the base repository, which cannot be resolved outside a git
+			// repository.
+			if baseRepo, _, _, err := shared.ParseURL(opts.SelectorArg); err == nil {
+				opts.BaseRepo = func() (ghrepo.Interface, error) {
+					return baseRepo, nil
+				}
 			}
 
 			bodyProvided := cmd.Flags().Changed("body")
@@ -86,6 +99,21 @@ func NewCmdRevert(f *cmdutil.Factory, runF func(*RevertOptions) error) *cobra.Co
 func revertRun(opts *RevertOptions) error {
 	cs := opts.IO.ColorScheme()
 
+	baseRepo, err := opts.BaseRepo()
+	if err != nil {
+		return err
+	}
+
+	// GitHub reverts by opening a pull request against the merge commit, which is
+	// a server-side operation. Gitea has no revert endpoint and no equivalent
+	// server-side flow, so the work has to be done with git and a push, which is
+	// a different command from this one. The refusal comes before the lookup so
+	// that the answer does not depend on the pull request's state, and so that a
+	// token Gitea rejects cannot turn it into a 401.
+	if hosttype.IsGitea(baseRepo.RepoHost()) {
+		return fmt.Errorf("Gitea has no revert endpoint, so `gm pr revert` cannot run against it; revert with git and open a pull request from the branch")
+	}
+
 	findOptions := shared.FindOptions{
 		Selector: opts.SelectorArg,
 		Fields:   []string{"id", "number", "state", "title"},
@@ -97,14 +125,6 @@ func revertRun(opts *RevertOptions) error {
 	if pr.State != "MERGED" {
 		fmt.Fprintf(opts.IO.ErrOut, "%s Pull request %s#%d (%s) can't be reverted because it has not been merged\n", cs.FailureIcon(), ghrepo.FullName(baseRepo), pr.Number, pr.Title)
 		return cmdutil.SilentError
-	}
-
-	// GitHub reverts by opening a pull request against the merge commit, which is
-	// a server-side operation. Gitea has no revert endpoint and no equivalent
-	// server-side flow, so the work has to be done with git and a push, which is
-	// a different command from this one.
-	if hosttype.IsGitea(baseRepo.RepoHost()) {
-		return fmt.Errorf("Gitea has no revert endpoint, so `gm pr revert` cannot run against it; revert with git and open a pull request from the branch")
 	}
 
 	httpClient, err := opts.HttpClient()

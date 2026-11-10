@@ -325,10 +325,10 @@ func runRun(opts *RunOptions) error {
 	}
 
 	if hosttype.IsGitea(repo.RepoHost()) {
-		// Gitea wants a full ref, and takes return_run_details as a query
-		// parameter rather than a field of the body. A body field would be
-		// rejected as an unknown parameter, and the run details the rest of this
-		// function prints would then never come back.
+		// Gitea takes return_run_details as a query parameter rather than a
+		// field of the body. A body field would be rejected as an unknown
+		// parameter, and the run details the rest of this function prints would
+		// then never come back.
 		if features.DispatchRunDetails {
 			path.SetQuery("return_run_details", "true")
 		}
@@ -543,11 +543,13 @@ func findInputs(yamlContent []byte) ([]WorkflowInput, error) {
 
 // giteaDispatchRef qualifies a ref for Gitea's workflow dispatch.
 //
-// Gitea parses the ref through git.RefName and rejects anything that is neither a
-// branch nor a tag ref, so the bare branch name GitHub accepts is not enough. The
-// example in Gitea's own API documentation is "refs/heads/main", and that is what
-// this produces. A tag has to be passed as its full ref by the caller, since there
-// is no way to tell a tag name from a branch name without asking the server.
+// Gitea reads a name without the refs/ prefix as a branch: it falls through to
+// git.RefNameFromBranch and looks the branch up, so the bare branch name GitHub
+// accepts works unchanged. A tag therefore has to be passed as its full
+// refs/tags/... ref by the caller, because a bare name would be looked up as a
+// branch of the same name and come back as "ref doesn't exist". Qualifying a
+// bare name here rather than sending it as given keeps the request body in the
+// shape Gitea's own API documentation shows, "refs/heads/main".
 func giteaDispatchRef(ref string) string {
 	if strings.HasPrefix(ref, "refs/") {
 		return ref

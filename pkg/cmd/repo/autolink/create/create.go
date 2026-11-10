@@ -6,6 +6,7 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/internal/browser"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/pkg/cmd/repo/autolink/shared"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -94,6 +95,10 @@ func createRun(opts *createOptions) error {
 	repo, err := opts.BaseRepo()
 	if err != nil {
 		return err
+	}
+
+	if hosttype.IsGitea(repo.RepoHost()) {
+		return shared.ErrGiteaAutolinkUnsupported
 	}
 
 	request := AutolinkCreateRequest{

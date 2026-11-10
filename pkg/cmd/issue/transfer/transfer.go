@@ -78,18 +78,20 @@ func transferRun(opts *TransferOptions) error {
 		return err
 	}
 
+	// Gitea can transfer a repository but has no endpoint for moving an issue
+	// between repositories. Refusing here, before the issue lookup, keeps the
+	// answer the same whatever state the issue is in and keeps an unusable
+	// token from turning it into a 401.
+	if hosttype.IsGitea(baseRepo.RepoHost()) {
+		return api.ErrGiteaIssueTransferUnsupported
+	}
+
 	issue, err := shared.FindIssueOrPR(httpClient, baseRepo, opts.IssueNumber, []string{"id", "number"})
 	if err != nil {
 		return err
 	}
 	if issue.IsPullRequest() {
 		return fmt.Errorf("issue %s#%d is a pull request and cannot be transferred", ghrepo.FullName(baseRepo), issue.Number)
-	}
-
-	// Gitea can transfer a repository but has no endpoint for moving an issue
-	// between repositories.
-	if hosttype.IsGitea(baseRepo.RepoHost()) {
-		return api.ErrGiteaIssueTransferUnsupported
 	}
 
 	destRepo, err := ghrepo.FromFullNameWithHost(opts.DestRepoSelector, baseRepo.RepoHost())

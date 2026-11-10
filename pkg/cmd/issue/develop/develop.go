@@ -13,6 +13,7 @@ import (
 	"github.com/cli/cli/v2/context"
 	"github.com/cli/cli/v2/git"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/tableprinter"
 	"github.com/cli/cli/v2/pkg/cmd/issue/shared"
 	prShared "github.com/cli/cli/v2/pkg/cmd/pr/shared"
@@ -173,6 +174,13 @@ func developRun(opts *DevelopOptions) error {
 	baseRepo, err := opts.BaseRepo()
 	if err != nil {
 		return err
+	}
+
+	// Gitea has no linked branches. Refusing here, before the issue lookup,
+	// keeps the answer independent of the issue and keeps an unusable token
+	// from turning it into a 401.
+	if hosttype.IsGitea(baseRepo.RepoHost()) {
+		return api.ErrGiteaLinkedBranchUnsupported
 	}
 
 	opts.IO.StartProgressIndicatorWithLabel(fmt.Sprintf("Fetching issue #%d", opts.IssueNumber))

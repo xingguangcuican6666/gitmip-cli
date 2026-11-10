@@ -15,6 +15,7 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	"github.com/cli/cli/v2/api"
 	"github.com/cli/cli/v2/internal/ghrepo"
+	"github.com/cli/cli/v2/internal/hosttype"
 	"github.com/cli/cli/v2/internal/safeurl"
 	"github.com/cli/cli/v2/pkg/cmdutil"
 	"github.com/cli/cli/v2/pkg/iostreams"
@@ -132,6 +133,13 @@ func creditsRun(opts *CreditsOptions) error {
 		if err != nil {
 			return err
 		}
+	}
+
+	if hosttype.IsGitea(baseRepo.RepoHost()) {
+		// Gitea's API has no contributors endpoint, so the request would 404.
+		// The message names the repository rather than the command because
+		// `gm credits` reaches this function too, with a repository of its own.
+		return fmt.Errorf("Gitea has no contributors endpoint, so credits cannot be fetched from %s", ghrepo.FullName(baseRepo))
 	}
 
 	type Contributor struct {
