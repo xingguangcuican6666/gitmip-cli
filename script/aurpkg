@@ -1,0 +1,171 @@
+#!/bin/bash
+#
+# Write the AUR recipe for this project.
+#
+# Usage:
+#   script/aurpkg <version> <commit> <out-dir>
+#
+# Writes <out-dir>/PKGBUILD and <out-dir>/.SRCINFO, and prints the pkgver it
+# wrote so a caller can name its commit after it.
+#
+# <version> is the version script/package stamps into the archives. An empty
+# value means `git describe --tags --always`, which is what an unset workflow
+# input expands to. <commit> is the commit the recipe builds from.
+#
+# AUR stores build recipes, not packages: a push publishes PKGBUILD and
+# .SRCINFO, and the package manager builds the software on the user's machine.
+# So this recipe builds the same tree the release archives were cut from, with
+# the same version stamped in, instead of shipping the .pkg.tar.zst that
+# script/archpkg wrote. `depends`, `license` and `url` match the .PKGINFO that
+# script/archpkg generates.
+#
+# .SRCINFO is written from a template rather than by `makepkg --printsrcinfo`,
+# because the runners that publish to AUR are not Arch systems and have no
+# makepkg. The format is fixed and the field order below is the one makepkg
+# prints.
+
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+if [ $# -lt 3 ]; then
+  echo "usage: script/aurpkg <version> <commit> <out-dir>" >&2
+  exit 1
+fi
+
+version="$1"
+commit="$2"
+outdir="$3"
+
+if [ -z "$version" ]; then
+  version="$(git describe --tags --always)"
+fi
+
+if [ -z "$commit" ]; then
+  echo "aurpkg: commit is required" >&2
+  exit 1
+fi
+
+# The version ends up inside double quotes in the PKGBUILD and is substituted
+# with sed, and the commit ends up in a URL fragment. Both normally come from
+# git describe and github.sha, but the workflow also accepts a hand-typed
+# version input, and a quote or a backslash there would write a recipe that
+# does not parse.
+case "$version" in
+  *[!A-Za-z0-9._+-]*)
+    echo "aurpkg: version has characters a version may not contain: $version" >&2
+    exit 1
+    ;;
+esac
+case "$commit" in
+  *[!0-9a-f]*)
+    echo "aurpkg: commit is not a hexadecimal object name: $commit" >&2
+    exit 1
+    ;;
+esac
+
+# pacman's pkgver may only contain letters, digits and . _ +, and may not
+# contain a hyphen: everything after the last hyphen in a file name is read as
+# pkgrel. Drop the leading v and turn the separators git describe uses into
+# dots, so v2.103.3-57-g46d29d4df becomes 2.103.3.57.g46d29d4df. This is the
+# same rule script/archpkg applies, so a package built from this recipe and one
+# built by script/package agree on the version for a given commit.
+pkgver="${version#v}"
+pkgver="${pkgver//-/.}"
+pkgver="$(printf '%s' "$pkgver" | tr -c 'A-Za-z0-9._+' '.' | sed 's/\.\+$//')"
+if [ -z "$pkgver" ]; then
+  pkgver=0.unknown
+fi
+pkgrel=1
+
+tmpdir="$(mktemp -d)"
+trap 'rm -rf "$tmpdir"' EXIT
+
+cat > "$tmpdir/PKGBUILD" <<'TEMPLATE'
+# Maintainer: xingguangcuican <xingguangcuican@meowarch.top>
+# Written by script/aurpkg so this recipe and the archives script/package
+# writes name the same version and install the same layout.
+pkgname=gitmip-cli
+pkgver=@@PKGVER@@
+pkgrel=@@PKGREL@@
+pkgdesc="Command line tool for GitHub and Gitea, forked from the GitHub CLI"
+arch=('x86_64' 'aarch64')
+url="https://github.com/xingguangcuican6666/gitmip-cli"
+license=('MIT')
+depends=('git')
+makedepends=('go')
+source=("$pkgname::git+https://github.com/xingguangcuican6666/gitmip-cli.git#commit=@@COMMIT@@")
+sha256sums=('SKIP')
+
+# The version git describe produced. pacman's pkgver cannot contain a hyphen,
+# so pkgver above spells it differently; this is the spelling that goes into
+# the binary, matching the archives built by script/package.
+_version="@@VERSION@@"
+
+build() {
+  cd "$pkgname"
+
+  # The man pages and the completions are generated with the host toolchain,
+  # then the binary is built, which is the order script/package uses. GH_VERSION
+  # pins the stamped version, because a commit source has no tags for git
+  # describe to find.
+  CGO_ENABLED=0 GH_VERSION="$_version" go run script/build.go bin/gm
+  go run script/build.go manpages
+
+  mkdir -p share/bash-completion/completions \
+    share/fish/vendor_completions.d \
+    share/zsh/site-functions
+  bin/gm completion -s bash > share/bash-completion/completions/gm
+  bin/gm completion -s fish > share/fish/vendor_completions.d/gm.fish
+  bin/gm completion -s zsh > share/zsh/site-functions/_gm
+}
+
+package() {
+  cd "$pkgname"
+  install -Dm755 bin/gm "$pkgdir/usr/bin/gm"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  # -t keeps the many gm-*.1 pages in one install call instead of one per page.
+  install -Dm644 share/man/man1/*.1 -t "$pkgdir/usr/share/man/man1/"
+  install -Dm644 share/bash-completion/completions/gm \
+    "$pkgdir/usr/share/bash-completion/completions/gm"
+  install -Dm644 share/fish/vendor_completions.d/gm.fish \
+    "$pkgdir/usr/share/fish/vendor_completions.d/gm.fish"
+  install -Dm644 share/zsh/site-functions/_gm \
+    "$pkgdir/usr/share/zsh/site-functions/_gm"
+}
+TEMPLATE
+
+cat > "$tmpdir/.SRCINFO" <<'TEMPLATE'
+pkgbase = gitmip-cli
+	pkgdesc = Command line tool for GitHub and Gitea, forked from the GitHub CLI
+	pkgver = @@PKGVER@@
+	pkgrel = @@PKGREL@@
+	url = https://github.com/xingguangcuican6666/gitmip-cli
+	arch = x86_64
+	arch = aarch64
+	license = MIT
+	makedepends = go
+	depends = git
+	source = gitmip-cli::git+https://github.com/xingguangcuican6666/gitmip-cli.git#commit=@@COMMIT@@
+	sha256sums = SKIP
+
+pkgname = gitmip-cli
+TEMPLATE
+
+# sed is used without -i because BSD sed wants an argument after -i and GNU sed
+# does not; writing to a separate file works on both. The values are checked
+# above, so none of them can contain a sed metacharacter.
+for f in PKGBUILD .SRCINFO; do
+  sed -e "s|@@PKGVER@@|${pkgver}|g" \
+      -e "s|@@PKGREL@@|${pkgrel}|g" \
+      -e "s|@@COMMIT@@|${commit}|g" \
+      -e "s|@@VERSION@@|${version}|g" \
+      "$tmpdir/$f" > "$tmpdir/$f.out"
+  chmod 644 "$tmpdir/$f.out"
+done
+
+mkdir -p "$outdir"
+mv "$tmpdir/PKGBUILD.out" "$outdir/PKGBUILD"
+mv "$tmpdir/.SRCINFO.out" "$outdir/.SRCINFO"
+
+echo "$pkgver"

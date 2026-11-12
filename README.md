@@ -60,6 +60,23 @@ them.
 Arch packages are only built for `linux` targets, since pacman installs only on
 Arch. For macOS and Windows, use the portable archive.
 
+## Installing from AUR
+
+The same workflow publishes a recipe to the AUR at
+`ssh://aur@git.aur-a.meowarch.top:22222/gitmip-cli.git`, so an Arch system can
+build the package itself:
+
+```sh
+git clone ssh://aur@git.aur-a.meowarch.top:22222/gitmip-cli.git
+cd gitmip-cli
+makepkg -si
+```
+
+The recipe builds the commit the workflow packaged and stamps the same version
+into the binary, so it installs the same layout as the `.pkg.tar.zst` above. It
+is written by `script/aurpkg`; the job that publishes it runs only when every
+target in the run packaged successfully, and not on pull requests.
+
 ---
 
 # GitHub CLI

@@ -16,6 +16,11 @@
 #
 # This is not the upstream release pipeline in deployment.yml, which signs and
 # notarizes assets and needs credentials this fork does not have.
+#
+# The last job publishes the source recipe to AUR, so a release does not stop at
+# downloadable archives. AUR stores recipes rather than packages: the recipe
+# builds the same commit this run packaged, and the package manager assembles it
+# on the user's machine.
 name: Package
 
 on:
@@ -155,3 +160,103 @@ jobs:
           path: dist/*
           if-no-files-found: error
           retention-days: 7
+
+  # Publishes the AUR recipe once every target packaged. AUR stores build
+  # recipes rather than packages, so the push is a PKGBUILD and a .SRCINFO that
+  # build the commit this run packaged; the package manager turns them into a
+  # package on each user's machine.
+  #
+  # Pull requests are excluded: the deploy key is a repository secret that fork
+  # PRs do not receive, and a branch under review must not publish.
+  aur:
+    name: Publish to AUR
+    needs: package
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    # Two runs of this job would race on the same AUR branch: the second clone
+    # would miss the first push and the second push would be rejected as a
+    # non-fast-forward. Serializing them keeps every run's push fast-forward.
+    concurrency:
+      group: aur-publish
+      cancel-in-progress: false
+    steps:
+      - name: Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # script/aurpkg falls back to `git describe --tags` when no version is
+          # given, which needs the tag objects to be present.
+          fetch-depth: 0
+
+      # The recipe is written from the commit, not from the archives, so nothing
+      # has to be downloaded first. The version is passed through the
+      # environment rather than interpolated into the script, because a value
+      # typed into the workflow_dispatch input must not become shell syntax.
+      - name: Write the AUR recipe
+        id: recipe
+        env:
+          VERSION_INPUT: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          # git rev-parse peels an annotated tag to the commit it points at, so
+          # the recipe names a commit a package manager can check out whatever
+          # the event was.
+          commit="$(git rev-parse 'HEAD^{commit}')"
+          # Written outside the checkout so the recipe cannot be mistaken for
+          # part of the repository.
+          pkgver="$(script/aurpkg "$VERSION_INPUT" "$commit" "$RUNNER_TEMP/aur")"
+          echo "pkgver=$pkgver" >> "$GITHUB_OUTPUT"
+          echo "wrote the AUR recipe for $pkgver"
+
+      - name: Load the AUR deploy key
+        env:
+          AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          # An unset secret expands to the empty string, so the failure this
+          # guards against is a git push rejected for the wrong reason, not a
+          # missing variable.
+          if [ -z "$AUR_SSH_PRIVATE_KEY" ]; then
+            echo "the AUR_SSH_PRIVATE_KEY secret is not set" >&2
+            exit 1
+          fi
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$AUR_SSH_PRIVATE_KEY" > ~/.ssh/aur
+          chmod 600 ~/.ssh/aur
+          # AUR is reached on a non-standard port, so the known_hosts entry is
+          # spelled [host]:port. Scanning is what the AUR documentation does,
+          # and StrictHostKeyChecking then applies to every later connection.
+          ssh-keyscan -p 22222 git.aur-a.meowarch.top >> ~/.ssh/known_hosts
+
+      - name: Push the recipe
+        env:
+          PKGVER: ${{ steps.recipe.outputs.pkgver }}
+          RECIPE_DIR: ${{ runner.temp }}/aur
+        run: |
+          set -euo pipefail
+          # The key is named explicitly instead of relying on the default, since
+          # the runner image may carry other keys and an agent is not in use.
+          # It is exported here rather than in the step environment because a
+          # `~` in an environment value reaches git unexpanded.
+          export GIT_SSH_COMMAND="ssh -i $HOME/.ssh/aur -o IdentitiesOnly=yes"
+          git config --global user.name xingguangcuican
+          git config --global user.email xingguangcuican@meowarch.top
+
+          # A package that does not exist yet clones as an empty repository and
+          # the first push creates it.
+          git clone ssh://aur@git.aur-a.meowarch.top:22222/gitmip-cli.git aur-repo
+          cp "$RECIPE_DIR/PKGBUILD" "$RECIPE_DIR/.SRCINFO" aur-repo/
+
+          cd aur-repo
+          git add PKGBUILD .SRCINFO
+          # Every trunk push would otherwise add a commit that changes nothing,
+          # which AUR shows as a new package version for no reason.
+          if git diff --cached --quiet; then
+            echo "the recipe is unchanged; nothing to publish"
+            exit 0
+          fi
+          git commit -m "Update to $PKGVER"
+          # AUR keeps packages on master, and a fresh clone of a package that
+          # does not exist yet is an unborn branch whose name follows the
+          # runner's init.defaultBranch. Naming the remote branch explicitly
+          # means the push lands on master either way.
+          git push origin HEAD:master
